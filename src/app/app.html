@@ -1,0 +1,70 @@
+<ng-container *ngIf="(authService.user$ | async) as user; else noAuth">
+  <div class="layout-container">
+    <!-- Sidebar -->
+    <aside class="sidebar glass-panel">
+      <div class="logo-area">
+        <h2 class="title-gradient">DigiWarga</h2>
+        <p class="tagline">Sistem Pendudukan Terpadu</p>
+      </div>
+      
+      <nav class="nav-links">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a routerLink="/families" routerLinkActive="active" class="nav-item">
+          <span class="icon">🏘️</span>
+          <span>Kartu Keluarga</span>
+        </a>
+        <a routerLink="/residents" routerLinkActive="active" class="nav-item">
+          <span class="icon">👥</span>
+          <span>Data Penduduk</span>
+        </a>
+        <a routerLink="/services" routerLinkActive="active" class="nav-item">
+          <span class="icon">📥</span>
+          <span>Layanan Admin</span>
+        </a>
+        <a routerLink="/settings" routerLinkActive="active" class="nav-item">
+          <span class="icon">⚙️</span>
+          <span>Pengaturan Akun</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile card-luxury">
+          <div class="avatar">👤</div>
+          <div class="user-info">
+            <p class="username">{{ user.displayName || user.email?.split('@')?.[0] || 'Administrator' }}</p>
+            <p class="role">Petugas Administrasi</p>
+          </div>
+          <button (click)="logout()" class="btn-logout" title="Sign Out">🚪</button>
+        </div>
+        <div class="branding">
+          <p>Develop By : Pandu Talenta Digital</p>
+          <p>Fullstack By Roedy Rustan</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-nav glass-panel">
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" placeholder="Cari NIK atau Nomor KK...">
+        </div>
+        <div class="quick-actions">
+          <button class="btn-primary" routerLink="/families">Kelola Data (+)</button>
+        </div>
+      </header>
+
+      <section class="content-area">
+        <router-outlet></router-outlet>
+      </section>
+    </main>
+  </div>
+</ng-container>
+
+<ng-template #noAuth>
+  <router-outlet></router-outlet>
+</ng-template>
