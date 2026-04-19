@@ -76,7 +76,7 @@ Untuk detail arsitektur teknis lebih mendalam, silakan buka: [BLUEPRINT.md](./BL
 Aplikasi ini dikembangkan untuk **Desa Contoh**. Kontribusi dan saran fitur baru sangat disambut untuk meningkatkan kualitas layanan kependudukan digital.
 
 ---
-© 2026 **Antigravity AI** | Made with ❤️ for DigiWarga.
+© 2026 **Pandu Talenta Digital** | Made with ❤️ for DigiWarga.
 
 ---
-**Develop By : Pandu Talenta Digital | Fullstack By Roedy Rustan**
+**Fullstack By Roedy Rustan**
