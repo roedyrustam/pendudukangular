@@ -2,7 +2,7 @@
 
 **System Name:** DigiWarga  
 **Architecture Style:** Serverless Single Page Application (SPA)  
-**Version:** 1.0.0
+**Version:** 1.2.0
 
 ---
 
@@ -18,14 +18,22 @@
 ## 2. Infrastructure Architecture
 ```mermaid
 graph TD
-    User((User Admin)) --> SPA[Angular SPA]
-    SPA --> Auth[Firebase Auth]
-    SPA --> FS[Cloud Firestore]
-    SPA --> ST[Cloud Storage]
-    SPA --> PDF[Client-side PDF Engine]
+    Client((Warga / Admin)) --> SPA[Angular SPA (Cyber-Luxe)]
+    SPA --> Auth[Firebase Auth + Google OAuth]
+    SPA --> RBAC{Role-Based Access}
+    RBAC --> FS[Cloud Firestore]
+    RBAC --> ST[Cloud Storage]
+    SPA --> PDF[jsPDF Client Engine]
 ```
 
 ## 3. Data Architecture (Firestore)
+
+### Collection: `users`
+Sistem User & RBAC.
+- `uid` (string, doc_id)
+- `email` (string)
+- `role` (enum: admin, petugas, warga)
+- `nik` (string): Identitas terhubung ke penduduk.
 
 ### Collection: `residents`
 Menyimpan data individu penduduk.
@@ -50,11 +58,15 @@ Menyimpan data Kartu Keluarga.
 - `province` (string)
 - `created_at` (timestamp)
 
-### Collection: `services`
+### Collection: `services` (Requests)
 Riwayat pengajuan administratif.
 - `nik` (string): FK ke residents
 - `service_type` (string)
 - `reason` (string)
+- `attachments` (array of strings): Berkas pendukung warga (URL).
+- `letter_url` (string): Unduhan surat resmi jika telah diselesaikan.
+- `admin_note` (string): Catatan dari peninjau.
+- `processed_by` (string): Email admin penyelesai form.
 - `status` (enum: Pending, Diproses, Selesai, Ditolak)
 - `created_at` (timestamp)
 

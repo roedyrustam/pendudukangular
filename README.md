@@ -5,12 +5,13 @@
 ---
 
 ## ✨ Fitur Utama
+- 🔐 **Role Based Access Control (RBAC)**: Akses multi-level (Admin, Petugas, Warga) yang aman.
+- 🌐 **Portal Warga (Self-Service)**: Pendaftaran mandiri via Google Auth & pelacakan layanan.
+- 📜 **Smart Document Issuance**: Cetak & arsip otomatis Surat Keterangan / Pengantar resmi berformat PDF.
+- 📂 **Digital Document Repository**: Unggah dokumen pendukung mandiri (KTP/KK) langsung ke cloud.
 - 📊 **Dashboard Analytics**: Visualisasi statistik kependudukan real-time.
 - 👥 **Manajemen Penduduk**: Database NIK terpadu dengan pencarian & filter canggih.
 - 🏡 **Sistem Keluarga**: Pengelolaan Kartu Keluarga (KK) dengan tracking anggota otomatis.
-- 📂 **Digital Document Repository**: Unggah dan kelola berkas KTP/KK langsung di cloud.
-- 📄 **Smart Reporting**: Cetak Biodata dan Laporan kolektif dalam format PDF profesional.
-- 🔐 **Secure Access**: Proteksi data menggunakan Firebase Authentication.
 
 ---
 

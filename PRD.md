@@ -2,7 +2,7 @@
 
 **Project Name:** DigiWarga (Sistem Informasi Kependudukan Digital)  
 **Client:** Desa Contoh  
-**Status:** Version 1.0 (Production Ready)  
+**Status:** Version 1.2 (Multi-User & Service Automation)  
 **Author:** Pandu Talenta Digital
 
 ---
@@ -31,13 +31,15 @@ DigiWarga adalah platform manajemen kependudukan modern yang dirancang untuk men
 ### Core Modules
 | ID | Feature | Description |
 |---|---|---|
-| F01 | **Auth & Security** | Login admin dengan Firebase Auth & proteksi halaman. |
+| F01 | **Auth & Security** | Login dengan Firebase Auth, Google OAuth, & RBAC (Admin, Petugas, Warga). |
 | F02 | **Dashboard Analytics** | Visualisasi data gender, status layanan, dan pertumbuhan warga. |
 | F03 | **Population Management** | CRUD data penduduk, linking ke Kartu Keluarga (KK). |
 | F04 | **Family Management** | Pengelolaan data keluarga dengan tracking otomatis anggota. |
 | F05 | **Service Requests** | Pelacakan riwayat layanan administrasi (Pending -> Selesai). |
 | F06 | **Digital Repository** | Upload & manage scan dokumen (KTP/KK) via Firebase Storage. |
 | F07 | **PDF Reporting** | Cetak Biodata Penduduk dan Ekspor Laporan Tabel ke PDF. |
+| F08 | **Citizen Portal** | Self-Registration via Google Auth & validasi NIK mandiri. |
+| F09 | **Smart Document Issuance**| Cetak & arisp otomatis Surat Keterangan / Pengantar resmi berformat PDF. |
 
 ## 6. Non-Functional Requirements
 - **Performance**: Load data di bawah 2 detik menggunakan Firestore indexing.
@@ -47,9 +49,9 @@ DigiWarga adalah platform manajemen kependudukan modern yang dirancang untuk men
 
 ## 7. Feature Roadmap (Future Enhancements)
 - **Phase 2**: Integrasi Notifikasi WhatsApp (WA Gateway) untuk status layanan.
-- **Phase 3**: Portal Warga (Self-Service) untuk pengajuan mandiri.
-- **Phase 4**: Manajemen Wilayah (Tracking RT/RW dengan peta digital).
-- **Phase 5**: Sistem Tanda Tangan Digital (E-Signature) untuk surat resmi.
+- **Phase 3**: Manajemen Wilayah (Tracking RT/RW dengan peta digital).
+- **Phase 4**: Sistem Tanda Tangan Digital (E-Signature) untuk surat resmi.
+- **Phase 5**: Audit Log transaksi sistem.
 
 ---
 *Dokumen ini merupakan acuan resmi untuk pengembangan dan implementasi sistem DigiWarga di Desa Contoh.*
