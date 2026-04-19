@@ -320,6 +320,9 @@ export class ResidentDetailComponent implements OnInit {
   private dataService = inject(DataService);
   private pdfService = inject(PdfService);
 
+  resident$!: Observable<Resident | undefined>;
+  family$!: Observable<Family | undefined>;
+  requests$!: Observable<ServiceRequest[]>;
   documents$!: Observable<ResidentDocument[]>;
   isUploading = signal(false);
 
@@ -381,7 +384,7 @@ export class ResidentDetailComponent implements OnInit {
   }
 
   async downloadBiodata(resident: Resident) {
-    const family = await (this.family$ ? new Promise<Family>(resolve => this.family$.subscribe(f => resolve(f!))) : Promise.resolve(undefined));
-    this.pdfService.generateResidentBiodata(resident, family);
+    const family = await (this.family$ ? new Promise<Family | undefined>(resolve => this.family$.subscribe((f: Family | undefined) => resolve(f))) : Promise.resolve(undefined));
+    this.pdfService.generateResidentBiodata(resident, family as Family);
   }
 }

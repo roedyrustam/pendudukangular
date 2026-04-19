@@ -33,7 +33,6 @@ export class AuthService {
 
   async getProfile(uid: string): Promise<AppUser | null> {
     const docRef = doc(this.firestore, 'users', uid);
-    const snap = await getDoc(userRef); // Mistake in TargetContent below? No, I'll fix it here.
     const userSnap = await getDoc(docRef);
     return userSnap.exists() ? (userSnap.data() as AppUser) : null;
   }

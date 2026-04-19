@@ -61,7 +61,7 @@ import { AuthService } from '../../services/auth.service';
 
           <p *ngIf="errorMessage()" class="error-msg mt-4">{{ errorMessage() }}</p>
 
-          <ng-container *ngIf="!isCompletingProfile()">
+
             <button type="submit" class="btn-primary w-full mt-8" [disabled]="isLoading()">
               {{ isLoading() ? 'Memproses...' : (isRegistering() ? 'Daftar Sekarang' : 'Masuk Ke Sistem') }}
             </button>
