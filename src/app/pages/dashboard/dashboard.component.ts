@@ -1,116 +1,194 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
-import { RouterModule } from '@angular/router';
-import { ServiceRequest } from '../../models/data.models';
+import { ServiceRequest, AppUser, Resident, Family } from '../../models/data.models';
+import { AuthService } from '../../services/auth.service';
+import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="dashboard-grid fade-in">
-      <div class="stat-card card-luxury">
-        <div class="stat-icon">👥</div>
-        <div class="stat-info">
-          <h3>Total Penduduk</h3>
-          <p class="stat-value">{{ totalResidents() }}</p>
-          <span class="stat-trend positive">+{{ recentResidentsCount() }} Baru</span>
-        </div>
+    <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
+      <div class="welcome-banner card-luxury mb-8 fade-in">
+        <h1 class="title-gradient">Selamat Datang, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
+        <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
       </div>
 
-      <div class="stat-card card-luxury">
-        <div class="stat-icon">🏘️</div>
-        <div class="stat-info">
-          <h3>Total Keluarga (KK)</h3>
-          <p class="stat-value">{{ totalFamilies() }}</p>
-          <span class="stat-trend opacity-70">Sistem Terintegrasi</span>
-        </div>
-      </div>
-
-      <div class="stat-card card-luxury">
-        <div class="stat-icon">📥</div>
-        <div class="stat-info">
-          <h3>Permintaan Layanan</h3>
-          <p class="stat-value">{{ activeRequestsCount() }}</p>
-          <span class="stat-trend" [class.pending]="pendingRequestsCount() > 0">
-            {{ pendingRequestsCount() }} Perlu Diproses
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Analytics Section -->
-    <div class="analytics-grid mt-8 fade-in" style="animation-delay: 0.1s">
-      <div class="card-luxury analytics-card">
-        <h3>📊 Demografi Gender</h3>
-        <div class="chart-simple">
-          <div class="chart-bar">
-            <div class="bar male" [style.width.%]="malePercentage()">
-               <span>Laki-laki ({{ malePercentage() }}%)</span>
-            </div>
-            <div class="bar female" [style.width.%]="femalePercentage()">
-               <span>Perempuan ({{ femalePercentage() }}%)</span>
+      <!-- ADMIN & PETUGAS VIEW -->
+      <ng-container *ngIf="profile.role !== 'warga'">
+        <div class="dashboard-grid fade-in">
+          <div class="stat-card card-luxury">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+              <h3>Total Penduduk</h3>
+              <p class="stat-value">{{ totalResidents() }}</p>
+              <span class="stat-trend positive">+{{ recentResidentsCount() }} Baru</span>
             </div>
           </div>
-          <div class="chart-labels mt-4">
-            <div class="label"><span class="dot male"></span> Laki-laki: {{ maleCount() }}</div>
-            <div class="label"><span class="dot female"></span> Perempuan: {{ femaleCount() }}</div>
-          </div>
-        </div>
-      </div>
 
-      <div class="card-luxury analytics-card">
-        <h3>📋 Status Pelayanan</h3>
-        <div class="status-funnel">
-          <div class="funnel-item" *ngFor="let s of statusBreakdown()">
-            <label>{{ s.label }}</label>
-            <div class="funnel-bar-bg">
-              <div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div>
+          <div class="stat-card card-luxury">
+            <div class="stat-icon">🏘️</div>
+            <div class="stat-info">
+              <h3>Total Keluarga (KK)</h3>
+              <p class="stat-value">{{ totalFamilies() }}</p>
+              <span class="stat-trend opacity-70">Sistem Terintegrasi</span>
             </div>
-            <span class="count">{{ s.count }}</span>
+          </div>
+
+          <div class="stat-card card-luxury">
+            <div class="stat-icon">📥</div>
+            <div class="stat-info">
+              <h3>Permintaan Layanan</h3>
+              <p class="stat-value">{{ activeRequestsCount() }}</p>
+              <span class="stat-trend" [class.pending]="pendingRequestsCount() > 0">
+                {{ pendingRequestsCount() }} Perlu Diproses
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="content-main mt-8 fade-in" style="animation-delay: 0.1s">
-      <div class="grid-2">
-        <div class="card-luxury">
-          <div class="flex-between mb-4">
-            <h3>Antrian Layanan Terbaru</h3>
-            <button class="btn-text" routerLink="/services">Lihat Semua</button>
-          </div>
-          <div class="request-list">
-            <div *ngFor="let req of latestRequests()" class="request-item">
-              <div class="req-info">
-                 <span class="req-type">{{ req.service_type }}</span>
-                 <span class="req-nik">{{ req.nik }}</span>
+        <!-- Analytics Section -->
+        <div class="analytics-grid mt-8 fade-in" style="animation-delay: 0.1s">
+          <div class="card-luxury analytics-card">
+            <h3>📊 Demografi Gender</h3>
+            <div class="chart-simple">
+              <div class="chart-bar">
+                <div class="bar male" [style.width.%]="malePercentage()">
+                   <span>Laki-laki ({{ malePercentage() }}%)</span>
+                </div>
+                <div class="bar female" [style.width.%]="femalePercentage()">
+                   <span>Perempuan ({{ femalePercentage() }}%)</span>
+                </div>
               </div>
-              <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+              <div class="chart-labels mt-4">
+                <div class="label"><span class="dot male"></span> Laki-laki: {{ maleCount() }}</div>
+                <div class="label"><span class="dot female"></span> Perempuan: {{ femaleCount() }}</div>
+              </div>
             </div>
-            <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-8">Tidak ada antrian aktif.</p>
+          </div>
+
+          <div class="card-luxury analytics-card">
+            <h3>📋 Status Pelayanan</h3>
+            <div class="status-funnel">
+              <div class="funnel-item" *ngFor="let s of statusBreakdown()">
+                <label>{{ s.label }}</label>
+                <div class="funnel-bar-bg">
+                  <div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div>
+                </div>
+                <span class="count">{{ s.count }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="card-luxury cta-card">
-          <div class="cta-content">
-             <h3>Siap mengelola data?</h3>
-             <p class="text-muted mb-6">Mulai pendataan warga baru atau kelola kartu keluarga yang sudah ada dengan mudah.</p>
-             <div class="flex gap-2">
-                <button class="btn-primary" routerLink="/families">Kelola Keluarga</button>
-                <button class="btn-outline" routerLink="/residents">Cari Penduduk</button>
+        <div class="content-main mt-8 fade-in" style="animation-delay: 0.1s">
+          <div class="grid-2">
+            <div class="card-luxury">
+              <div class="flex-between mb-4">
+                <h3>Antrian Layanan Terbaru</h3>
+                <button class="btn-text" routerLink="/services">Lihat Semua</button>
+              </div>
+              <div class="request-list">
+                <div *ngFor="let req of latestRequests()" class="request-item">
+                  <div class="req-info">
+                     <span class="req-type">{{ req.service_type }}</span>
+                     <span class="req-nik">{{ req.nik }}</span>
+                  </div>
+                  <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+                </div>
+                <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-8">Tidak ada antrian aktif.</p>
+              </div>
+            </div>
+
+            <div class="card-luxury cta-card">
+              <div class="cta-content">
+                 <h3>Siap mengelola data?</h3>
+                 <p class="text-muted mb-6">Mulai pendataan warga baru atau kelola kartu keluarga yang sudah ada dengan mudah.</p>
+                 <div class="flex gap-2">
+                    <button class="btn-primary" routerLink="/families">Kelola Keluarga</button>
+                    <button class="btn-outline" routerLink="/residents">Cari Penduduk</button>
+                 </div>
+              </div>
+              <div class="dev-tools mt-8">
+                <p class="text-xs text-muted mb-2">DEVELOPER TOOLS</p>
+                <button class="btn-secondary-sm" (click)="seedData()">Seed Sample Data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- WARGA VIEW -->
+      <ng-container *ngIf="profile.role === 'warga'">
+        <div class="dashboard-grid fade-in">
+          <div class="card-luxury personal-info-card" *ngIf="residentProfile$ | async as resident">
+            <div class="flex-between mb-4">
+              <h3>Profil Saya</h3>
+              <button class="btn-text-sm" [routerLink]="['/residents', resident.nik]">Detail Lengkap</button>
+            </div>
+            <div class="info-item">
+              <label>NIK</label>
+              <p>{{ resident.nik }}</p>
+            </div>
+            <div class="info-item mt-2">
+              <label>Nama Lengkap</label>
+              <p>{{ resident.full_name }}</p>
+            </div>
+            <div class="info-item mt-2">
+              <label>Pekerjaan</label>
+              <p>{{ resident.occupation }}</p>
+            </div>
+          </div>
+
+          <div class="card-luxury family-card" *ngIf="familyData$ | async as family">
+             <h3>Data Keluarga</h3>
+             <div class="kk-badge mt-2">No. KK: {{ family.kk_number }}</div>
+             <p class="text-xs text-muted mt-4">Alamat Terdaftar:</p>
+             <p class="text-sm">{{ family.address }}</p>
+             <p class="text-sm">{{ family.rt_rw }} - {{ family.district }}</p>
+             <button class="btn-primary mt-6 w-full" routerLink="/services">Ajukan Layanan Baru</button>
+          </div>
+
+          <div class="card-luxury requests-card">
+             <h3>Pengajuan Saya</h3>
+             <div class="request-list mt-4">
+                <div *ngFor="let req of myRequests$ | async" class="request-item">
+                  <div class="req-info">
+                     <span class="req-type">{{ req.service_type }}</span>
+                     <span class="req-date text-xs text-muted">{{ req.created_at?.toDate() | date:'dd MMM yyyy' }}</span>
+                  </div>
+                  <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+                </div>
+                <p *ngIf="(myRequests$ | async)?.length === 0" class="text-xs text-muted text-center py-4">Belum ada pengajuan.</p>
              </div>
           </div>
-          <div class="dev-tools mt-8">
-            <p class="text-xs text-muted mb-2">DEVELOPER TOOLS</p>
-            <button class="btn-secondary-sm" (click)="seedData()">Seed Sample Data</button>
-          </div>
         </div>
-      </div>
+      </ng-container>
     </div>
   `,
   styles: [`
+    .welcome-banner {
+      padding: 3rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    }
+    .badge {
+      padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
+      &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+      &.petugas { background: rgba(99, 102, 241, 0.2); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); }
+      &.warga { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    }
+    .personal-info-card, .family-card, .requests-card { padding: 2rem; }
+    .info-item {
+      label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      p { font-weight: 600; color: white; }
+    }
+    .kk-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-family: monospace; font-size: 1rem; display: inline-block; font-weight: 700; }
+    .btn-text-sm { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; &:hover { text-decoration: underline; } }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -190,6 +268,23 @@ import { ServiceRequest } from '../../models/data.models';
 })
 export class DashboardComponent {
   private dataService = inject(DataService);
+  private authService = inject(AuthService);
+
+  userProfile$ = this.authService.userData$;
+  
+  // Warga Specific Data
+  residentProfile$: Observable<Resident | undefined> = this.userProfile$.pipe(
+    switchMap(u => u?.nik ? this.dataService.getResident(u.nik) : of(undefined))
+  );
+
+  familyData$: Observable<Family | undefined> = this.residentProfile$.pipe(
+    switchMap(r => r?.family_id ? this.dataService.getFamily(r.family_id) : of(undefined))
+  );
+
+  myRequests$: Observable<ServiceRequest[]> = this.userProfile$.pipe(
+    switchMap(u => u?.nik ? this.dataService.getResidentRequests(u.nik) : of([]))
+  );
+
   totalResidents = signal(0);
   totalFamilies = signal(0);
   activeRequestsCount = signal(0);

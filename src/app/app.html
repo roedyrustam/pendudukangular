@@ -1,4 +1,4 @@
-<ng-container *ngIf="(authService.user$ | async) as user; else noAuth">
+<ng-container *ngIf="(authService.userData$ | async) as userProfile; else noAuth">
   <div class="layout-container">
     <!-- Sidebar -->
     <aside class="sidebar glass-panel">
@@ -12,18 +12,41 @@
           <span class="icon">📊</span>
           <span>Dashboard</span>
         </a>
-        <a routerLink="/families" routerLinkActive="active" class="nav-item">
-          <span class="icon">🏘️</span>
-          <span>Kartu Keluarga</span>
+
+        <!-- Admin & Petugas Menus -->
+        <ng-container *ngIf="userProfile.role === 'admin' || userProfile.role === 'petugas'">
+          <a routerLink="/families" routerLinkActive="active" class="nav-item">
+            <span class="icon">🏘️</span>
+            <span>Kartu Keluarga</span>
+          </a>
+          <a routerLink="/residents" routerLinkActive="active" class="nav-item">
+            <span class="icon">👥</span>
+            <span>Data Penduduk</span>
+          </a>
+          <a routerLink="/services" routerLinkActive="active" class="nav-item">
+            <span class="icon">📥</span>
+            <span>Layanan Admin</span>
+          </a>
+          <a routerLink="/region-insights" routerLinkActive="active" class="nav-item">
+            <span class="icon">🗺️</span>
+            <span>Wawasan Wilayah</span>
+          </a>
+        </ng-container>
+
+        <!-- Warga Specific Menus -->
+        <ng-container *ngIf="userProfile.role === 'warga'">
+          <a [routerLink]="['/residents', 'detail', userProfile.nik]" routerLinkActive="active" class="nav-item">
+            <span class="icon">👤</span>
+            <span>Profil Saya</span>
+          </a>
+        </ng-container>
+
+        <!-- Admin Only -->
+        <a *ngIf="userProfile.role === 'admin'" routerLink="/users" routerLinkActive="active" class="nav-item">
+          <span class="icon">🛡️</span>
+          <span>Manajemen User</span>
         </a>
-        <a routerLink="/residents" routerLinkActive="active" class="nav-item">
-          <span class="icon">👥</span>
-          <span>Data Penduduk</span>
-        </a>
-        <a routerLink="/services" routerLinkActive="active" class="nav-item">
-          <span class="icon">📥</span>
-          <span>Layanan Admin</span>
-        </a>
+
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙️</span>
           <span>Pengaturan Akun</span>
@@ -34,8 +57,10 @@
         <div class="user-profile card-luxury">
           <div class="avatar">👤</div>
           <div class="user-info">
-            <p class="username">{{ user.displayName || user.email?.split('@')?.[0] || 'Administrator' }}</p>
-            <p class="role">Petugas Administrasi</p>
+            <p class="username">{{ userProfile.displayName || userProfile.email?.split('@')?.[0] }}</p>
+            <p class="role" [style.color]="userProfile.role === 'admin' ? '#f59e0b' : userProfile.role === 'petugas' ? '#6366f1' : '#10b981'">
+              {{ userProfile.role | uppercase }}
+            </p>
           </div>
           <button (click)="logout()" class="btn-logout" title="Sign Out">🚪</button>
         </div>

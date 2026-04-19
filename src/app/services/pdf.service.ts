@@ -100,4 +100,76 @@ export class PdfService {
 
     doc.save(`Laporan_Penduduk_${Date.now()}.pdf`);
   }
+
+  generateFamilyCard(family: Family, members: Resident[]) {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('PROFIL KARTU KELUARGA', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(`No. ${family.kk_number}`, pageWidth / 2, 28, { align: 'center' });
+
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, pageWidth - 20, 35);
+
+    // Metadata
+    doc.setFontSize(10);
+    let y = 45;
+    const addMeta = (label: string, value: string, x: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, x, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`: ${value || '-'}`, x + 35, y);
+    };
+
+    addMeta('Nama Kepala KK', family.head_of_family_name, 20);
+    addMeta('Alamat', family.address, 20); y += 6;
+    addMeta('RT / RW', family.rt_rw, 20);
+    addMeta('Kecamatan', family.district, 20); y += 6;
+    addMeta('Kabupaten/Kota', family.regency, 20);
+    addMeta('Provinsi', family.province, 20);
+
+    // Members Table
+    const tableData = members.map((m, i) => [
+      i + 1,
+      m.full_name,
+      m.nik,
+      m.gender === 'Laki-laki' ? 'L' : 'P',
+      m.birth_place + ', ' + m.birth_date,
+      m.occupation,
+      m.relationship
+    ]);
+
+    (doc as any).autoTable({
+      startY: 75,
+      head: [['No', 'Nama Lengkap', 'NIK', 'JK', 'Tempat/Tgl Lahir', 'Pekerjaan', 'Hubungan']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [52, 73, 94], textColor: 255 },
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 10 },
+        6: { cellWidth: 25 }
+      }
+    });
+
+    // Footer
+    const footerY = doc.internal.pageSize.getHeight() - 25;
+    doc.setFontSize(9);
+    doc.text('Dicetak Oleh:', pageWidth - 60, footerY);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Sistem DigiWarga', pageWidth - 60, footerY + 10);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`ID Proyek: ${family.kk_number}`, 20, footerY + 10);
+
+    doc.save(`KK_${family.kk_number}.pdf`);
+  }
 }

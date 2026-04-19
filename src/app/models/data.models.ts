@@ -29,6 +29,23 @@ export interface ServiceRequest {
   service_type: string;
   reason: string;
   status: 'Pending' | 'Diproses' | 'Selesai' | 'Ditolak';
+  admin_note?: string;
+  attachments?: string[];
+  letter_url?: string;
+  processed_by?: string;
+  processed_at?: any;
+  created_at: any;
+}
+
+export type UserRole = 'admin' | 'petugas' | 'warga';
+
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  role: UserRole;
+  nik?: string; // Only for warga
+  displayName?: string;
+  photoURL?: string;
   created_at: any;
 }
 

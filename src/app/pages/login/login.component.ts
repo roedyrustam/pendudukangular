@@ -16,13 +16,35 @@ import { AuthService } from '../../services/auth.service';
       <div class="login-card card-luxury glass-panel fade-in">
         <div class="brand">
           <div class="logo-hex">DW</div>
-          <h2>DigiWarga</h2>
-          <p class="text-muted">Manajemen Kependudukan Terpadu</p>
+          <h2>{{ isRegistering() ? 'Daftar Warga' : isCompletingProfile() ? 'Lengkapi Profil' : 'DigiWarga' }}</h2>
+          <p class="text-muted">{{ isRegistering() ? 'Buat akun untuk akses mandiri' : isCompletingProfile() ? 'Masukkan NIK untuk akses sistem' : 'Manajemen Kependudukan Terpadu' }}</p>
         </div>
 
         <form (submit)="onSubmit()" class="mt-8">
-          <div class="input-group">
-            <label>Email Admin</label>
+          <!-- Complete Profile Mode (Google New User) -->
+          <div *ngIf="isCompletingProfile()" class="input-group mb-4 fade-in">
+            <label>NIK (16 Digit)</label>
+            <div class="input-wrapper">
+              <span class="icon">🆔</span>
+              <input type="text" [(ngModel)]="nik" name="p_nik" placeholder="Masukkan NIK valid Anda" required>
+            </div>
+            <button type="button" (click)="finishGoogleProfile()" class="btn-primary w-full mt-6" [disabled]="isLoading() || !nik">
+              {{ isLoading() ? 'Menyimpan...' : 'Selesaikan Pendaftaran' }}
+            </button>
+          </div>
+
+          <!-- Normal Login/Register Mode -->
+          <ng-container *ngIf="!isCompletingProfile()">
+            <div *ngIf="isRegistering()" class="input-group mb-4">
+              <label>NIK (Must be valid in system)</label>
+              <div class="input-wrapper">
+                <span class="icon">🆔</span>
+                <input type="text" [(ngModel)]="nik" name="nik" placeholder="16 digit NIK" required>
+              </div>
+            </div>
+
+            <div class="input-group">
+            <label>Email Address</label>
             <div class="input-wrapper">
               <span class="icon">📧</span>
               <input type="email" [(ngModel)]="email" name="email" placeholder="admin@digiwarga.id" required>
@@ -39,9 +61,30 @@ import { AuthService } from '../../services/auth.service';
 
           <p *ngIf="errorMessage()" class="error-msg mt-4">{{ errorMessage() }}</p>
 
-          <button type="submit" class="btn-primary w-full mt-8" [disabled]="isLoading()">
-            {{ isLoading() ? 'Mengautentikasi...' : 'Masuk Ke Sistem' }}
-          </button>
+          <ng-container *ngIf="!isCompletingProfile()">
+            <button type="submit" class="btn-primary w-full mt-8" [disabled]="isLoading()">
+              {{ isLoading() ? 'Memproses...' : (isRegistering() ? 'Daftar Sekarang' : 'Masuk Ke Sistem') }}
+            </button>
+
+            <div class="divider mt-6" *ngIf="!isRegistering()">
+              <span>OR</span>
+            </div>
+
+            <button type="button" (click)="onGoogleLogin()" *ngIf="!isRegistering()" class="btn-google w-full mt-4" [disabled]="isLoading()">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+              {{ isLoading() ? 'Menghubungkan...' : 'Masuk dengan Google' }}
+            </button>
+
+            <div class="toggle-mode mt-6">
+              <p class="text-xs text-muted">
+                {{ isRegistering() ? 'Sudah punya akun?' : 'Warga baru?' }}
+                <br>
+                <button type="button" class="btn-link" (click)="toggleMode()">
+                  {{ isRegistering() ? 'Klik di sini untuk Masuk' : 'Daftar akun Warga di sini' }}
+                </button>
+              </p>
+            </div>
+          </ng-container>
         </form>
 
         <div class="footer mt-6">
@@ -121,6 +164,25 @@ import { AuthService } from '../../services/auth.service';
     .w-full { width: 100%; }
     .error-msg { color: #ef4444; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.2); }
     .text-xs { font-size: 0.7rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .btn-link { 
+      background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0.25rem; font-size: 0.8rem;
+      &:hover { text-decoration: underline; }
+    }
+    .toggle-mode { line-height: 1.5; }
+    .divider {
+      display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.7rem;
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+    }
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+      background: white; color: #1f2937; border: none; padding: 0.75rem; border-radius: 0.75rem;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+      img { width: 18px; }
+      &:hover { background: #f3f4f6; transform: translateY(-2px); }
+      &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    }
+    .mt-6 { margin-top: 1.5rem; }
   `]
 })
 export class LoginComponent {
@@ -129,17 +191,70 @@ export class LoginComponent {
 
   email = '';
   password = '';
+  nik = '';
   isLoading = signal(false);
+  isRegistering = signal(false);
+  isCompletingProfile = signal(false);
   errorMessage = signal('');
+
+  toggleMode() {
+    this.isRegistering.update(v => !v);
+    this.isCompletingProfile.set(false);
+    this.errorMessage.set('');
+  }
+
+  async onGoogleLogin() {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    
+    try {
+      const cred = await this.authService.loginWithGoogle();
+      const profile = await this.authService.getProfile(cred.user.uid);
+      
+      if (!profile) {
+        // New Google User - Needs NIK
+        this.isCompletingProfile.set(true);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+    } catch (e: any) {
+      console.error(e);
+      this.errorMessage.set('Gagal masuk dengan Google. Silakan coba lagi.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async finishGoogleProfile() {
+    if (!this.nik) return;
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    this.isLoading.set(true);
+    try {
+      await this.authService.createUserProfile(user, 'warga', this.nik);
+      this.router.navigate(['/dashboard']);
+    } catch (e) {
+      console.error(e);
+      this.errorMessage.set('Gagal melengkapi profil. Pastikan NIK benar.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
 
   async onSubmit() {
     if (!this.email || !this.password) return;
+    if (this.isRegistering() && !this.nik) return;
     
     this.isLoading.set(true);
     this.errorMessage.set('');
 
     try {
-      await this.authService.login(this.email, this.password);
+      if (this.isRegistering()) {
+        await this.authService.register(this.email, this.password, this.nik);
+      } else {
+        await this.authService.login(this.email, this.password);
+      }
       this.router.navigate(['/dashboard']);
     } catch (e: any) {
       console.error(e);

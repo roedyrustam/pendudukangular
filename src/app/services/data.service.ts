@@ -12,7 +12,8 @@ import {
   orderBy,
   limit,
   addDoc,
-  docData
+  docData,
+  getDocs
 } from '@angular/fire/firestore';
 import { Family, Resident, ServiceRequest, ResidentDocument } from '../models/data.models';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
@@ -147,5 +148,59 @@ export class DataService {
     // Delete metadata from firestore
     const docRef = doc(this.firestore, 'residents_docs', docId);
     return deleteDoc(docRef);
+  }
+
+  async updateRequestStatus(requestId: string, status: string, adminNote: string) {
+    const docRef = doc(this.firestore, 'services', requestId);
+    return updateDoc(docRef, {
+      status,
+      admin_note: adminNote,
+      updated_at: new Date()
+    });
+  }
+
+  // --- USER MANAGEMENT ---
+  getUsers(): Observable<AppUser[]> {
+    return collectionData(
+      query(collection(this.firestore, 'users'), orderBy('created_at', 'desc')),
+      { idField: 'id' }
+    ) as Observable<AppUser[]>;
+  }
+
+  async updateUserRole(uid: string, role: UserRole) {
+    const docRef = doc(this.firestore, 'users', uid);
+    return updateDoc(docRef, { role });
+  }
+
+  // --- Multi-Upload & Enhanced Services ---
+  
+  async uploadFileOnly(file: File, path: string): Promise<string> {
+    const storageRef = ref(this.storage, path);
+    await uploadBytes(storageRef, file);
+    return getDownloadURL(storageRef);
+  }
+
+  async uploadMultipleFiles(files: FileList | File[], basePath: string): Promise<string[]> {
+    const urls: string[] = [];
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      const path = `${basePath}/${Date.now()}_${file.name}`;
+      const url = await this.uploadFileOnly(file, path);
+      urls.push(url);
+    }
+    return urls;
+  }
+
+  async getResidentByNikSync(nik: string): Promise<Resident | null> {
+    const q = query(collection(this.firestore, 'residents'), where('nik', '==', nik));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Resident;
+  }
+
+  async updateRequestFull(requestId: string, data: Partial<ServiceRequest>) {
+    const docRef = doc(this.firestore, 'requests', requestId);
+    return updateDoc(docRef, { ...data, processed_at: new Date() });
   }
 }

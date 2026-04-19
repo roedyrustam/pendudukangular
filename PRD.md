@@ -3,7 +3,7 @@
 **Project Name:** DigiWarga (Sistem Informasi Kependudukan Digital)  
 **Client:** Desa Contoh  
 **Status:** Version 1.0 (Production Ready)  
-**Author:** Antigravity AI Assistant
+**Author:** Pandu Talenta Digital
 
 ---
 

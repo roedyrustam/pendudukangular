@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { Family, Resident } from '../../models/data.models';
 import { FormsModule } from '@angular/forms';
+import { PdfService } from '../../services/pdf.service';
 
 @Component({
   selector: 'app-families',
@@ -49,8 +50,11 @@ import { FormsModule } from '@angular/forms';
     <div *ngIf="selectedFamily()" class="form-overlay" (click)="selectedFamily.set(null)">
       <div class="form-card card-luxury glass-panel wide" (click)="$event.stopPropagation()">
         <header class="modal-header">
-          <h3>Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
-          <p class="text-muted">KK: {{ selectedFamily()?.kk_number }}</p>
+          <div class="titles">
+            <h3>Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
+            <p class="text-muted">KK: {{ selectedFamily()?.kk_number }}</p>
+          </div>
+          <button class="btn-outline btn-sm" (click)="downloadFamilyPDF()">🖨️ Cetak Profil Keluarga</button>
         </header>
 
         <section class="resident-section mt-6">
@@ -232,6 +236,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class FamiliesComponent {
   private dataService = inject(DataService);
+  private pdfService = inject(PdfService);
   families = signal<Family[]>([]);
   showAddFamily = signal(false);
   familyToEdit = signal<Family | null>(null);
@@ -307,5 +312,12 @@ export class FamiliesComponent {
      if (confirm('Hapus anggota dari keluarga ini?')) {
        await this.dataService.deleteResident(nik);
      }
+  }
+
+  downloadFamilyPDF() {
+    const fam = this.selectedFamily();
+    if (fam) {
+      this.pdfService.generateFamilyCard(fam, this.members());
+    }
   }
 }
