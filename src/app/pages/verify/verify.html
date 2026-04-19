@@ -1,0 +1,56 @@
+<div class="verify-container luxury-bg min-h-screen flex items-center justify-center p-4">
+  <div class="verify-card card-luxury max-w-lg w-full p-8 text-center">
+    <div class="brand mb-6 text-2xl font-bold text-gradient">DigiWarga Verifier</div>
+
+    <ng-container *ngIf="loading()">
+      <div class="spinner mx-auto mb-4"></div>
+      <p>Memverifikasi Dokumen...</p>
+    </ng-container>
+
+    <ng-container *ngIf="!loading() && error()">
+      <div class="status-icon text-red mt-4 text-5xl">❌</div>
+      <h2 class="text-xl font-bold mt-4 mb-2">Verifikasi Gagal</h2>
+      <p class="text-muted">{{ error() }}</p>
+    </ng-container>
+
+    <ng-container *ngIf="!loading() && !error() && request()">
+      <div class="status-icon text-green mt-4 text-5xl" *ngIf="request()?.status === 'Selesai'">✅</div>
+      <div class="status-icon text-orange mt-4 text-5xl" *ngIf="request()?.status !== 'Selesai'">⚠️</div>
+      
+      <h2 class="text-2xl font-bold mt-4 mb-2">
+        {{ request()?.status === 'Selesai' ? 'Dokumen Otentik' : 'Dokumen Belum Disahkan' }}
+      </h2>
+      <p class="text-muted mb-6">Sistem mencatat bahwa surat ini sah dikeluarkan oleh Desa Maju Jaya.</p>
+
+      <div class="data-box bg-dark/50 p-4 rounded-lg text-left mb-6 border border-white/10">
+        <p class="mb-2"><span class="text-muted">Jenis Layanan:</span> <br> <strong>{{ request()?.service_type }}</strong></p>
+        <p class="mb-2"><span class="text-muted">Diberikan Kepada:</span> <br> <strong>{{ resident()?.full_name || 'NN' }} ({{ request()?.nik }})</strong></p>
+        <p class="mb-0"><span class="text-muted">Tanggal Pengesahan:</span> <br> <strong>{{ request()?.processed_at?.toDate() | date:'dd MMMM yyyy HH:mm' }}</strong></p>
+      </div>
+
+      <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-primary full-width block">
+        Unduh Salinan Digital
+      </a>
+    </ng-container>
+  </div>
+</div>
+
+<style>
+.verify-container {
+  min-height: 100vh;
+  background: var(--darkness);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand {
+  letter-spacing: 2px;
+}
+.status-icon {
+  text-shadow: 0 0 20px currentColor;
+}
+.text-green { color: #10b981; }
+.text-red { color: #ef4444; }
+.text-orange { color: #f59e0b; }
+.data-box p { font-size: 0.95rem; line-height: 1.4; }
+</style>

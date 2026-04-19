@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { ServiceRequest, AppUser, Resident, Family } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
@@ -8,12 +9,21 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
       <div class="welcome-banner card-luxury mb-8 fade-in">
         <h1 class="title-gradient">Selamat Datang, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
-        <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
+        <div class="flex-between">
+          <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
+          <div class="territory-filter" *ngIf="profile.role !== 'warga'">
+            <label class="text-xs text-muted mr-2">Filter Wilayah (RT/RW):</label>
+            <select class="custom-select" [ngModel]="selectedRt()" (ngModelChange)="onRtChange($event)">
+              <option value="">Semua Wilayah</option>
+              <option *ngFor="let rt of availableRts()" [value]="rt">{{ rt }}</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- ADMIN & PETUGAS VIEW -->
@@ -174,6 +184,17 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
       h1 { font-size: 2rem; margin-bottom: 0.5rem; }
     }
+    .custom-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      outline: none;
+      & > option { background: var(--darkness); color: white; }
+    }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .badge {
       padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
       &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
@@ -299,47 +320,85 @@ export class DashboardComponent {
   femalePercentage = signal(0);
   statusBreakdown = signal<{label: string, count: number, percent: number}[]>([]);
 
+  // Raw Data for Filtering
+  rawFamilies: Family[] = [];
+  rawResidents: Resident[] = [];
+  rawRequests: ServiceRequest[] = [];
+  
+  availableRts = signal<string[]>([]);
+  selectedRt = signal<string>('');
+
   constructor() {
-    this.dataService.getFamilies().subscribe(f => this.totalFamilies.set(f.length));
-    
-    this.dataService.getResidents().subscribe(residents => {
-      this.totalResidents.set(residents.length);
+    combineLatest([
+      this.dataService.getFamilies(),
+      this.dataService.getResidents(),
+      this.dataService.getRequests()
+    ]).subscribe(([families, residents, requests]) => {
+      this.rawFamilies = families;
+      this.rawResidents = residents;
+      this.rawRequests = requests;
       
-      // Calculate Recent (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const recent = residents.filter(r => {
-        const createdAt = r.created_at?.toDate ? r.created_at.toDate() : new Date(r.created_at);
-        return createdAt >= thirtyDaysAgo;
-      });
-      this.recentResidentsCount.set(recent.length);
-
-      // Gender Analytics
-      const males = residents.filter(r => r.gender === 'Laki-laki').length;
-      const females = residents.length - males;
-      this.maleCount.set(males);
-      this.femaleCount.set(females);
-      this.malePercentage.set(residents.length ? Math.round((males / residents.length) * 100) : 50);
-      this.femalePercentage.set(residents.length ? 100 - this.malePercentage() : 50);
+      const rts = Array.from(new Set(families.map(f => f.rt_rw).filter(Boolean)));
+      this.availableRts.set(rts.sort());
+      
+      this.applyAnalytics();
     });
+  }
 
-    this.dataService.getRequests().subscribe(reqs => {
-      this.activeRequestsCount.set(reqs.length);
-      this.pendingRequestsCount.set(reqs.filter(r => r.status === 'Pending').length);
-      this.latestRequests.set(reqs.slice(0, 5));
+  onRtChange(rt: string) {
+    this.selectedRt.set(rt);
+    this.applyAnalytics();
+  }
 
-      // Status Analytics
-      const statuses = ['Selesai', 'Diproses', 'Pending', 'Ditolak'];
-      const breakdown = statuses.map(s => {
-        const count = reqs.filter(r => r.status === s).length;
-        return {
-          label: s,
-          count: count,
-          percent: reqs.length ? (count / reqs.length) * 100 : 0
-        };
-      });
-      this.statusBreakdown.set(breakdown);
+  applyAnalytics() {
+    const currentRt = this.selectedRt();
+    
+    // Filter Families
+    const activeFamilies = currentRt ? this.rawFamilies.filter(f => f.rt_rw === currentRt) : this.rawFamilies;
+    this.totalFamilies.set(activeFamilies.length);
+    
+    // Map family IDs for Resident filtering
+    const activeKkList = activeFamilies.map(f => f.kk_number);
+    
+    // Filter Residents
+    const activeResidents = currentRt ? this.rawResidents.filter(r => activeKkList.includes(r.family_id)) : this.rawResidents;
+    this.totalResidents.set(activeResidents.length);
+
+    // Filter Requests (by joining resident -> requested by)
+    const activeResidentNiks = activeResidents.map(r => r.nik);
+    const activeReqs = currentRt ? this.rawRequests.filter(req => activeResidentNiks.includes(req.nik)) : this.rawRequests;
+
+    // Recalculate Metrics for Residents
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recent = activeResidents.filter(r => {
+      const createdAt = r.created_at?.toDate ? r.created_at.toDate() : new Date(r.created_at);
+      return createdAt >= thirtyDaysAgo;
     });
+    this.recentResidentsCount.set(recent.length);
+
+    const males = activeResidents.filter(r => r.gender === 'Laki-laki').length;
+    const females = activeResidents.length - males;
+    this.maleCount.set(males);
+    this.femaleCount.set(females);
+    this.malePercentage.set(activeResidents.length ? Math.round((males / activeResidents.length) * 100) : 50);
+    this.femalePercentage.set(activeResidents.length ? 100 - this.malePercentage() : 50);
+
+    // Recalculate Metrics for Requests
+    this.activeRequestsCount.set(activeReqs.length);
+    this.pendingRequestsCount.set(activeReqs.filter(r => r.status === 'Pending').length);
+    this.latestRequests.set(activeReqs.slice(0, 5));
+
+    const statuses = ['Selesai', 'Diproses', 'Pending', 'Ditolak'];
+    const breakdown = statuses.map(s => {
+      const count = activeReqs.filter(r => r.status === s).length;
+      return {
+        label: s,
+        count: count,
+        percent: activeReqs.length ? (count / activeReqs.length) * 100 : 0
+      };
+    });
+    this.statusBreakdown.set(breakdown);
   }
 
   async seedData() {

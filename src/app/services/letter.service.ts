@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { jsPDF } from 'jspdf';
+import * as QRCode from 'qrcode';
 import { Resident, ServiceRequest } from '../models/data.models';
 import { DataService } from './data.service';
 
@@ -82,7 +83,19 @@ export class LetterService {
     doc.text(`Maju Jaya, ${dateStr}`, 140, y);
     y += 6;
     doc.text('Kepala Desa Maju Jaya', 140, y);
-    y += 25;
+    
+    // Generate QR Code for Verification
+    if (request.id) {
+      const verifyUrl = `https://digiwarga.web.app/verify/${request.id}`;
+      try {
+        const qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 60, margin: 1 });
+        doc.addImage(qrDataUrl, 'PNG', 142, y + 2, 25, 25);
+      } catch (err) {
+        console.error('Failed to generate QR', err);
+      }
+    }
+    
+    y += 32;
     doc.setFont('helvetica', 'bold');
     doc.text('BPK. PANDU TALENTA, M.Si', 140, y);
     doc.setLineWidth(0.2);

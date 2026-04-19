@@ -20,6 +20,7 @@ export interface Resident {
   gender: 'Laki-laki' | 'Perempuan';
   occupation: string;
   relationship: string;
+  phone?: string;
   created_at: any;
 }
 
@@ -44,6 +45,7 @@ export interface AppUser {
   email: string | null;
   role: UserRole;
   nik?: string; // Only for warga
+  phone?: string;
   displayName?: string;
   photoURL?: string;
   created_at: any;

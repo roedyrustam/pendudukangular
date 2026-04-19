@@ -8,10 +8,12 @@ import { ResidentDetailComponent } from './pages/resident-detail/resident-detail
 import { SettingsComponent } from './pages/settings/settings.component';
 import { RegionInsightsComponent } from './pages/region-insights/region-insights.component';
 import { UsersComponent } from './pages/users/users.component';
+import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'verify/:id', component: Verify },
   { 
     path: '', 
     canActivate: [authGuard],

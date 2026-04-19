@@ -431,6 +431,19 @@ export class ServicesComponent {
       this.showSuccess.set(true);
       setTimeout(() => this.showSuccess.set(false), 3000);
       this.loadRequests();
+
+      // Implement WA Notification Prompt
+      if (resident.phone) {
+        const confirmWa = confirm(`Surat berhasil dicetak! Ingin mengirim notifikasi WhatsApp otomatis ke ${resident.full_name} (${resident.phone})?`);
+        if (confirmWa) {
+          const text = encodeURIComponent(`Halo ${resident.full_name},\n\nPermohonan layanan *${req.service_type}* Anda telah selesai diproses oleh Pemerintah Desa Maju Jaya.\n\nAnda dapat mengunduh surat resmi digital dengan *E-Signature* di sini:\n${letterUrl}\n\nTerima kasih atas kepercayaan Anda kepada DigiWarga.`);
+          const waUrl = `https://wa.me/${resident.phone.replace(/^0/, '62')}?text=${text}`;
+          window.open(waUrl, '_blank');
+        }
+      } else {
+         alert('Surat berhasil dicetak. (Warga ini belum mendaftarkan nomor telepon untuk notifikasi WA)');
+      }
+
     } catch (e: any) {
       console.error(e);
       alert(e.message || 'Gagal generate surat');

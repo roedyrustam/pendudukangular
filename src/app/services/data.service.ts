@@ -203,4 +203,10 @@ export class DataService {
     const docRef = doc(this.firestore, 'requests', requestId);
     return updateDoc(docRef, { ...data, processed_at: new Date() });
   }
+  async getRequestById(requestId: string): Promise<ServiceRequest | null> {
+    const docRef = doc(this.firestore, 'requests', requestId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as ServiceRequest;
+  }
 }
