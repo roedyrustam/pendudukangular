@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -185,9 +186,22 @@ import { AuthService } from '../../services/auth.service';
     .mt-6 { margin-top: 1.5rem; }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+
+  ngOnInit() {
+    this.authService.user$.pipe(take(1)).subscribe(async user => {
+      if (user) {
+        const profile = await this.authService.getProfile(user.uid);
+        if (!profile) {
+          this.isCompletingProfile.set(true);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
+      }
+    });
+  }
 
   email = '';
   password = '';
