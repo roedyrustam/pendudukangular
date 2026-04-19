@@ -13,9 +13,10 @@ import {
   limit,
   addDoc,
   docData,
-  getDocs
+  getDocs,
+  getDoc
 } from '@angular/fire/firestore';
-import { Family, Resident, ServiceRequest, ResidentDocument } from '../models/data.models';
+import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole } from '../models/data.models';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 import { Observable, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -90,11 +91,6 @@ export class DataService {
     return addDoc(colRef, { ...request, created_at: new Date() });
   }
 
-  async updateRequestStatus(requestId: string, status: string) {
-    const ref = doc(this.firestore, 'requests', requestId);
-    return updateDoc(ref, { status });
-  }
-
   // --- DETAIL FETCHERS ---
   getResident(nik: string): Observable<Resident | undefined> {
     const ref = doc(this.firestore, 'residents', nik);
@@ -150,8 +146,8 @@ export class DataService {
     return deleteDoc(docRef);
   }
 
-  async updateRequestStatus(requestId: string, status: string, adminNote: string) {
-    const docRef = doc(this.firestore, 'services', requestId);
+  async updateRequestStatus(requestId: string, status: string, adminNote: string = '') {
+    const docRef = doc(this.firestore, 'requests', requestId);
     return updateDoc(docRef, {
       status,
       admin_note: adminNote,
