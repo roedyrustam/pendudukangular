@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole, Article, APBDes } from '../models/data.models';
+import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole, Article, APBDes, InventoryItem } from '../models/data.models';
 import { Observable, from, map } from 'rxjs';
 
 @Injectable({
@@ -285,5 +285,30 @@ export class DataService {
 
   async addAPBDes(data: Partial<APBDes>) {
     return this.supabase.from('apbdes').insert([data]);
+  }
+
+  // --- INVENTORY ---
+  getInventory(): Observable<InventoryItem[]> {
+    return from(
+      this.supabase
+        .from('inventory')
+        .select('*')
+        .order('item_name', { ascending: true })
+    ).pipe(map((res) => res.data as InventoryItem[]));
+  }
+
+  async addInventory(item: Partial<InventoryItem>) {
+    return this.supabase.from('inventory').insert([item]);
+  }
+
+  async updateInventory(item: Partial<InventoryItem>) {
+    return this.supabase
+      .from('inventory')
+      .update(item)
+      .eq('id', item.id);
+  }
+
+  async deleteInventory(id: string) {
+    return this.supabase.from('inventory').delete().eq('id', id);
   }
 }
