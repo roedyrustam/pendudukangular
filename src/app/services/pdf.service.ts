@@ -38,8 +38,17 @@ export class PdfService {
     addField('NIK', resident.nik);
     addField('Tempat, Tgl Lahir', `${resident.birth_place}, ${resident.birth_date}`);
     addField('Jenis Kelamin', resident.gender);
+    addField('Agama', resident.religion || '-');
+    addField('Status Kawin', resident.marital_status || '-');
+    addField('Pendidikan', resident.education || '-');
     addField('Pekerjaan', resident.occupation);
     addField('Hubungan Keluarga', resident.relationship);
+    addField('Golongan Darah', resident.blood_type || '-');
+    addField('Kewarganegaraan', resident.citizenship || 'WNI');
+    addField('No. Telepon', resident.phone || '-');
+    addField('Nama Ayah', resident.father_name || '-');
+    addField('Nama Ibu', resident.mother_name || '-');
+    addField('Alamat Sekarang', resident.address || '-');
 
     if (family) {
       y += 5;
@@ -54,9 +63,12 @@ export class PdfService {
       
       addField('No. Kartu Keluarga', family.kk_number);
       addField('Kepala Keluarga', family.head_of_family_name);
+      if (family.head_of_family_nik) addField('NIK Kepala KK', family.head_of_family_nik);
       addField('Alamat', family.address);
-      addField('RT/RW', family.rt_rw);
+      addField('RT / RW', `${family.rt || '-'} / ${family.rw || '-'}`);
+      if (family.hamlet) addField('Dusun', family.hamlet);
       addField('Wilayah', `${family.district}, ${family.regency}`);
+      if (family.social_class) addField('Kelas Sosial', family.social_class);
     }
 
     // Footer
@@ -85,17 +97,19 @@ export class PdfService {
       r.full_name,
       r.gender,
       r.birth_place + ', ' + r.birth_date,
+      r.religion || '-',
       r.occupation,
+      r.marital_status || '-',
       r.relationship
     ]);
 
     (doc as any).autoTable({
       startY: 30,
-      head: [['No', 'NIK', 'Nama Lengkap', 'L/P', 'Tempat, Tgl Lahir', 'Pekerjaan', 'Hubungan']],
+      head: [['No', 'NIK', 'Nama Lengkap', 'L/P', 'Tempat, Tgl Lahir', 'Agama', 'Pekerjaan', 'Status', 'Hubungan']],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      styles: { fontSize: 9 }
+      styles: { fontSize: 8 }
     });
 
     doc.save(`Laporan_Penduduk_${Date.now()}.pdf`);
@@ -125,11 +139,14 @@ export class PdfService {
     };
 
     addMeta('Nama Kepala KK', family.head_of_family_name, 20);
+    if (family.head_of_family_nik) { addMeta('NIK Kepala KK', family.head_of_family_nik, 20); y += 6; }
     addMeta('Alamat', family.address, 20); y += 6;
-    addMeta('RT / RW', family.rt_rw, 20);
+    addMeta('RT / RW', `${family.rt || '-'} / ${family.rw || '-'}`, 20);
+    if (family.hamlet) { addMeta('Dusun', family.hamlet, 20); }
     addMeta('Kecamatan', family.district, 20); y += 6;
     addMeta('Kabupaten/Kota', family.regency, 20);
     addMeta('Provinsi', family.province, 20);
+    if (family.social_class) { y += 6; addMeta('Kelas Sosial', family.social_class, 20); }
 
     // Members Table
     const tableData = members.map((m, i) => [

@@ -41,10 +41,26 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
             <span>👤</span> Data Pribadi
           </h3>
           
-          <div class="info-list">
+          <div class="info-grid">
             <div class="info-item">
               <label>Tempat, Tanggal Lahir</label>
               <p>{{ resident.birth_place }}, {{ resident.birth_date }}</p>
+            </div>
+            <div class="info-item">
+              <label>Jenis Kelamin</label>
+              <p>{{ resident.gender }}</p>
+            </div>
+            <div class="info-item">
+              <label>Agama</label>
+              <p>{{ resident.religion || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Status Perkawinan</label>
+              <p>{{ resident.marital_status || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Pendidikan</label>
+              <p>{{ resident.education || '-' }}</p>
             </div>
             <div class="info-item">
               <label>Pekerjaan</label>
@@ -53,6 +69,30 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
             <div class="info-item">
               <label>Hubungan Keluarga</label>
               <p>{{ resident.relationship }}</p>
+            </div>
+            <div class="info-item">
+              <label>Golongan Darah</label>
+              <p>{{ resident.blood_type || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Kewarganegaraan</label>
+              <p>{{ resident.citizenship || 'WNI' }}</p>
+            </div>
+            <div class="info-item">
+              <label>No. Telepon</label>
+              <p>{{ resident.phone || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Nama Ayah</label>
+              <p>{{ resident.father_name || '-' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Nama Ibu</label>
+              <p>{{ resident.mother_name || '-' }}</p>
+            </div>
+            <div class="info-item full-width">
+              <label>Alamat Sekarang</label>
+              <p>{{ resident.address || '-' }}</p>
             </div>
           </div>
         </div>
@@ -63,7 +103,7 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
             <span>🏘️</span> Informasi Keluarga
           </h3>
           
-          <div class="info-list">
+          <div class="info-grid">
             <div class="info-item">
               <label>Nomor Kartu Keluarga (KK)</label>
               <a [routerLink]="['/families']" class="kk-link">
@@ -74,10 +114,25 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
               <label>Kepala Keluarga</label>
               <p>{{ family.head_of_family_name }}</p>
             </div>
-            <div class="info-item">
+            <div class="info-item" *ngIf="family.head_of_family_nik">
+              <label>NIK Kepala Keluarga</label>
+              <p class="nik-mono">{{ family.head_of_family_nik }}</p>
+            </div>
+            <div class="info-item full-width">
               <label>Alamat Lengkap</label>
               <p>{{ family.address }}</p>
-              <p class="text-xs text-muted">RT/RW {{ family.rt_rw }}, {{ family.district }}, {{ family.regency }}</p>
+              <p class="text-xs text-muted">
+                RT {{ family.rt || '-' }} / RW {{ family.rw || '-' }}, 
+                Dusun {{ family.hamlet || '-' }}, {{ family.district }}, {{ family.regency }}
+              </p>
+            </div>
+            <div class="info-item" *ngIf="family.social_class">
+              <label>Kelas Sosial</label>
+              <p>{{ family.social_class }}</p>
+            </div>
+            <div class="info-item" *ngIf="family.print_date">
+              <label>Tanggal Cetak KK</label>
+              <p>{{ family.print_date }}</p>
             </div>
           </div>
         </div>
@@ -177,15 +232,17 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
     }
     .timeline-card { grid-column: span 2; }
     
-    .info-list {
-      display: flex;
-      flex-direction: column;
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
       .info-item {
         label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        p, a { font-size: 1.1rem; color: #fff; font-weight: 500; }
+        p, a { font-size: 1rem; color: #fff; font-weight: 500; }
+        &.full-width { grid-column: 1 / -1; }
       }
     }
+    .nik-mono { font-family: 'Courier New', monospace; color: var(--primary) !important; }
 
     .kk-link {
       color: var(--primary) !important;
