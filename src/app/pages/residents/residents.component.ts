@@ -195,6 +195,14 @@ import { Router } from '@angular/router';
               <label>Dusun / Lingkungan</label>
               <input [(ngModel)]="addForm.hamlet" name="hamlet" placeholder="Nama Dusun">
             </div>
+            <div class="input-group">
+              <label>RT</label>
+              <input [(ngModel)]="addForm.rt" name="rt" placeholder="001">
+            </div>
+            <div class="input-group">
+              <label>RW</label>
+              <input [(ngModel)]="addForm.rw" name="rw" placeholder="005">
+            </div>
           </div>
           <div class="form-actions mt-8">
             <button type="button" class="btn-text" (click)="isAddModalOpen.set(false)">Batal</button>
@@ -298,6 +306,14 @@ import { Router } from '@angular/router';
             <div class="input-group">
               <label>Dusun</label>
               <input [(ngModel)]="editForm.hamlet" name="hamlet">
+            </div>
+            <div class="input-group">
+              <label>RT</label>
+              <input [(ngModel)]="editForm.rt" name="rt">
+            </div>
+            <div class="input-group">
+              <label>RW</label>
+              <input [(ngModel)]="editForm.rw" name="rw">
             </div>
           </div>
           <div class="form-actions mt-8">
