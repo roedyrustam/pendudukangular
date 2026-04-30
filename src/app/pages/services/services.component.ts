@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -282,7 +282,7 @@ import { of, switchMap, take } from 'rxjs';
     }
   `]
 })
-export class ServicesComponent {
+export class ServicesComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private letterService = inject(LetterService);
@@ -302,6 +302,7 @@ export class ServicesComponent {
   isSubmitting = signal(false);
   isSubmittingManagement = signal(false);
   recentRequests = signal<ServiceRequest[]>([]);
+  private subscriptions: any[] = [];
 
   requestForm: any = { nik: '', reason: '' };
   managementForm: any = { status: '', admin_note: '' };
@@ -312,6 +313,15 @@ export class ServicesComponent {
       this.userProfile = u;
       this.loadRequests();
     });
+
+    // Realtime Subscriptions
+    this.subscriptions.push(
+      this.dataService.subscribeToRequests(() => this.loadRequests())
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   loadRequests() {

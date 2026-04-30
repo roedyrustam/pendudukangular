@@ -45,13 +45,13 @@ import { Observable } from 'rxjs';
               </td>
               <td>
                 <div class="role-actions">
-                  <button (click)="updateRole(user.uid, 'admin')" 
+                  <button (click)="updateRole(user.id, 'admin')" 
                     class="btn-icon" title="Promote to Admin"
                     [class.active]="user.role === 'admin'">🛡️</button>
-                  <button (click)="updateRole(user.uid, 'petugas')" 
+                  <button (click)="updateRole(user.id, 'petugas')" 
                     class="btn-icon" title="Set as Petugas"
                     [class.active]="user.role === 'petugas'">💼</button>
-                  <button (click)="updateRole(user.uid, 'warga')" 
+                  <button (click)="updateRole(user.id, 'warga')" 
                     class="btn-icon" title="Set as Warga"
                     [class.active]="user.role === 'warga'">🏠</button>
                 </div>

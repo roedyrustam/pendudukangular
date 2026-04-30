@@ -25,7 +25,7 @@
       <div class="data-box bg-dark/50 p-4 rounded-lg text-left mb-6 border border-white/10">
         <p class="mb-2"><span class="text-muted">Jenis Layanan:</span> <br> <strong>{{ request()?.service_type }}</strong></p>
         <p class="mb-2"><span class="text-muted">Diberikan Kepada:</span> <br> <strong>{{ resident()?.full_name || 'NN' }} ({{ request()?.nik }})</strong></p>
-        <p class="mb-0"><span class="text-muted">Tanggal Pengesahan:</span> <br> <strong>{{ request()?.processed_at?.toDate() | date:'dd MMMM yyyy HH:mm' }}</strong></p>
+        <p class="mb-0"><span class="text-muted">Tanggal Pengesahan:</span> <br> <strong>{{ (request()?.processed_at ? (request()?.processed_at.toDate ? request()?.processed_at.toDate() : request()?.processed_at) : null) | date:'dd MMMM yyyy HH:mm' }}</strong></p>
       </div>
 
       <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-primary full-width block">

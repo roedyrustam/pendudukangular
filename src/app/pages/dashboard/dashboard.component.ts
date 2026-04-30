@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -288,7 +288,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .gap-2 { gap: 0.5rem; }
   `]
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
 
@@ -328,6 +328,7 @@ export class DashboardComponent {
   
   availableRts = signal<string[]>([]);
   selectedRt = signal<string>('');
+  private subscriptions: any[] = [];
 
   constructor() {
     combineLatest([
@@ -344,6 +345,37 @@ export class DashboardComponent {
       
       this.applyAnalytics();
     });
+
+    // Realtime Subscriptions
+    this.subscriptions.push(
+      this.dataService.subscribeToRequests((payload) => {
+        console.log('Realtime Request Update:', payload);
+        this.refreshData();
+      })
+    );
+    this.subscriptions.push(
+      this.dataService.subscribeToResidents((payload) => {
+        console.log('Realtime Resident Update:', payload);
+        this.refreshData();
+      })
+    );
+  }
+
+  refreshData() {
+    combineLatest([
+      this.dataService.getFamilies(),
+      this.dataService.getResidents(),
+      this.dataService.getRequests()
+    ]).subscribe(([families, residents, requests]) => {
+      this.rawFamilies = families;
+      this.rawResidents = residents;
+      this.rawRequests = requests;
+      this.applyAnalytics();
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   onRtChange(rt: string) {

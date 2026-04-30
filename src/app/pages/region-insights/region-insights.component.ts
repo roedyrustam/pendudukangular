@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { Family, Resident } from '../../models/data.models';
@@ -95,7 +95,7 @@ import { Family, Resident } from '../../models/data.models';
     .mt-8 { margin-top: 2rem; }
   `]
 })
-export class RegionInsightsComponent {
+export class RegionInsightsComponent implements OnDestroy {
   private dataService = inject(DataService);
   
   regionStats = signal<any[]>([]);
@@ -103,13 +103,30 @@ export class RegionInsightsComponent {
   avgMembersPerFamily = signal('0');
   totalRegions = signal(0);
   densestRegion = signal('-');
+  private subscriptions: any[] = [];
 
   constructor() {
+    this.refreshStats();
+
+    // Realtime Subscriptions
+    this.subscriptions.push(
+      this.dataService.subscribeToResidents(() => this.refreshStats())
+    );
+    this.subscriptions.push(
+      this.dataService.subscribeToRequests(() => this.refreshStats())
+    );
+  }
+
+  refreshStats() {
     this.dataService.getFamilies().subscribe(families => {
       this.dataService.getResidents().subscribe(residents => {
         this.calculateStats(families, residents);
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   private calculateStats(families: Family[], residents: Resident[]) {

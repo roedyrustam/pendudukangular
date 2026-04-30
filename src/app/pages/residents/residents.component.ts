@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { PdfService } from '../../services/pdf.service';
@@ -235,7 +235,7 @@ import { Router } from '@angular/router';
     .overflow-hidden { overflow: hidden; }
   `]
 })
-export class ResidentsComponent {
+export class ResidentsComponent implements OnDestroy {
   private dataService = inject(DataService);
   private router = inject(Router);
   private pdfService = inject(PdfService);
@@ -248,14 +248,28 @@ export class ResidentsComponent {
 
   residentToEdit = signal<Resident | null>(null);
   editForm: any = {};
+  private subscriptions: any[] = [];
 
   constructor() {
+    this.refreshData();
+
+    // Realtime Subscriptions
+    this.subscriptions.push(
+      this.dataService.subscribeToResidents(() => this.refreshData())
+    );
+  }
+
+  refreshData() {
     this.dataService.getResidents().subscribe(data => {
       this.residents.set(data);
-      this.filteredResidents.set(data);
+      this.filterResidents(); // Re-apply current filters
       // Extract unique occupations
       this.occupationList = [...new Set(data.map(r => r.occupation))].filter(Boolean).sort();
     });
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   filterResidents() {

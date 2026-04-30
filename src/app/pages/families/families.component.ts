@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { Family, Resident } from '../../models/data.models';
@@ -234,7 +234,7 @@ import { PdfService } from '../../services/pdf.service';
     .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
   `]
 })
-export class FamiliesComponent {
+export class FamiliesComponent implements OnDestroy {
   private dataService = inject(DataService);
   private pdfService = inject(PdfService);
   families = signal<Family[]>([]);
@@ -244,13 +244,37 @@ export class FamiliesComponent {
   showAddResident = signal(false);
   members = signal<Resident[]>([]);
   allResidents = signal<Resident[]>([]);
+  private subscriptions: any[] = [];
 
   familyForm: Family = this.resetFamilyForm();
   newResident: Resident = this.resetResidentForm();
 
   constructor() {
+    this.refreshData();
+
+    // Realtime Subscriptions
+    this.subscriptions.push(
+      this.dataService.subscribeToFamilies(() => this.refreshData())
+    );
+    this.subscriptions.push(
+      this.dataService.subscribeToResidents(() => this.refreshData())
+    );
+  }
+
+  refreshData() {
     this.dataService.getFamilies().subscribe(data => this.families.set(data));
-    this.dataService.getResidents().subscribe(data => this.allResidents.set(data));
+    this.dataService.getResidents().subscribe(data => {
+      this.allResidents.set(data);
+      // Update members if detail modal is open
+      const selected = this.selectedFamily();
+      if (selected) {
+        this.members.set(data.filter(r => r.family_id === selected.kk_number));
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   getMemberCount(kk_number: string): number {

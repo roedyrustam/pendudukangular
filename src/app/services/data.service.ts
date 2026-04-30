@@ -230,4 +230,27 @@ export class DataService {
       .single();
     return data as ServiceRequest;
   }
+
+  // --- REALTIME SUBSCRIPTIONS ---
+  
+  subscribeToRequests(callback: (payload: any) => void) {
+    return this.supabase
+      .channel('public:services')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, callback)
+      .subscribe();
+  }
+
+  subscribeToResidents(callback: (payload: any) => void) {
+    return this.supabase
+      .channel('public:residents')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'residents' }, callback)
+      .subscribe();
+  }
+
+  subscribeToFamilies(callback: (payload: any) => void) {
+    return this.supabase
+      .channel('public:families')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'families' }, callback)
+      .subscribe();
+  }
 }
