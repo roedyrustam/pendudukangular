@@ -101,6 +101,59 @@ import { Router } from '@angular/router';
               <label>Hubungan</label>
               <input [(ngModel)]="editForm.relationship" name="rel">
             </div>
+            <div class="input-group">
+              <label>Agama</label>
+              <select [(ngModel)]="editForm.religion" name="religion">
+                <option value="Islam">Islam</option>
+                <option value="Kristen">Kristen</option>
+                <option value="Katolik">Katolik</option>
+                <option value="Hindu">Hindu</option>
+                <option value="Buddha">Buddha</option>
+                <option value="Konghucu">Konghucu</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Pendidikan</label>
+              <input [(ngModel)]="editForm.education" name="education">
+            </div>
+            <div class="input-group">
+              <label>Status Kawin</label>
+              <select [(ngModel)]="editForm.marital_status" name="marital_status">
+                <option value="Belum Kawin">Belum Kawin</option>
+                <option value="Kawin">Kawin</option>
+                <option value="Cerai Hidup">Cerai Hidup</option>
+                <option value="Cerai Mati">Cerai Mati</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Golongan Darah</label>
+              <select [(ngModel)]="editForm.blood_type" name="blood_type">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="AB">AB</option>
+                <option value="O">O</option>
+                <option value="-">Tidak Tahu</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Kewarganegaraan</label>
+              <select [(ngModel)]="editForm.citizenship" name="citizenship">
+                <option value="WNI">WNI</option>
+                <option value="WNA">WNA</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Nama Ayah</label>
+              <input [(ngModel)]="editForm.father_name" name="father_name">
+            </div>
+            <div class="input-group">
+              <label>Nama Ibu</label>
+              <input [(ngModel)]="editForm.mother_name" name="mother_name">
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+              <label>Alamat Lengkap</label>
+              <input [(ngModel)]="editForm.address" name="address">
+            </div>
           </div>
           <div class="form-actions mt-6">
             <button type="button" class="btn-text" (click)="residentToEdit.set(null)">Batal</button>
@@ -210,10 +263,12 @@ import { Router } from '@angular/router';
       backdrop-filter: blur(4px);
     }
     .form-card {
-      width: 450px;
+      width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
       padding: 2rem;
     }
-    .form-grid { display: grid; gap: 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .input-group {
       display: flex;
       flex-direction: column;

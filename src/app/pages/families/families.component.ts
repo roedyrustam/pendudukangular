@@ -26,16 +26,45 @@ import { PdfService } from '../../services/pdf.service';
               <input [(ngModel)]="familyForm.kk_number" name="kk" placeholder="16 digit nomor KK" required [disabled]="!!familyToEdit()">
             </div>
             <div class="input-group">
+              <label>NIK Kepala Keluarga</label>
+              <input [(ngModel)]="familyForm.head_of_family_nik" name="head_nik" placeholder="16 digit NIK">
+            </div>
+            <div class="input-group">
               <label>Kepala Keluarga</label>
               <input [(ngModel)]="familyForm.head_of_family_name" name="head" placeholder="Nama lengkap" required>
             </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+              <label>Alamat Lengkap</label>
+              <input [(ngModel)]="familyForm.address" name="addr" placeholder="Jalan / Perumahan" required>
+            </div>
             <div class="input-group">
-              <label>Alamat</label>
-              <input [(ngModel)]="familyForm.address" name="addr" placeholder="Alamat lengkap" required>
+              <label>RT</label>
+              <input [(ngModel)]="familyForm.rt" name="rt" placeholder="001">
+            </div>
+            <div class="input-group">
+              <label>RW</label>
+              <input [(ngModel)]="familyForm.rw" name="rw" placeholder="002">
+            </div>
+            <div class="input-group">
+              <label>Dusun</label>
+              <input [(ngModel)]="familyForm.hamlet" name="hamlet" placeholder="Dusun">
             </div>
             <div class="input-group">
               <label>Kecamatan</label>
-              <input [(ngModel)]="familyForm.district" name="dist" placeholder="Nama kecamatan" required>
+              <input [(ngModel)]="familyForm.district" name="dist" placeholder="Kecamatan" required>
+            </div>
+            <div class="input-group">
+              <label>Kelas Sosial</label>
+              <select [(ngModel)]="familyForm.social_class" name="social_class">
+                <option value="Sangat Miskin">Sangat Miskin</option>
+                <option value="Miskin">Miskin</option>
+                <option value="Sedang">Sedang</option>
+                <option value="Kaya">Kaya</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Tanggal Cetak KK</label>
+              <input type="date" [(ngModel)]="familyForm.print_date" name="print_date">
             </div>
           </div>
           <div class="form-actions mt-6">
@@ -178,7 +207,7 @@ import { PdfService } from '../../services/pdf.service';
       gap: 0.5rem;
       label { font-size: 0.8rem; color: var(--text-muted); }
     }
-    .form-grid { display: grid; gap: 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
     input, select {
       background: rgba(255,255,255,0.05);
@@ -282,7 +311,22 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   resetFamilyForm(): Family {
-    return { kk_number: '', head_of_family_name: '', address: '', rt_rw: '', district: '', regency: 'Bandung', province: 'Jawa Barat', created_at: '' };
+    return { 
+      kk_number: '', 
+      head_of_family_name: '', 
+      head_of_family_nik: '', 
+      address: '', 
+      rt_rw: '', 
+      rt: '', 
+      rw: '', 
+      hamlet: '', 
+      district: '', 
+      regency: 'Bandung', 
+      province: 'Jawa Barat', 
+      social_class: 'Sedang', 
+      print_date: '', 
+      created_at: '' 
+    };
   }
 
   resetResidentForm(): Resident {

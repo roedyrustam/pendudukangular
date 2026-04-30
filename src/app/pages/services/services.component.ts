@@ -86,6 +86,10 @@ import { of, switchMap, take } from 'rxjs';
               <input [(ngModel)]="requestForm.reason" name="reason" placeholder="Contoh: Hilang/Rusak" required>
             </div>
             <div class="input-group full-width" style="grid-column: 1 / -1;">
+              <label>No. HP / WhatsApp Aktif</label>
+              <input [(ngModel)]="requestForm.phone_active" name="phone_active" placeholder="08123456789" required>
+            </div>
+            <div class="input-group full-width" style="grid-column: 1 / -1;">
               <label>Dokumen Pendukung (Pilih beberapa jika perlu)</label>
               <div class="upload-zone" (click)="fileInput.click()">
                 <span>📁 Klik untuk unggah KTP/KK/Surat Pengantar</span>
@@ -296,10 +300,10 @@ export class ServicesComponent implements OnDestroy {
   userProfile: AppUser | null = null;
 
   services = [
-    { icon: '🆔', name: 'Update E-KTP', desc: 'Perubahan status, foto, atau alamat pada KTP elektronik.' },
-    { icon: '👶', name: 'Akta Kelahiran', desc: 'Permohonan akta untuk anggota keluarga baru.' },
-    { icon: '⛪', name: 'Update Data Agama', desc: 'Penyesuaian kolom agama pada KK dan KTP.' },
-    { icon: '⚰️', name: 'Akta Kematian', desc: 'Pelaporan dan penerbitan akta kematian warga.' }
+    { id_surat: '1', icon: '🆔', name: 'Update E-KTP', desc: 'Perubahan status, foto, atau alamat pada KTP elektronik.' },
+    { id_surat: '2', icon: '👶', name: 'Akta Kelahiran', desc: 'Permohonan akta untuk anggota keluarga baru.' },
+    { id_surat: '3', icon: '⛪', name: 'Update Data Agama', desc: 'Penyesuaian kolom agama pada KK dan KTP.' },
+    { id_surat: '4', icon: '⚰️', name: 'Akta Kematian', desc: 'Pelaporan dan penerbitan akta kematian warga.' }
   ];
 
   activeService = signal<any>(null);
@@ -358,7 +362,8 @@ export class ServicesComponent implements OnDestroy {
     this.activeService.set(service);
     this.requestForm = { 
       nik: this.userProfile?.nik || '', 
-      reason: '' 
+      reason: '',
+      phone_active: this.userProfile?.phone || '' 
     };
     this.selectedFiles = [];
   }
@@ -376,7 +381,9 @@ export class ServicesComponent implements OnDestroy {
       const newReq: any = {
         nik: this.requestForm.nik,
         service_type: this.activeService().name,
+        id_surat: this.activeService().id_surat,
         reason: this.requestForm.reason,
+        phone_active: this.requestForm.phone_active,
         status: 'Pending',
         attachments: attachmentUrls,
         created_at: ''
