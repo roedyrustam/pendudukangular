@@ -153,6 +153,19 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                 <div class="progress"><div class="bar expense" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
               </div>
             </div>
+
+            <!-- Inventory Mini Widget -->
+            <div class="card-luxury inventory-mini" *ngIf="inventoryCount() > 0">
+               <div class="flex-between mb-4">
+                 <h3>📦 Inventaris Aset</h3>
+                 <button class="btn-text" routerLink="/inventory">Kelola</button>
+               </div>
+               <div class="stat-main">
+                  <span class="count">{{ inventoryCount() }}</span>
+                  <span class="unit">Barang Terdaftar</span>
+               </div>
+               <p class="text-xs text-muted mt-2">Total Nilai: Rp {{ totalInventoryValue() | number }}</p>
+            </div>
           </div>
         </div>
 
@@ -385,6 +398,16 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       }
     }
 
+    .inventory-mini {
+       .stat-main {
+          display: flex;
+          align-items: baseline;
+          gap: 0.5rem;
+          .count { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+          .unit { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+       }
+    }
+
     .articles-grid-mini {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -445,6 +468,8 @@ export class DashboardComponent implements OnDestroy {
   latestRequests = signal<ServiceRequest[]>([]);
   latestArticles = signal<Article[]>([]);
   budgetSummary = signal<{year: number, income: number, expense: number, expensePercent: number} | null>(null);
+  inventoryCount = signal(0);
+  totalInventoryValue = signal(0);
 
   // Analytics
   maleCount = signal(0);
@@ -522,6 +547,12 @@ export class DashboardComponent implements OnDestroy {
           expensePercent: income > 0 ? (expense / income) * 100 : 0
         });
       }
+    });
+
+    // Load Inventory
+    this.dataService.getInventory().subscribe(items => {
+      this.inventoryCount.set(items.length);
+      this.totalInventoryValue.set(items.reduce((acc, curr) => acc + (curr.price || 0) * curr.quantity, 0));
     });
   }
 

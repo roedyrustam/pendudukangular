@@ -63,6 +63,41 @@ import { Family, Resident } from '../../models/data.models';
         <p>{{ densestRegion() }}</p>
       </div>
     </div>
+
+    <!-- Advanced Demographics -->
+    <div class="insights-grid mt-8">
+       <!-- Age Groups -->
+       <div class="card-luxury insight-card">
+          <h3>👶 Distribusi Kelompok Usia</h3>
+          <div class="scroll-area">
+             <div *ngFor="let a of ageStats()" class="region-row">
+                <div class="row-header">
+                   <span class="region-label">{{ a.label }}</span>
+                   <span class="row-count">{{ a.count }} Jiwa</span>
+                </div>
+                <div class="progress-container">
+                   <div class="progress-bar" [style.width.%]="a.percent" [style.background]="a.color"></div>
+                </div>
+             </div>
+          </div>
+       </div>
+
+       <!-- Education -->
+       <div class="card-luxury insight-card">
+          <h3>🎓 Tingkat Pendidikan</h3>
+          <div class="scroll-area">
+             <div *ngFor="let e of educationStats()" class="region-row">
+                <div class="row-header">
+                   <span class="region-label">{{ e.label }}</span>
+                   <span class="row-count">{{ e.count }}</span>
+                </div>
+                <div class="progress-container">
+                   <div class="progress-bar alt" [style.width.%]="e.percent"></div>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
   `,
   styles: [`
     .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
@@ -103,6 +138,10 @@ export class RegionInsightsComponent implements OnDestroy {
   avgMembersPerFamily = signal('0');
   totalRegions = signal(0);
   densestRegion = signal('-');
+  
+  ageStats = signal<any[]>([]);
+  educationStats = signal<any[]>([]);
+  religionStats = signal<any[]>([]);
   private subscriptions: any[] = [];
 
   constructor() {
@@ -173,5 +212,37 @@ export class RegionInsightsComponent implements OnDestroy {
     if (families.length > 0) {
       this.avgMembersPerFamily.set((residents.length / families.length).toFixed(1));
     }
+
+    // Advanced Stats: Age
+    const now = new Date();
+    const ageGroups = [
+      { label: 'Bayi/Balita (0-5)', min: 0, max: 5, count: 0, color: '#3b82f6' },
+      { label: 'Anak-anak (6-17)', min: 6, max: 17, count: 0, color: '#10b981' },
+      { label: 'Produktif (18-55)', min: 18, max: 55, count: 0, color: '#818cf8' },
+      { label: 'Lansia (56+)', min: 56, max: 200, count: 0, color: '#f59e0b' }
+    ];
+
+    residents.forEach(r => {
+      const birthDate = new Date(r.birth_date);
+      const age = now.getFullYear() - birthDate.getFullYear();
+      const group = ageGroups.find(g => age >= g.min && age <= g.max);
+      if (group) group.count++;
+    });
+
+    const maxAge = Math.max(...ageGroups.map(g => g.count), 1);
+    this.ageStats.set(ageGroups.map(g => ({ ...g, percent: (g.count / maxAge) * 100 })));
+
+    // Advanced Stats: Education
+    const eduMap = new Map<string, number>();
+    residents.forEach(r => {
+      const key = r.education || 'TIDAK TERDEFINISI';
+      eduMap.set(key, (eduMap.get(key) || 0) + 1);
+    });
+
+    const maxEdu = Math.max(...Array.from(eduMap.values()), 1);
+    this.educationStats.set(Array.from(eduMap.entries())
+      .map(([label, count]) => ({ label, count, percent: (count / maxEdu) * 100 }))
+      .sort((a, b) => b.count - a.count)
+    );
   }
 }

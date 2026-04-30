@@ -10,6 +10,7 @@ import { RegionInsightsComponent } from './pages/region-insights/region-insights
 import { UsersComponent } from './pages/users/users.component';
 import { ArticlesComponent } from './pages/articles/articles.component';
 import { ApbdesComponent } from './pages/apbdes/apbdes.component';
+import { InventoryComponent } from './pages/inventory/inventory.component';
 import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
@@ -28,6 +29,7 @@ export const routes: Routes = [
       { path: 'services', component: ServicesComponent },
       { path: 'articles', component: ArticlesComponent },
       { path: 'apbdes', component: ApbdesComponent },
+      { path: 'inventory', component: InventoryComponent },
       { path: 'region-insights', component: RegionInsightsComponent },
       { path: 'users', component: UsersComponent },
       { path: 'settings', component: SettingsComponent },
