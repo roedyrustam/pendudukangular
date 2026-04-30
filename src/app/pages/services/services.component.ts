@@ -45,7 +45,7 @@ import { of, switchMap, take } from 'rxjs';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let req of recentRequests()" 
+            <tr *ngFor="let req of paginatedRequests()" 
               (click)="canManage() ? openManagementModal(req) : null" 
               [class.clickable-row]="canManage()">
               <td>{{ req.created_at | date:'dd MMM yyyy HH:mm' }}</td>
@@ -60,10 +60,26 @@ import { of, switchMap, take } from 'rxjs';
               </td>
             </tr>
             <tr *ngIf="recentRequests().length === 0">
-              <td colspan="5" class="empty-state">Belum ada pengajuan layanan.</td>
+              <td colspan="6" class="empty-state">Belum ada pengajuan layanan.</td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container" *ngIf="recentRequests().length > pageSize()">
+          <div class="pagination-info">
+            Menampilkan {{ startRange() }} - {{ endRange() }} dari {{ recentRequests().length }} Pengajuan
+          </div>
+          <div class="pagination-controls">
+            <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Prev</button>
+            <button *ngFor="let p of totalPagesArray()" 
+                    (click)="goToPage(p)" 
+                    [class.active]="currentPage() === p">
+              {{ p }}
+            </button>
+            <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Next</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -316,6 +332,35 @@ export class ServicesComponent implements OnDestroy {
   isSubmittingManagement = signal(false);
   recentRequests = signal<ServiceRequest[]>([]);
   private subscriptions: any[] = [];
+
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(10);
+
+  paginatedRequests = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.recentRequests().slice(start, end);
+  });
+
+  totalPages = computed(() => Math.ceil(this.recentRequests().length / this.pageSize()));
+  totalPagesArray = computed(() => {
+    const pages = this.totalPages();
+    const current = this.currentPage();
+    let start = Math.max(1, current - 2);
+    let end = Math.min(pages, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+    return Array.from({length: end - start + 1}, (_, i) => start + i);
+  });
+
+  startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
+  endRange = computed(() => Math.min(this.currentPage() * this.pageSize(), this.recentRequests().length));
+
+  goToPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.currentPage.set(p);
+    }
+  }
 
   requestForm: any = { nik: '', reason: '' };
   managementForm: any = { status: '', admin_note: '' };

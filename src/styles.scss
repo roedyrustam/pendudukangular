@@ -155,3 +155,20 @@ input:-webkit-autofill:focus {
   &.selesai { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
   &.ditolak { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
 }
+
+/* Pagination UI */
+.pagination-container {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.5rem; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);
+  .pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+  .pagination-controls {
+    display: flex; gap: 0.5rem;
+    button {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;
+      padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; transition: 0.2s;
+      &:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); }
+      &:disabled { opacity: 0.3; cursor: not-allowed; }
+      &.active { background: var(--primary); border-color: var(--primary); font-weight: 700; }
+    }
+  }
+}

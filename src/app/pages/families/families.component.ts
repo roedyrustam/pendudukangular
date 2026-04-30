@@ -131,7 +131,7 @@ import { PdfService } from '../../services/pdf.service';
 
     <!-- List KK -->
     <div class="families-grid">
-      <div *ngFor="let f of families()" class="card-luxury family-card">
+      <div *ngFor="let f of paginatedFamilies()" class="card-luxury family-card">
         <div class="card-header">
           <div class="icon">🏠</div>
           <div class="head-info">
@@ -153,6 +153,22 @@ import { PdfService } from '../../services/pdf.service';
         <div class="card-footer">
           <button class="btn-outline w-full" (click)="openDetail(f)">Kelola Anggota</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container mt-8" *ngIf="families().length > pageSize()">
+      <div class="pagination-info">
+        Menampilkan {{ startRange() }} - {{ endRange() }} dari {{ families().length }} KK
+      </div>
+      <div class="pagination-controls">
+        <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Prev</button>
+        <button *ngFor="let p of totalPagesArray()" 
+                (click)="goToPage(p)" 
+                [class.active]="currentPage() === p">
+          {{ p }}
+        </button>
+        <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Next</button>
       </div>
     </div>
   `,
@@ -279,6 +295,35 @@ export class FamiliesComponent implements OnDestroy {
   allResidents = signal<Resident[]>([]);
   private subscriptions: any[] = [];
   private villageConfig: VillageConfig | null = null;
+
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(8); // Grid looks better with 8 (2 rows of 4)
+
+  paginatedFamilies = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.families().slice(start, end);
+  });
+
+  totalPages = computed(() => Math.ceil(this.families().length / this.pageSize()));
+  totalPagesArray = computed(() => {
+    const pages = this.totalPages();
+    const current = this.currentPage();
+    let start = Math.max(1, current - 2);
+    let end = Math.min(pages, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+    return Array.from({length: end - start + 1}, (_, i) => start + i);
+  });
+
+  startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
+  endRange = computed(() => Math.min(this.currentPage() * this.pageSize(), this.families().length));
+
+  goToPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.currentPage.set(p);
+    }
+  }
 
   familyForm: Family = this.resetFamilyForm();
   newResident: Resident = this.resetResidentForm();

@@ -95,7 +95,7 @@ import { Router } from '@angular/router';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of filteredResidents()">
+          <tr *ngFor="let r of paginatedResidents()" class="fade-in">
             <td class="nik-cell">{{ r.nik }}</td>
             <td class="name-cell">{{ r.full_name }}</td>
             <td>{{ r.gender }}</td>
@@ -117,6 +117,22 @@ import { Router } from '@angular/router';
           </tr>
         </tbody>
       </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-container" *ngIf="filteredResidents().length > pageSize()">
+        <div class="pagination-info">
+          Menampilkan {{ startRange() }} - {{ endRange() }} dari {{ filteredResidents().length }} Penduduk
+        </div>
+        <div class="pagination-controls">
+          <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Prev</button>
+          <button *ngFor="let p of totalPagesArray()" 
+                  (click)="goToPage(p)" 
+                  [class.active]="currentPage() === p">
+            {{ p }}
+          </button>
+          <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Next</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add Modal -->
@@ -517,6 +533,37 @@ export class ResidentsComponent implements OnDestroy {
   filterHamlet = '';
   filterStatus = '';
 
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(10);
+
+  paginatedResidents = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredResidents().slice(start, end);
+  });
+
+  totalPages = computed(() => Math.ceil(this.filteredResidents().length / this.pageSize()));
+  totalPagesArray = computed(() => {
+    const pages = this.totalPages();
+    const current = this.currentPage();
+    // Simple pagination logic to show max 5 pages
+    let start = Math.max(1, current - 2);
+    let end = Math.min(pages, start + 4);
+    if (end - start < 4) start = Math.max(1, end - 4);
+    
+    return Array.from({length: end - start + 1}, (_, i) => start + i);
+  });
+
+  startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
+  endRange = computed(() => Math.min(this.currentPage() * this.pageSize(), this.filteredResidents().length));
+
+  goToPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.currentPage.set(p);
+    }
+  }
+
   isAddModalOpen = signal(false);
   loadingAdd = signal(false);
   addForm: Partial<Resident> = {
@@ -569,6 +616,7 @@ export class ResidentsComponent implements OnDestroy {
       return matches;
     });
     this.filteredResidents.set(filtered);
+    this.currentPage.set(1); // Reset to first page on filter
   }
 
   countGender(gender: string): number {
