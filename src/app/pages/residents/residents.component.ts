@@ -15,9 +15,14 @@ import { Router } from '@angular/router';
       <div class="titles">
         <h2 class="title-gradient">Data Penduduk Terpadu</h2>
         <p class="text-muted">Manajemen data individu berbasis NIK seluruh wilayah</p>
-        <button class="btn-primary mt-4" (click)="exportToPdf()">
-          Ekspor Laporan PDF 📄
-        </button>
+        <div class="flex gap-2 mt-4">
+          <button class="btn-primary" (click)="isAddModalOpen.set(true)">
+            Tambah Penduduk ➕
+          </button>
+          <button class="btn-outline" (click)="exportToPdf()">
+            Ekspor Laporan PDF 📄
+          </button>
+        </div>
       </div>
       <div class="search-filter glass-panel">
         <span class="icon">🔍</span>
@@ -74,11 +79,88 @@ import { Router } from '@angular/router';
       </table>
     </div>
 
+    <!-- Add Modal -->
+    <div *ngIf="isAddModalOpen()" class="form-overlay" (click)="isAddModalOpen.set(false)">
+      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
+        <div class="modal-header mb-6">
+          <h3 class="title-gradient">Tambah Data Penduduk Baru</h3>
+          <p class="text-muted">Masukkan informasi lengkap sesuai dokumen KTP/KK.</p>
+        </div>
+        
+        <form (submit)="addNewResident()">
+          <div class="form-grid">
+            <div class="input-group">
+              <label>NIK (16 Digit)</label>
+              <input [(ngModel)]="addForm.nik" name="nik" placeholder="Contoh: 320101XXXXXXXXXX" required minlength="16" maxlength="16">
+            </div>
+            <div class="input-group">
+              <label>Nama Lengkap</label>
+              <input [(ngModel)]="addForm.full_name" name="name" placeholder="Nama sesuai identitas" required>
+            </div>
+            <div class="input-group">
+              <label>Nomor KK</label>
+              <select [(ngModel)]="addForm.family_id" name="kk" required>
+                <option value="">-- Pilih Kartu Keluarga --</option>
+                <option *ngFor="let f of families()" [value]="f.kk_number">{{ f.kk_number }} - {{ f.head_of_family_name }}</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Gender</label>
+              <select [(ngModel)]="addForm.gender" name="gender" required>
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Tempat Lahir</label>
+              <input [(ngModel)]="addForm.birth_place" name="birth_place" placeholder="Contoh: Jakarta">
+            </div>
+            <div class="input-group">
+              <label>Tanggal Lahir</label>
+              <input type="date" [(ngModel)]="addForm.birth_date" name="birth_date" required>
+            </div>
+            <div class="input-group">
+              <label>Pekerjaan</label>
+              <select [(ngModel)]="addForm.occupation" name="job">
+                <option *ngFor="let job of occupationList" [value]="job">{{ job }}</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Hubungan Keluarga</label>
+              <select [(ngModel)]="addForm.relationship" name="rel" required>
+                <option *ngFor="let r of relationshipList" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Agama</label>
+              <select [(ngModel)]="addForm.religion" name="religion">
+                <option *ngFor="let r of religionList" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Pendidikan</label>
+              <select [(ngModel)]="addForm.education" name="education">
+                <option *ngFor="let e of educationList" [value]="e">{{ e }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions mt-8">
+            <button type="button" class="btn-text" (click)="isAddModalOpen.set(false)">Batal</button>
+            <button type="submit" class="btn-primary" [disabled]="loadingAdd()">
+              {{ loadingAdd() ? 'Menyimpan...' : 'Simpan Data Penduduk' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Edit Modal -->
     <div *ngIf="residentToEdit()" class="form-overlay" (click)="residentToEdit.set(null)">
       <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <h3>Edit Data Penduduk</h3>
-        <p class="text-muted mb-4">NIK: {{ residentToEdit()?.nik }}</p>
+        <div class="modal-header mb-6">
+          <h3 class="title-gradient">Edit Data Penduduk</h3>
+          <p class="text-muted">NIK: {{ residentToEdit()?.nik }}</p>
+        </div>
         
         <form (submit)="updateResident()">
           <div class="form-grid">
@@ -154,7 +236,7 @@ import { Router } from '@angular/router';
               <input [(ngModel)]="editForm.address" name="address">
             </div>
           </div>
-          <div class="form-actions mt-6">
+          <div class="form-actions mt-8">
             <button type="button" class="btn-text" (click)="residentToEdit.set(null)">Batal</button>
             <button type="submit" class="btn-primary">Simpan Perubahan</button>
           </div>
@@ -167,6 +249,20 @@ import { Router } from '@angular/router';
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
+    }
+    .flex { display: flex; }
+    .gap-2 { gap: 0.5rem; }
+    .modal-header h3 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.85rem 1.75rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      &:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff; }
     }
     .search-filter {
       display: flex;
@@ -312,10 +408,20 @@ export class ResidentsComponent implements OnDestroy {
   ];
 
   residents = signal<Resident[]>([]);
+  families = signal<any[]>([]);
   filteredResidents = signal<Resident[]>([]);
   searchTerm = '';
   filterGender = '';
   filterOccupation = '';
+
+  isAddModalOpen = signal(false);
+  loadingAdd = signal(false);
+  addForm: Partial<Resident> = {
+    gender: 'Laki-laki',
+    relationship: 'ANAK',
+    religion: 'Islam',
+    education: 'SLTA / SEDERAJAT'
+  };
 
   residentToEdit = signal<Resident | null>(null);
   editForm: any = {};
@@ -333,9 +439,12 @@ export class ResidentsComponent implements OnDestroy {
   refreshData() {
     this.dataService.getResidents().subscribe(data => {
       this.residents.set(data);
-      this.filterResidents(); // Re-apply current filters
-      // Extract unique occupations
+      this.filterResidents(); 
       this.occupationList = [...new Set(data.map(r => r.occupation))].filter(Boolean).sort();
+    });
+
+    this.dataService.getFamilies().subscribe(data => {
+      this.families.set(data);
     });
   }
 
@@ -369,12 +478,39 @@ export class ResidentsComponent implements OnDestroy {
     this.editForm = { ...resident };
   }
 
+  async addNewResident() {
+    if (!this.addForm.nik || !this.addForm.full_name || !this.addForm.family_id) {
+      alert('NIK, Nama Lengkap, dan No. KK wajib diisi.');
+      return;
+    }
+    
+    this.loadingAdd.set(true);
+    try {
+      await this.dataService.addResident(this.addForm as Resident);
+      this.isAddModalOpen.set(false);
+      this.addForm = {
+        gender: 'Laki-laki',
+        relationship: 'ANAK',
+        religion: 'Islam',
+        education: 'SLTA / SEDERAJAT'
+      };
+    } catch (err: any) {
+      alert('Gagal menambah penduduk: ' + err.message);
+    } finally {
+      this.loadingAdd.set(false);
+    }
+  }
+
   async updateResident() {
     const original = this.residentToEdit();
     if (!original) return;
     
-    await this.dataService.updateResident(this.editForm);
-    this.residentToEdit.set(null);
+    try {
+      await this.dataService.updateResident(this.editForm);
+      this.residentToEdit.set(null);
+    } catch (err: any) {
+      alert('Gagal memperbarui data: ' + err.message);
+    }
   }
 
   async deleteResident(nik: string) {
