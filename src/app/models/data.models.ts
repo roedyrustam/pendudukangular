@@ -57,22 +57,26 @@ export interface ServiceRequest {
 export type UserRole = 'admin' | 'petugas' | 'warga';
 
 export interface AppUser {
-  id: string;
-  email: string | null;
-  role: UserRole;
+  id: string; // id
+  email: string | null; // email / username
+  role: UserRole; // id_grup (1=admin, 2=petugas, 5=warga)
+  id_grup?: string | number; // id_grup dari OpenSID
   nik?: string; // Only for warga
-  phone?: string;
-  displayName?: string;
-  photoURL?: string;
+  phone?: string; // phone
+  displayName?: string; // nama
+  photoURL?: string; // foto
+  last_login?: string; // last_login
   created_at: string;
 }
 
 export interface ResidentDocument {
-  id: string;
-  nik: string;
-  name: string;
-  url: string;
-  path: string;
-  type: string;
-  created_at: string;
+  id: string; // id
+  nik: string; // id_pend / nik
+  name: string; // nama
+  url: string; // tautan unduhan publik
+  path: string; // satuan / path file (di OpenSID ini bisa berisi nama file)
+  type: string; // mime type atau jenis (contoh: KTP, KK)
+  description?: string; // keterangan
+  is_requirement?: boolean; // syarat_surat (apakah dokumen ini syarat permohonan)
+  created_at: string; // tgl_upload
 }
