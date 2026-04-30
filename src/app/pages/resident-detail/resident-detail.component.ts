@@ -113,7 +113,7 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
                     <span class="doc-ext">{{ doc.name.split('.').pop()?.toUpperCase() }}</span>
                     <div class="doc-meta">
                       <strong>{{ doc.name }}</strong>
-                      <p>{{ (doc.created_at ? (doc.created_at.toDate ? doc.created_at.toDate() : doc.created_at) : null) | date:'dd MMM yyyy' }}</p>
+                      <p>{{ doc.created_at | date:'dd MMM yyyy' }}</p>
                     </div>
                   </div>
                   <div class="doc-actions">
@@ -147,7 +147,7 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
                   <span class="badge-status" [attr.data-status]="req.status">{{ req.status }}</span>
                 </div>
                 <p class="text-sm text-muted mb-1">{{ req.reason }}</p>
-                <p class="text-xs">{{ (req.created_at ? (req.created_at.toDate ? req.created_at.toDate() : req.created_at) : null) | date:'dd MMM yyyy, HH:mm' }}</p>
+                <p class="text-xs">{{ req.created_at | date:'dd MMM yyyy, HH:mm' }}</p>
               </div>
             </div>
             <div *ngIf="requests.length === 0" class="empty-state p-8 text-center">

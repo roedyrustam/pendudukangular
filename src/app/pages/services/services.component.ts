@@ -48,7 +48,7 @@ import { of, switchMap, take } from 'rxjs';
             <tr *ngFor="let req of recentRequests()" 
               (click)="canManage() ? openManagementModal(req) : null" 
               [class.clickable-row]="canManage()">
-              <td>{{ (req.created_at ? (req.created_at.toDate ? req.created_at.toDate() : req.created_at) : null) | date:'dd MMM yyyy HH:mm' }}</td>
+              <td>{{ req.created_at | date:'dd MMM yyyy HH:mm' }}</td>
               <td class="nik-cell">{{ req.nik }}</td>
               <td>{{ req.service_type }}</td>
               <td>{{ req.reason }}</td>
@@ -180,6 +180,12 @@ import { of, switchMap, take } from 'rxjs';
           </div>
         </form>
       </div>
+    </div>
+
+    <!-- Success Notification -->
+    <div *ngIf="showSuccess()" class="toast-success fade-in">
+      <span>✅</span>
+      <p>Aksi Berhasil Dilakukan!</p>
     </div>
   `,
   styles: [`
@@ -367,13 +373,13 @@ export class ServicesComponent implements OnDestroy {
         attachmentUrls = await this.dataService.uploadMultipleFiles(this.selectedFiles, `requests/${this.requestForm.nik}`);
       }
 
-      const newReq: ServiceRequest = {
+      const newReq: any = {
         nik: this.requestForm.nik,
         service_type: this.activeService().name,
         reason: this.requestForm.reason,
         status: 'Pending',
         attachments: attachmentUrls,
-        created_at: null
+        created_at: ''
       };
 
       await this.dataService.addRequest(newReq);

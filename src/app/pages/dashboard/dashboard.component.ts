@@ -14,7 +14,13 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
   template: `
     <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
       <div class="welcome-banner card-luxury mb-8 fade-in">
-        <h1 class="title-gradient">Selamat Datang, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
+        <div class="flex items-center gap-3">
+          <h1 class="title-gradient">Selamat Datang, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
+          <div class="live-sync-indicator" title="Realtime Active">
+            <span class="pulse-dot"></span>
+            <span class="label">LIVE</span>
+          </div>
+        </div>
         <div class="flex-between">
           <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
           <div class="territory-filter" *ngIf="profile.role !== 'warga'">
@@ -168,7 +174,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                 <div *ngFor="let req of myRequests$ | async" class="request-item">
                   <div class="req-info">
                      <span class="req-type">{{ req.service_type }}</span>
-                      <span class="req-date text-xs text-muted">{{ (req.created_at ? (req.created_at.toDate ? req.created_at.toDate() : req.created_at) : null) | date:'dd MMM yyyy' }}</span>
+                      <span class="req-date text-xs text-muted">{{ req.created_at | date:'dd MMM yyyy' }}</span>
                   </div>
                   <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
                 </div>
@@ -201,6 +207,34 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
       &.petugas { background: rgba(99, 102, 241, 0.2); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); }
       &.warga { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    }
+    .live-sync-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 0.25rem 0.6rem;
+      border-radius: 1rem;
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulse 1.5s infinite;
+      }
+      .label {
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #10b981;
+        letter-spacing: 0.05em;
+      }
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     .personal-info-card, .family-card, .requests-card { padding: 2rem; }
     .info-item {
@@ -443,7 +477,7 @@ export class DashboardComponent implements OnDestroy {
       district: 'Cicendo',
       regency: 'Bandung',
       province: 'Jawa Barat',
-      created_at: null
+      created_at: ''
     };
 
     await this.dataService.addFamily(sampleFamily);
@@ -456,7 +490,7 @@ export class DashboardComponent implements OnDestroy {
       gender: 'Laki-laki',
       occupation: 'Wiraswasta',
       relationship: 'Kepala Keluarga',
-      created_at: null
+      created_at: ''
     });
 
     alert('Data sample berhasil ditambahkan!');

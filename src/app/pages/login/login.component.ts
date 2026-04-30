@@ -239,7 +239,7 @@ export class LoginComponent implements OnInit {
 
     this.isLoading.set(true);
     try {
-      await this.authService.createUserProfile(user, 'warga', this.nik);
+      await this.authService.createUserProfile(user as any, 'warga', this.nik);
       this.router.navigate(['/dashboard']);
     } catch (e) {
       console.error(e);
