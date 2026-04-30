@@ -11,6 +11,7 @@ import { UsersComponent } from './pages/users/users.component';
 import { ArticlesComponent } from './pages/articles/articles.component';
 import { ApbdesComponent } from './pages/apbdes/apbdes.component';
 import { InventoryComponent } from './pages/inventory/inventory.component';
+import { ResidentAnalysisComponent } from './pages/analysis/analysis.component';
 import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
@@ -33,6 +34,8 @@ export const routes: Routes = [
       { path: 'region-insights', component: RegionInsightsComponent },
       { path: 'users', component: UsersComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'inventory', component: InventoryComponent, title: 'Inventaris Aset - DigiWarga' },
+      { path: 'analysis', component: ResidentAnalysisComponent, title: 'Analisis Bansos - DigiWarga' },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }
