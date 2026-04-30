@@ -1,13 +1,13 @@
 -- Supabase SQL Script
 -- Update `users` table structure based on OpenSID's `user` fields
 
-ALTER TABLE public.users
+ALTER TABLE public.profiles
 ADD COLUMN IF NOT EXISTS id_grup text,
 ADD COLUMN IF NOT EXISTS last_login timestamp with time zone;
 
--- (Optional) If you want to migrate data directly from OpenSID `user` to `users`, you can run the following query:
+-- (Optional) If you want to migrate data directly from OpenSID `user` to `profiles`, you can run the following query:
 /*
-INSERT INTO public.users (
+INSERT INTO public.profiles (
     id, 
     email, 
     role, 

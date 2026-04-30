@@ -116,7 +116,7 @@ export class DataService {
     ).pipe(map((res) => res.data as ResidentDocument[]));
   }
 
-  async uploadResidentDocument(nik: string, file: File, type: string) {
+  async uploadResidentDocument(nik: string, file: File, type: string, description?: string, is_requirement?: boolean) {
     const filePath = `residents/${nik}/${Date.now()}_${file.name}`;
     
     // Upload file to Supabase Storage
@@ -142,6 +142,8 @@ export class DataService {
       url: urlData.publicUrl,
       path: filePath,
       type,
+      description: description || '',
+      is_requirement: is_requirement || false,
       created_at: new Date().toISOString()
     };
     
@@ -177,10 +179,10 @@ export class DataService {
     ).pipe(map((res) => res.data as AppUser[]));
   }
 
-  async updateUserRole(uid: string, role: UserRole) {
+  async updateUserRole(uid: string, role: UserRole, id_grup?: string | number) {
     return this.supabase
       .from('profiles')
-      .update({ role })
+      .update({ role, id_grup, updated_at: new Date().toISOString() })
       .eq('id', uid);
   }
 
