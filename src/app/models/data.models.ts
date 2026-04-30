@@ -12,6 +12,7 @@ export interface Family {
   province: string; // provinsi
   social_class?: string; // kelas_sosial
   print_date?: string; // tgl_cetak_kk
+  updated_at?: string;
   created_at: string; // tgl_daftar
 }
 
@@ -33,6 +34,11 @@ export interface Resident {
   father_name?: string; // nama_ayah
   mother_name?: string; // nama_ibu
   address?: string; // alamat_sekarang
+  status_dasar?: 'HIDUP' | 'MATI' | 'PINDAH';
+  hamlet?: string;
+  rt?: string;
+  rw?: string;
+  updated_at?: string;
   created_at: string;
 }
 
@@ -64,8 +70,9 @@ export interface AppUser {
   nik?: string; // Only for warga
   phone?: string; // phone
   displayName?: string; // nama
-  photoURL?: string; // foto
+  photo_url?: string; // foto
   last_login?: string; // last_login
+  updated_at?: string;
   created_at: string;
 }
 

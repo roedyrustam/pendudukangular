@@ -185,6 +185,20 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
               </div>
            </div>
         </div>
+
+        <!-- Developer Tools (Seed Data) -->
+        <div class="dev-tools-dashboard mt-12 mb-8 p-6 card-luxury glass-panel" *ngIf="profile.role === 'admin'">
+           <div class="flex-between">
+              <div>
+                 <h4 class="text-primary">🛠️ Developer Tools</h4>
+                 <p class="text-xs text-muted">Gunakan alat ini untuk pengujian fungsionalitas CRUD dan visualisasi data.</p>
+              </div>
+              <div class="flex gap-2">
+                 <button class="btn-outline-sm" (click)="seedData()">Tambah 1 Keluarga Sampel</button>
+                 <button class="btn-text-sm text-xs" (click)="refreshData()">Paksa Refresh Data</button>
+              </div>
+           </div>
+        </div>
       </ng-container>
 
       <!-- WARGA VIEW -->
@@ -434,7 +448,13 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .opacity-70 { opacity: 0.7; }
     .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
     .mt-8 { margin-top: 2rem; }
+    .mt-12 { margin-top: 3rem; }
     .gap-2 { gap: 0.5rem; }
+    .text-primary { color: var(--primary); }
+    .dev-tools-dashboard {
+       border: 1px dashed var(--primary);
+       background: rgba(99, 102, 241, 0.05);
+    }
   `]
 })
 export class DashboardComponent implements OnDestroy {

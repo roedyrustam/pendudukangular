@@ -54,6 +54,7 @@ import { Router } from '@angular/router';
             <th>NIK</th>
             <th>Nama Lengkap</th>
             <th>Gender</th>
+            <th>Status</th>
             <th>Hubungan</th>
             <th>No. KK</th>
             <th>Aksi</th>
@@ -64,6 +65,11 @@ import { Router } from '@angular/router';
             <td class="nik-cell">{{ r.nik }}</td>
             <td class="name-cell">{{ r.full_name }}</td>
             <td>{{ r.gender }}</td>
+            <td>
+              <span class="badge" [class]="r.status_dasar?.toLowerCase() || 'hidup'">
+                {{ r.status_dasar || 'HIDUP' }}
+              </span>
+            </td>
             <td><span class="badge secondary">{{ r.relationship }}</span></td>
             <td><span class="kk-link">{{ r.family_id }}</span></td>
             <td class="actions-cell">
@@ -142,6 +148,18 @@ import { Router } from '@angular/router';
               <select [(ngModel)]="addForm.education" name="education">
                 <option *ngFor="let e of educationList" [value]="e">{{ e }}</option>
               </select>
+            </div>
+            <div class="input-group">
+              <label>Status Dasar</label>
+              <select [(ngModel)]="addForm.status_dasar" name="status_dasar">
+                <option value="HIDUP">HIDUP</option>
+                <option value="MATI">MATI</option>
+                <option value="PINDAH">PINDAH</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Dusun / Lingkungan</label>
+              <input [(ngModel)]="addForm.hamlet" name="hamlet" placeholder="Nama Dusun">
             </div>
           </div>
           <div class="form-actions mt-8">
@@ -234,6 +252,18 @@ import { Router } from '@angular/router';
             <div class="input-group" style="grid-column: 1 / -1;">
               <label>Alamat Lengkap</label>
               <input [(ngModel)]="editForm.address" name="address">
+            </div>
+            <div class="input-group">
+              <label>Status Dasar</label>
+              <select [(ngModel)]="editForm.status_dasar" name="status_dasar">
+                <option value="HIDUP">HIDUP</option>
+                <option value="MATI">MATI</option>
+                <option value="PINDAH">PINDAH</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Dusun</label>
+              <input [(ngModel)]="editForm.hamlet" name="hamlet">
             </div>
           </div>
           <div class="form-actions mt-8">
@@ -329,7 +359,12 @@ import { Router } from '@angular/router';
         padding: 0.2rem 0.6rem;
         border-radius: 1rem;
         font-size: 0.75rem;
-        &.secondary { background: rgba(99, 102, 241, 0.1); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.2); }
+        &.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+        &.diproses { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
+        &.selesai { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        &.hidup { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        &.mati { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        &.pindah { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
       }
       .actions-cell {
         display: flex;
@@ -420,7 +455,8 @@ export class ResidentsComponent implements OnDestroy {
     gender: 'Laki-laki',
     relationship: 'ANAK',
     religion: 'Islam',
-    education: 'SLTA / SEDERAJAT'
+    education: 'SLTA / SEDERAJAT',
+    status_dasar: 'HIDUP'
   };
 
   residentToEdit = signal<Resident | null>(null);
@@ -492,7 +528,8 @@ export class ResidentsComponent implements OnDestroy {
         gender: 'Laki-laki',
         relationship: 'ANAK',
         religion: 'Islam',
-        education: 'SLTA / SEDERAJAT'
+        education: 'SLTA / SEDERAJAT',
+        status_dasar: 'HIDUP'
       };
     } catch (err: any) {
       alert('Gagal menambah penduduk: ' + err.message);
