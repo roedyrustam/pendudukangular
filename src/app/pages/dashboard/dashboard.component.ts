@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { RegionService } from '../../services/region.service';
+import { KemendesaService } from '../../services/kemendesa.service';
 import { ServiceRequest, AppUser, Resident, Family, VillageConfig } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
@@ -28,6 +29,9 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
             <p *ngIf="villageConfig()" class="village-label mt-2">
               📍 {{ villageConfig()?.village_name }}, {{ villageConfig()?.district_name }}, {{ villageConfig()?.regency_name }}
               <span class="village-code">{{ villageConfig()?.village_code }}</span>
+              <span *ngIf="idmStatus()" class="idm-badge ml-2" [attr.data-status]="idmStatus()">
+                IDM: {{ idmStatus() }}
+              </span>
             </p>
           </div>
           <div class="territory-filter" *ngIf="profile.role !== 'warga'">
@@ -211,6 +215,17 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
         margin-left: 0.5rem;
       }
     }
+    .idm-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.15rem 0.6rem;
+      border-radius: 2rem;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      &[data-status='Mandiri'] { background: #10b981; }
+      &[data-status='Maju'] { background: #3b82f6; }
+      &[data-status='Berkembang'] { background: #f59e0b; }
+    }
     .custom-select {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -346,9 +361,11 @@ export class DashboardComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private regionService = inject(RegionService);
+  private kemendesaService = inject(KemendesaService);
 
   userProfile$ = this.authService.userData$;
   villageConfig = signal<VillageConfig | null>(null);
+  idmStatus = signal<string>('');
   
   // Warga Specific Data
   residentProfile$: Observable<Resident | undefined> = this.userProfile$.pipe(
@@ -418,7 +435,15 @@ export class DashboardComponent implements OnDestroy {
 
     // Load Village Config
     this.regionService.getVillageConfig().subscribe(config => {
-      if (config) this.villageConfig.set(config);
+      if (config) {
+        this.villageConfig.set(config);
+        // Fetch IDM Status from Kemendesa
+        this.kemendesaService.getVillageIdm(config.village_code).subscribe(res => {
+          if (res && res.status) this.idmStatus.set(res.status);
+          // Fallback demo status if API is mock or failing
+          else if (!this.idmStatus()) this.idmStatus.set('Mandiri');
+        });
+      }
     });
   }
 
