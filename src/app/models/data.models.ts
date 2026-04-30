@@ -105,6 +105,9 @@ export interface VillageConfig {
   village_phone?: string;     // No Telp Kantor
   village_email?: string;     // Email Desa
   village_logo_url?: string;  // URL Logo Desa
+  idm_status?: string;        // Status IDM (Mandiri/Maju/dll)
+  idm_score?: number;         // Skor IDM
+  dana_desa?: number;         // Alokasi Dana Desa (Rp)
   updated_at?: string;
   created_at?: string;
 }

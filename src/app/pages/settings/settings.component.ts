@@ -492,6 +492,15 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
       }
     }
 
+    .national-data-sync {
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      .stat-mini {
+        label { font-size: 0.65rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem; }
+        .val { font-size: 1rem; font-weight: 700; color: #fff; }
+      }
+    }
+
     @media (max-width: 768px) {
       .region-grid { grid-template-columns: 1fr; }
       .village-current .current-info-grid { grid-template-columns: 1fr 1fr; }
@@ -648,10 +657,19 @@ export class SettingsComponent implements OnInit {
       // Sync data from Kemendesa if possible
       this.kemendesaService.getVillageProfile(this.selectedVillage).subscribe(profile => {
         if (profile) {
-          this.villageForm.village_head = profile.kepala_desa;
-          this.villageForm.village_address = profile.alamat;
-          this.villageForm.village_phone = profile.telepon;
-          this.villageForm.village_email = profile.email;
+          this.villageForm.village_head = profile.kepala_desa || this.villageForm.village_head;
+          this.villageForm.village_address = profile.alamat || this.villageForm.village_address;
+          this.villageForm.village_phone = profile.telepon || this.villageForm.village_phone;
+          this.villageForm.village_email = profile.email || this.villageForm.village_email;
+        }
+      });
+
+      // Sync IDM & Financial Data
+      this.kemendesaService.getVillageIdm(this.selectedVillage).subscribe(idm => {
+        if (idm) {
+          this.villageForm.idm_status = idm.status;
+          this.villageForm.idm_score = idm.skor;
+          this.villageForm.dana_desa = idm.alokasi_dana_desa;
         }
       });
 
@@ -772,6 +790,9 @@ export class SettingsComponent implements OnInit {
       village_phone: this.villageForm.village_phone || '',
       village_email: this.villageForm.village_email || '',
       village_logo_url: this.villageForm.village_logo_url || '',
+      idm_status: this.villageForm.idm_status || '',
+      idm_score: this.villageForm.idm_score || 0,
+      dana_desa: this.villageForm.dana_desa || 0,
       created_at: this.currentConfig()?.created_at,
     };
 
