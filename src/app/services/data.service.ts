@@ -8,7 +8,7 @@ import { Observable, from, map } from 'rxjs';
   providedIn: 'root',
 })
 export class DataService {
-  private supabase: SupabaseClient;
+  public supabase: SupabaseClient;
 
   constructor() {
     this.supabase = createClient(environment.supabase.url, environment.supabase.key);
@@ -310,5 +310,9 @@ export class DataService {
 
   async deleteInventory(id: string) {
     return this.supabase.from('inventory').delete().eq('id', id);
+  }
+
+  async bulkUpsert(table: string, data: any[]) {
+    return this.supabase.from(table).upsert(data);
   }
 }

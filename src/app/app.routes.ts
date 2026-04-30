@@ -12,6 +12,7 @@ import { ArticlesComponent } from './pages/articles/articles.component';
 import { ApbdesComponent } from './pages/apbdes/apbdes.component';
 import { InventoryComponent } from './pages/inventory/inventory.component';
 import { ResidentAnalysisComponent } from './pages/analysis/analysis.component';
+import { ImportComponent } from './pages/import/import.component';
 import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
@@ -30,12 +31,12 @@ export const routes: Routes = [
       { path: 'services', component: ServicesComponent },
       { path: 'articles', component: ArticlesComponent },
       { path: 'apbdes', component: ApbdesComponent },
-      { path: 'inventory', component: InventoryComponent },
-      { path: 'region-insights', component: RegionInsightsComponent },
-      { path: 'users', component: UsersComponent },
-      { path: 'settings', component: SettingsComponent },
       { path: 'inventory', component: InventoryComponent, title: 'Inventaris Aset - DigiWarga' },
+      { path: 'region-insights', component: RegionInsightsComponent, title: 'Wawasan Wilayah - DigiWarga' },
+      { path: 'users', component: UsersComponent, title: 'Manajemen Pengguna - DigiWarga' },
       { path: 'analysis', component: ResidentAnalysisComponent, title: 'Analisis Bansos - DigiWarga' },
+      { path: 'import', component: ImportComponent, title: 'Migrasi Data - DigiWarga' },
+      { path: 'settings', component: SettingsComponent, title: 'Pengaturan - DigiWarga' },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }
