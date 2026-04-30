@@ -60,9 +60,19 @@ import { DataService } from '../../services/data.service';
                  <span class="text-xs">{{ logs().length }} baris terdeteksi</span>
               </div>
               <div class="log-lines">
-                 <div *ngFor="let log of logs()" class="log-line">{{ log }}</div>
+                 <div *ngFor="let log of logs()" class="log-line" [class.error]="log.includes('ERROR')">{{ log }}</div>
                  <div *ngIf="logs().length === 0" class="text-muted text-xs italic">Menunggu parsing...</div>
               </div>
+           </div>
+
+           <!-- RLS Helper -->
+           <div class="rls-helper card-luxury mb-6 p-4 border-warning" *ngIf="showRLSHelper()">
+              <div class="flex-between mb-2">
+                 <span class="text-xs text-warning font-bold">⚠️ PERBAIKAN RLS DIPERLUKAN</span>
+                 <button class="btn-text-sm" (click)="copyRLSSql()">Salin SQL</button>
+              </div>
+              <p class="text-xs mb-3">Jalankan perintah ini di Supabase SQL Editor untuk mengizinkan impor data:</p>
+              <pre class="sql-code">ALTER TABLE public.{{ targetTable }} DISABLE ROW LEVEL SECURITY;</pre>
            </div>
 
            <div class="actions flex gap-3">
@@ -99,7 +109,10 @@ import { DataService } from '../../services/data.service';
        font-size: 0.7rem;
        color: #10b981;
     }
-    .log-line { margin-bottom: 2px; }
+    .log-line { margin-bottom: 2px; &.error { color: #f87171; } }
+    .sql-code { background: #000; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; color: #a5b4fc; }
+    .border-warning { border: 1px solid rgba(245, 158, 11, 0.3); }
+    .text-warning { color: #f59e0b; }
     .custom-select, .custom-input {
        background: rgba(255,255,255,0.05);
        border: 1px solid var(--border-color);
@@ -130,6 +143,7 @@ export class ImportComponent {
   isDragging = signal(false);
   isProcessing = signal(false);
   showSuccess = signal(false);
+  showRLSHelper = signal(false);
   successCount = signal(0);
 
   targetTable = 'residents';
@@ -161,10 +175,24 @@ export class ImportComponent {
     this.fileSize.set(file.size);
     const reader = new FileReader();
     reader.onload = (ev) => {
-      this.sqlContent.set(ev.target?.result as string);
+      const content = ev.target?.result as string;
+      this.sqlContent.set(content);
       this.addLog('File loaded successfully. Size: ' + file.size + ' bytes');
+      this.autoDetectTable(content);
     };
     reader.readAsText(file);
+  }
+
+  autoDetectTable(content: string) {
+    if (content.includes('INSERT INTO `tweb_penduduk`')) {
+      this.targetTable = 'residents';
+      this.sqlTableName = 'tweb_penduduk';
+      this.addLog('✨ Auto-detected: Penduduk (tweb_penduduk)');
+    } else if (content.includes('INSERT INTO `tweb_keluarga`')) {
+      this.targetTable = 'families';
+      this.sqlTableName = 'tweb_keluarga';
+      this.addLog('✨ Auto-detected: Keluarga (tweb_keluarga)');
+    }
   }
 
   resetFile() {
@@ -259,10 +287,19 @@ export class ImportComponent {
       setTimeout(() => this.showSuccess.set(false), 5000);
     } catch (err: any) {
       this.addLog('❌ ERROR: ' + err.message);
+      if (err.message.includes('row-level security')) {
+        this.showRLSHelper.set(true);
+      }
       alert('Migrasi gagal: ' + err.message);
     } finally {
       this.isProcessing.set(false);
     }
+  }
+
+  copyRLSSql() {
+    const sql = `ALTER TABLE public.${this.targetTable} DISABLE ROW LEVEL SECURITY;`;
+    navigator.clipboard.writeText(sql);
+    this.addLog('📋 SQL disalin ke clipboard.');
   }
 
   private mapSchema(item: any): any {
