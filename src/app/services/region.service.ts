@@ -75,4 +75,21 @@ export class RegionService {
         .insert([payload]);
     }
   }
+
+  async uploadVillageLogo(file: File): Promise<string> {
+    const fileName = `logo_${Date.now()}.${file.name.split('.').pop()}`;
+    const filePath = `logos/${fileName}`;
+
+    const { data, error } = await this.supabase.storage
+      .from('village-logos')
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = this.supabase.storage
+      .from('village-logos')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  }
 }

@@ -215,6 +215,21 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
                   <label>Email Desa</label>
                   <input [(ngModel)]="villageForm.village_email" name="village_email" placeholder="desa@example.go.id">
                 </div>
+                <div class="input-group" style="grid-column: 1 / -1;">
+                  <label>Logo Resmi Desa (PNG/JPG)</label>
+                  <div class="logo-upload-wrapper">
+                    <div class="logo-preview" *ngIf="villageForm.village_logo_url || logoPreview()">
+                      <img [src]="logoPreview() || villageForm.village_logo_url" alt="Logo Preview">
+                    </div>
+                    <div class="upload-controls">
+                      <input type="file" (change)="onLogoSelected($event)" accept="image/*" #logoInput hidden>
+                      <button type="button" class="btn-outline-sm" (click)="logoInput.click()" [disabled]="uploadingLogo()">
+                        {{ uploadingLogo() ? 'Mengunggah...' : 'Pilih Logo Desa' }}
+                      </button>
+                      <p class="text-xs text-muted mt-2">Disarankan background transparan (PNG).</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -417,6 +432,37 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
       h4 { font-size: 0.9rem; font-weight: 600; }
     }
 
+    .logo-upload-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: rgba(255,255,255,0.03);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-color);
+      .logo-preview {
+        width: 80px;
+        height: 80px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        img { max-width: 100%; max-height: 100%; object-fit: contain; }
+      }
+      .btn-outline-sm {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        &:disabled { opacity: 0.5; }
+      }
+    }
+
     @media (max-width: 768px) {
       .region-grid { grid-template-columns: 1fr; }
       .village-current .current-info-grid { grid-template-columns: 1fr 1fr; }
@@ -533,9 +579,31 @@ export class SettingsComponent implements OnInit {
   selectedProvince = '';
   selectedRegency = '';
   selectedDistrict = '';
-  selectedVillage = '';
+    selectedVillage = '';
 
   villageForm: Partial<VillageConfig> = {};
+  uploadingLogo = signal(false);
+  logoPreview = signal<string | null>(null);
+
+  async onLogoSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Show preview locally
+    const reader = new FileReader();
+    reader.onload = () => this.logoPreview.set(reader.result as string);
+    reader.readAsDataURL(file);
+
+    this.uploadingLogo.set(true);
+    try {
+      const publicUrl = await this.regionService.uploadVillageLogo(file);
+      this.villageForm.village_logo_url = publicUrl;
+    } catch (err: any) {
+      alert('Gagal mengunggah logo: ' + err.message);
+    } finally {
+      this.uploadingLogo.set(false);
+    }
+  }
 
   async loadProvinces() {
     this.loadingRegion.set(true);
