@@ -355,6 +355,11 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1.5rem;
     }
+    .security-seal {
+      display: flex; align-items: center; gap: 0.5rem;
+      .seal-ring { width: 20px; height: 20px; border: 2px solid #10b981; border-radius: 50%; }
+      .seal-content { display: flex; align-items: center; gap: 0.25rem; font-size: 0.6rem; color: #10b981; }
+    }
     .stat-card { display: flex; align-items: center; gap: 1.5rem; }
     .stat-icon { font-size: 2.5rem; background: rgba(255, 255, 255, 0.05); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 1rem; }
     .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--primary); line-height: 1; margin: 0.2rem 0; }
@@ -693,7 +698,7 @@ export class DashboardComponent implements OnDestroy {
     const hBreakdown = hamlets.map(h => {
       const count = activeFamilies.filter(f => f.hamlet === h).length;
       return {
-        label: h,
+        label: h as string,
         count: count,
         percent: activeFamilies.length ? (count / activeFamilies.length) * 100 : 0
       };
@@ -743,5 +748,82 @@ export class DashboardComponent implements OnDestroy {
     });
 
     alert('Data sample berhasil ditambahkan!');
+  }
+
+  async seedMassiveData() {
+    const vc = this.villageConfig();
+    const names = ['Ahmad', 'Siti', 'Budi', 'Dewi', 'Eko', 'Lani', 'Joko', 'Ani', 'Indra', 'Maya', 'Rudi', 'Wati', 'Hendra', 'Yanti', 'Agus', 'Ratna', 'Tono', 'Dina', 'Iwan', 'Rina'];
+    const familyNames = ['Santoso', 'Pratama', 'Wijaya', 'Kusuma', 'Sutrisno'];
+    
+    for (let i = 0; i < 5; i++) {
+      const kkNum = '327301010526' + (1000 + i);
+      const headNik = '327301101070' + (1000 + i);
+      const headName = names[i] + ' ' + familyNames[i];
+      
+      const fam: Family = {
+        kk_number: kkNum,
+        head_of_family_nik: headNik,
+        head_of_family_name: headName,
+        address: 'Jl. Raya Desa No. ' + (i + 1),
+        rt: '00' + (i + 1),
+        rw: '005',
+        rt_rw: '0' + (i + 1) + '/005',
+        hamlet: i < 3 ? 'Dusun Mekar' : 'Dusun Jaya',
+        district: vc?.district_name || 'Cicendo',
+        regency: vc?.regency_name || 'Bandung',
+        province: vc?.province_name || 'Jawa Barat',
+        social_class: i % 2 === 0 ? 'Sedang' : 'Miskin',
+        created_at: ''
+      };
+      
+      await this.dataService.addFamily(fam);
+      
+      // Add Head of Family
+      await this.dataService.addResident({
+        nik: headNik,
+        family_id: kkNum,
+        full_name: headName,
+        birth_place: 'Bandung',
+        birth_date: '1970-01-01',
+        gender: i % 2 === 0 ? 'Laki-laki' : 'Perempuan',
+        occupation: 'Wiraswasta',
+        relationship: 'Kepala Keluarga',
+        religion: 'Islam',
+        education: 'SMA/Sederajat',
+        marital_status: 'Kawin',
+        blood_type: 'O',
+        citizenship: 'WNI',
+        father_name: 'Ayah ' + headName,
+        mother_name: 'Ibu ' + headName,
+        address: fam.address,
+        created_at: ''
+      });
+
+      // Add 3 more members per family
+      for (let j = 1; j <= 3; j++) {
+        const memberNik = '327301101070' + (2000 + (i * 10) + j);
+        const memberName = names[(i * 3 + j) % names.length] + ' ' + familyNames[i];
+        await this.dataService.addResident({
+          nik: memberNik,
+          family_id: kkNum,
+          full_name: memberName,
+          birth_place: 'Bandung',
+          birth_date: '2000-01-01',
+          gender: j % 2 === 0 ? 'Laki-laki' : 'Perempuan',
+          occupation: 'Pelajar/Mahasiswa',
+          relationship: j === 1 ? 'Istri' : 'Anak',
+          religion: 'Islam',
+          education: 'SMA/Sederajat',
+          marital_status: j === 1 ? 'Kawin' : 'Belum Kawin',
+          blood_type: 'A',
+          citizenship: 'WNI',
+          father_name: headName,
+          mother_name: 'Ibu ' + memberName,
+          address: fam.address,
+          created_at: ''
+        });
+      }
+    }
+    alert('Massive Seed Berhasil: 5 Keluarga & 20 Penduduk ditambahkan!');
   }
 }
