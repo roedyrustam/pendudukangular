@@ -44,7 +44,41 @@ import { Router } from '@angular/router';
             <option *ngFor="let job of occupationList" [value]="job">{{ job }}</option>
           </select>
         </div>
+        <div class="filter-group">
+          <label>Dusun</label>
+          <select [(ngModel)]="filterHamlet" (change)="filterResidents()">
+            <option value="">Semua Dusun</option>
+            <option value="Dusun I">Dusun I</option>
+            <option value="Dusun II">Dusun II</option>
+            <option value="Dusun III">Dusun III</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Status Dasar</label>
+          <select [(ngModel)]="filterStatus" (change)="filterResidents()">
+            <option value="">Semua Status</option>
+            <option value="HIDUP">HIDUP</option>
+            <option value="MATI">MATI</option>
+            <option value="PINDAH">PINDAH</option>
+          </select>
+        </div>
       </div>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="stats-bar mb-6">
+       <div class="stat-item card-luxury">
+          <label>Total Terfilter</label>
+          <span class="value">{{ filteredResidents().length }} Jiwa</span>
+       </div>
+       <div class="stat-item card-luxury">
+          <label>Laki-laki</label>
+          <span class="value">{{ countGender('Laki-laki') }}</span>
+       </div>
+       <div class="stat-item card-luxury">
+          <label>Perempuan</label>
+          <span class="value">{{ countGender('Perempuan') }}</span>
+       </div>
     </div>
 
     <div class="card-luxury p-0 overflow-hidden">
@@ -334,6 +368,18 @@ import { Router } from '@angular/router';
         }
       }
     }
+    .stats-bar {
+       display: grid;
+       grid-template-columns: repeat(3, 1fr);
+       gap: 1.5rem;
+       .stat-item {
+          padding: 1rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem; }
+          .value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+       }
+    }
     .luxury-table {
       width: 100%;
       border-collapse: collapse;
@@ -448,6 +494,8 @@ export class ResidentsComponent implements OnDestroy {
   searchTerm = '';
   filterGender = '';
   filterOccupation = '';
+  filterHamlet = '';
+  filterStatus = '';
 
   isAddModalOpen = signal(false);
   loadingAdd = signal(false);
@@ -490,19 +538,21 @@ export class ResidentsComponent implements OnDestroy {
 
   filterResidents() {
     const term = this.searchTerm.toLowerCase();
-    const gender = this.filterGender;
-    const job = this.filterOccupation;
+    const filtered = this.residents().filter(r => {
+      let matches = true;
+      const searchStr = (r.nik + r.full_name + r.family_id).toLowerCase();
+      if (term && !searchStr.includes(term)) matches = false;
+      if (this.filterGender && r.gender !== this.filterGender) matches = false;
+      if (this.filterOccupation && r.occupation !== this.filterOccupation) matches = false;
+      if (this.filterHamlet && r.hamlet !== this.filterHamlet) matches = false;
+      if (this.filterStatus && (r.status_dasar || 'HIDUP') !== this.filterStatus) matches = false;
+      return matches;
+    });
+    this.filteredResidents.set(filtered);
+  }
 
-    this.filteredResidents.set(
-      this.residents().filter(r => {
-        const matchesSearch = r.nik.includes(term) || 
-                             r.full_name.toLowerCase().includes(term) ||
-                             r.family_id.includes(term);
-        const matchesGender = !gender || r.gender === gender;
-        const matchesJob = !job || r.occupation === job;
-        return matchesSearch && matchesGender && matchesJob;
-      })
-    );
+  countGender(gender: string): number {
+    return this.filteredResidents().filter(r => r.gender === gender).length;
   }
 
   viewProfile(nik: string) {
