@@ -37,17 +37,21 @@ export interface Resident {
 }
 
 export interface ServiceRequest {
-  id: string;
-  nik: string;
-  service_type: string;
-  reason: string;
-  status: 'Pending' | 'Diproses' | 'Selesai' | 'Ditolak';
-  admin_note?: string;
-  attachments?: string[];
-  letter_url?: string;
+  id: string; // id
+  nik: string; // id_pemohon (NIK)
+  service_type: string; // nama surat
+  id_surat?: string; // id_surat dari tweb_surat_format
+  reason: string; // keperluan / isian_form
+  form_data?: string; // isian_form (JSON)
+  status: 'Pending' | 'Diproses' | 'Selesai' | 'Ditolak'; // status (0, 1, 2, 3)
+  admin_note?: string; // keterangan
+  attachments?: string[]; // syarat
+  letter_url?: string; // url file surat (jika sudah dicetak)
+  phone_active?: string; // no_hp_aktif
   processed_by?: string;
   processed_at?: string;
-  created_at: string;
+  updated_at?: string; // updated_at
+  created_at: string; // created_at
 }
 
 export type UserRole = 'admin' | 'petugas' | 'warga';
