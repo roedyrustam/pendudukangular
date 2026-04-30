@@ -1,5 +1,4 @@
 export interface Family {
-  id?: string;
   kk_number: string;
   head_of_family_name: string;
   address: string;
@@ -7,11 +6,10 @@ export interface Family {
   district: string;
   regency: string;
   province: string;
-  created_at: any;
+  created_at: string;
 }
 
 export interface Resident {
-  id?: string;
   nik: string;
   family_id: string;
   full_name: string;
@@ -21,11 +19,11 @@ export interface Resident {
   occupation: string;
   relationship: string;
   phone?: string;
-  created_at: any;
+  created_at: string;
 }
 
 export interface ServiceRequest {
-  id?: string;
+  id: string;
   nik: string;
   service_type: string;
   reason: string;
@@ -34,29 +32,29 @@ export interface ServiceRequest {
   attachments?: string[];
   letter_url?: string;
   processed_by?: string;
-  processed_at?: any;
-  created_at: any;
+  processed_at?: string;
+  created_at: string;
 }
 
 export type UserRole = 'admin' | 'petugas' | 'warga';
 
 export interface AppUser {
-  uid: string;
+  id: string;
   email: string | null;
   role: UserRole;
   nik?: string; // Only for warga
   phone?: string;
   displayName?: string;
   photoURL?: string;
-  created_at: any;
+  created_at: string;
 }
 
 export interface ResidentDocument {
-  id?: string;
+  id: string;
   nik: string;
   name: string;
   url: string;
   path: string;
   type: string;
-  created_at: any;
+  created_at: string;
 }

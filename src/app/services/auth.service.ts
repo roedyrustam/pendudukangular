@@ -1,78 +1,91 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, user, signInWithEmailAndPassword, signOut, User, updateProfile, updatePassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from '@angular/fire/auth';
-import { Firestore, doc, getDoc, setDoc, docData } from '@angular/fire/firestore';
-import { Observable, of, switchMap } from 'rxjs';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
+import { Observable, from, map, of, BehaviorSubject, switchMap } from 'rxjs';
 import { AppUser } from '../models/data.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private auth = inject(Auth);
-  private firestore = inject(Firestore);
-  
-  // Basic Auth User
-  user$: Observable<User | null> = user(this.auth);
+  private supabase: SupabaseClient;
+  private authState = new BehaviorSubject<User | null>(null);
+
+  user$ = this.authState.asObservable();
+
+  constructor() {
+    this.supabase = createClient(environment.supabase.url, environment.supabase.key);
+    
+    // Initialize auth state
+    this.supabase.auth.getUser().then(({ data }) => {
+      this.authState.next(data.user);
+    });
+
+    // Listen for changes
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      this.authState.next(session?.user ?? null);
+    });
+  }
 
   // Full App User with Role
   userData$: Observable<AppUser | null> = this.user$.pipe(
     switchMap(u => {
       if (!u) return of(null);
-      return docData(doc(this.firestore, 'users', u.uid)) as Observable<AppUser>;
+      return from(this.getProfile(u.id));
     })
   );
 
   async login(email: string, password: string) {
-    return signInWithEmailAndPassword(this.auth, email, password);
+    return this.supabase.auth.signInWithPassword({ email, password });
   }
 
   async loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(this.auth, provider);
+    return this.supabase.auth.signInWithOAuth({ provider: 'google' });
   }
 
   async getProfile(uid: string): Promise<AppUser | null> {
-    const docRef = doc(this.firestore, 'users', uid);
-    const userSnap = await getDoc(docRef);
-    return userSnap.exists() ? (userSnap.data() as AppUser) : null;
+    const { data } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', uid)
+      .single();
+    return data as AppUser;
   }
 
   async register(email: string, password: string, nik?: string) {
-    const cred = await createUserWithEmailAndPassword(this.auth, email, password);
-    await this.createUserProfile(cred.user, 'warga', nik);
-    return cred;
+    const { data, error } = await this.supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    if (data.user) {
+      await this.createUserProfile(data.user, 'warga', nik);
+    }
+    return data;
   }
 
   async createUserProfile(user: User, role: 'admin' | 'petugas' | 'warga', nik?: string) {
-    const userRef = doc(this.firestore, 'users', user.uid);
-    const appUser: AppUser = {
-      uid: user.uid,
+    const appUser = {
+      id: user.id,
       email: user.email,
       role: role,
       nik: nik,
-      displayName: user.displayName || '',
-      created_at: new Date()
+      created_at: new Date().toISOString()
     };
-    return setDoc(userRef, appUser);
+    return this.supabase.from('profiles').insert([appUser]);
   }
 
   async logout() {
-    return signOut(this.auth);
+    return this.supabase.auth.signOut();
   }
 
-  getCurrentUser(): User | null {
-    return this.auth.currentUser;
+  async getCurrentUser() {
+    const { data } = await this.supabase.auth.getUser();
+    return data.user;
   }
 
   async updateUserProfile(displayName: string) {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('No user logged in');
-    return updateProfile(user, { displayName });
+    return this.supabase.auth.updateUser({ data: { display_name: displayName } });
   }
 
   async updateUserPassword(newPassword: string) {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('No user logged in');
-    return updatePassword(user, newPassword);
+    return this.supabase.auth.updateUser({ password: newPassword });
   }
 }

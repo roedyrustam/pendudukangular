@@ -1,179 +1,197 @@
-import { Injectable, inject } from '@angular/core';
-import {
-  Firestore,
-  collection,
-  collectionData,
-  doc,
-  setDoc,
-  deleteDoc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  addDoc,
-  docData,
-  getDocs,
-  getDoc
-} from '@angular/fire/firestore';
+import { Injectable, inject, signal } from '@angular/core';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
 import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole } from '../models/data.models';
-import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
-import { Observable, from } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable, from, map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DataService {
-  private firestore = inject(Firestore);
-  private storage = inject(Storage);
+  private supabase: SupabaseClient;
+
+  constructor() {
+    this.supabase = createClient(environment.supabase.url, environment.supabase.key);
+  }
 
   // --- FAMILIES ---
   getFamilies(): Observable<Family[]> {
-    return collectionData(
-      query(collection(this.firestore, 'families'), orderBy('created_at', 'desc')),
-      { idField: 'id' }
-    ) as Observable<Family[]>;
+    return from(
+      this.supabase
+        .from('families')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as Family[]));
   }
 
   async addFamily(family: Family) {
-    const ref = doc(this.firestore, 'families', family.kk_number);
-    return setDoc(ref, { ...family, created_at: new Date() });
+    return this.supabase.from('families').insert([{ ...family, created_at: new Date().toISOString() }]);
   }
 
   async updateFamily(family: Family) {
-    const ref = doc(this.firestore, 'families', family.kk_number);
-    return updateDoc(ref, { ...family });
+    return this.supabase
+      .from('families')
+      .update({ ...family })
+      .eq('kk_number', family.kk_number);
   }
 
   async deleteFamily(kk_number: string) {
-    const ref = doc(this.firestore, 'families', kk_number);
-    return deleteDoc(ref);
+    return this.supabase.from('families').delete().eq('kk_number', kk_number);
   }
 
   // --- RESIDENTS ---
   getResidents(familyId?: string): Observable<Resident[]> {
-    let colRef = collection(this.firestore, 'residents');
-    let q;
+    let query = this.supabase
+      .from('residents')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
     if (familyId) {
-      q = query(colRef, where('family_id', '==', familyId), orderBy('created_at', 'desc'));
-    } else {
-      q = query(colRef, orderBy('created_at', 'desc'));
+      query = query.eq('family_id', familyId);
     }
-    return collectionData(q, { idField: 'id' }) as Observable<Resident[]>;
+    
+    return from(query).pipe(map((res) => res.data as Resident[]));
   }
 
   async addResident(resident: Resident) {
-    const ref = doc(this.firestore, 'residents', resident.nik);
-    return setDoc(ref, { ...resident, created_at: new Date() });
+    return this.supabase.from('residents').insert([{ ...resident, created_at: new Date().toISOString() }]);
   }
 
   async updateResident(resident: Resident) {
-    const ref = doc(this.firestore, 'residents', resident.nik);
-    return updateDoc(ref, { ...resident });
+    return this.supabase
+      .from('residents')
+      .update({ ...resident })
+      .eq('nik', resident.nik);
   }
 
   async deleteResident(nik: string) {
-    const ref = doc(this.firestore, 'residents', nik);
-    return deleteDoc(ref);
+    return this.supabase.from('residents').delete().eq('nik', nik);
   }
 
   // --- SERVICE REQUESTS ---
   getRequests(): Observable<ServiceRequest[]> {
-    return collectionData(
-      query(collection(this.firestore, 'requests'), orderBy('created_at', 'desc')),
-      { idField: 'id' }
-    ) as Observable<ServiceRequest[]>;
+    return from(
+      this.supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as ServiceRequest[]));
   }
 
   async addRequest(request: ServiceRequest) {
-    const colRef = collection(this.firestore, 'requests');
-    return addDoc(colRef, { ...request, created_at: new Date() });
+    return this.supabase.from('services').insert([{ ...request, created_at: new Date().toISOString() }]);
   }
 
   // --- DETAIL FETCHERS ---
   getResident(nik: string): Observable<Resident | undefined> {
-    const ref = doc(this.firestore, 'residents', nik);
-    return docData(ref, { idField: 'id' }) as Observable<Resident | undefined>;
+    return from(
+      this.supabase.from('residents').select('*').eq('nik', nik).single()
+    ).pipe(map((res) => res.data as Resident));
   }
 
   getFamily(kk_number: string): Observable<Family | undefined> {
-    const ref = doc(this.firestore, 'families', kk_number);
-    return docData(ref, { idField: 'id' }) as Observable<Family | undefined>;
+    return from(
+      this.supabase.from('families').select('*').eq('kk_number', kk_number).single()
+    ).pipe(map((res) => res.data as Family));
   }
 
   getResidentRequests(nik: string): Observable<ServiceRequest[]> {
-    const colRef = collection(this.firestore, 'requests');
-    const q = query(colRef, where('nik', '==', nik), orderBy('created_at', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<ServiceRequest[]>;
+    return from(
+      this.supabase
+        .from('services')
+        .select('*')
+        .eq('nik', nik)
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as ServiceRequest[]));
   }
 
   // --- DOCUMENTS ---
   getResidentDocuments(nik: string): Observable<ResidentDocument[]> {
-    const colRef = collection(this.firestore, 'residents_docs');
-    const q = query(colRef, where('nik', '==', nik), orderBy('created_at', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<ResidentDocument[]>;
+    return from(
+      this.supabase
+        .from('residents_docs')
+        .select('*')
+        .eq('nik', nik)
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as ResidentDocument[]));
   }
 
   async uploadResidentDocument(nik: string, file: File, type: string) {
     const filePath = `residents/${nik}/${Date.now()}_${file.name}`;
-    const storageRef = ref(this.storage, filePath);
     
-    // Upload file
-    await uploadBytes(storageRef, file);
-    const downloadUrl = await getDownloadURL(storageRef);
+    // Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await this.supabase.storage
+      .from('residents')
+      .upload(filePath, file);
 
-    // Save metadata
-    const docData: ResidentDocument = {
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: urlData } = this.supabase.storage
+      .from('residents')
+      .getPublicUrl(filePath);
+
+    // Save metadata to Firestore (now Supabase)
+    const docData: Omit<ResidentDocument, 'id'> = {
       nik,
       name: file.name,
-      url: downloadUrl,
+      url: urlData.publicUrl,
       path: filePath,
       type,
-      created_at: new Date()
+      created_at: new Date().toISOString()
     };
     
-    return addDoc(collection(this.firestore, 'residents_docs'), docData);
+    return this.supabase.from('residents_docs').insert([docData]);
   }
 
   async deleteResidentDocument(docId: string, path: string) {
     // Delete file from storage
-    const storageRef = ref(this.storage, path);
-    await deleteObject(storageRef);
+    await this.supabase.storage.from('residents').remove([path]);
 
-    // Delete metadata from firestore
-    const docRef = doc(this.firestore, 'residents_docs', docId);
-    return deleteDoc(docRef);
+    // Delete metadata from table
+    return this.supabase.from('residents_docs').delete().eq('id', docId);
   }
 
   async updateRequestStatus(requestId: string, status: string, adminNote: string = '') {
-    const docRef = doc(this.firestore, 'requests', requestId);
-    return updateDoc(docRef, {
-      status,
-      admin_note: adminNote,
-      updated_at: new Date()
-    });
+    return this.supabase
+      .from('services')
+      .update({
+        status,
+        admin_note: adminNote,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
   }
 
   // --- USER MANAGEMENT ---
   getUsers(): Observable<AppUser[]> {
-    return collectionData(
-      query(collection(this.firestore, 'users'), orderBy('created_at', 'desc')),
-      { idField: 'id' }
-    ) as Observable<AppUser[]>;
+    return from(
+      this.supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as AppUser[]));
   }
 
   async updateUserRole(uid: string, role: UserRole) {
-    const docRef = doc(this.firestore, 'users', uid);
-    return updateDoc(docRef, { role });
+    return this.supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', uid);
   }
 
   // --- Multi-Upload & Enhanced Services ---
   
   async uploadFileOnly(file: File, path: string): Promise<string> {
-    const storageRef = ref(this.storage, path);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
+    const { data, error } = await this.supabase.storage
+      .from('residents')
+      .upload(path, file);
+    if (error) throw error;
+    
+    const { data: urlData } = this.supabase.storage
+      .from('residents')
+      .getPublicUrl(path);
+    return urlData.publicUrl;
   }
 
   async uploadMultipleFiles(files: FileList | File[], basePath: string): Promise<string[]> {
@@ -189,20 +207,27 @@ export class DataService {
   }
 
   async getResidentByNikSync(nik: string): Promise<Resident | null> {
-    const q = query(collection(this.firestore, 'residents'), where('nik', '==', nik));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Resident;
+    const { data } = await this.supabase
+      .from('residents')
+      .select('*')
+      .eq('nik', nik)
+      .single();
+    return data as Resident;
   }
 
   async updateRequestFull(requestId: string, data: Partial<ServiceRequest>) {
-    const docRef = doc(this.firestore, 'requests', requestId);
-    return updateDoc(docRef, { ...data, processed_at: new Date() });
+    return this.supabase
+      .from('services')
+      .update({ ...data, processed_at: new Date().toISOString() })
+      .eq('id', requestId);
   }
+  
   async getRequestById(requestId: string): Promise<ServiceRequest | null> {
-    const docRef = doc(this.firestore, 'requests', requestId);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return null;
-    return { id: snap.id, ...snap.data() } as ServiceRequest;
+    const { data } = await this.supabase
+      .from('services')
+      .select('*')
+      .eq('id', requestId)
+      .single();
+    return data as ServiceRequest;
   }
 }
