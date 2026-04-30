@@ -429,36 +429,40 @@ import { Router } from '@angular/router';
       .empty-state { text-align: center; padding: 4rem; color: var(--text-muted); }
     }
     .form-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      backdrop-filter: blur(4px);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .form-card {
-      width: 700px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 2rem;
+      width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 3rem;
+      &::-webkit-scrollbar { width: 6px; }
+      &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      label { font-size: 0.8rem; color: var(--text-muted); }
+      display: flex; flex-direction: column; gap: 0.5rem;
+      label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
     }
     input, select {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-color);
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      color: white;
-      outline: none;
-      &:focus { border-color: var(--primary); }
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+      color: white; padding: 0.85rem 1rem; border-radius: 0.75rem; outline: none;
+      transition: all 0.2s;
+      &:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
+    }
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.2em;
+      padding-right: 3rem !important;
+      cursor: pointer;
+    }
+    select option { 
+      background-color: #0f172a !important; 
+      color: white !important;
+      padding: 1rem;
     }
     .form-actions { display: flex; justify-content: flex-end; gap: 1rem; }
     .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; }

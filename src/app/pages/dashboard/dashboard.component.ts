@@ -195,6 +195,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
               </div>
               <div class="flex gap-2">
                  <button class="btn-outline-sm" (click)="seedData()">Tambah 1 Keluarga Sampel</button>
+                 <button class="btn-primary-sm" (click)="seedMassiveData()">Tambah 20 Warga & 5 KK</button>
                  <button class="btn-text-sm text-xs" (click)="refreshData()">Paksa Refresh Data</button>
               </div>
            </div>
@@ -454,6 +455,17 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .dev-tools-dashboard {
        border: 1px dashed var(--primary);
        background: rgba(99, 102, 241, 0.05);
+    }
+    .btn-primary-sm {
+       background: var(--primary);
+       color: white;
+       border: none;
+       padding: 0.35rem 0.75rem;
+       border-radius: 0.5rem;
+       font-size: 0.75rem;
+       font-weight: 600;
+       cursor: pointer;
+       &:hover { filter: brightness(1.1); }
     }
   `]
 })
