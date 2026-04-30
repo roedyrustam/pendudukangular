@@ -109,6 +109,22 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
               </div>
             </div>
           </div>
+
+          <div class="card-luxury analytics-card">
+            <h3>🏘️ Distribusi Wilayah (Dusun)</h3>
+            <div class="hamlet-list">
+               <div class="hamlet-item" *ngFor="let h of hamletBreakdown()">
+                  <div class="flex-between mb-1">
+                     <span class="name">{{ h.label }}</span>
+                     <span class="pct">{{ h.count }} KK</span>
+                  </div>
+                  <div class="progress-lite">
+                     <div class="bar" [style.width.%]="h.percent"></div>
+                  </div>
+               </div>
+               <p *ngIf="hamletBreakdown().length === 0" class="text-muted text-xs italic">Data wilayah belum terpetakan.</p>
+            </div>
+          </div>
         </div>
 
         <div class="content-main mt-8 fade-in" style="animation-delay: 0.1s">
@@ -447,6 +463,17 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
     .text-xs { font-size: 0.7rem; }
     .opacity-70 { opacity: 0.7; }
+    .hamlet-list {
+       display: flex; flex-direction: column; gap: 1rem;
+       .hamlet-item {
+          .name { font-size: 0.85rem; font-weight: 500; color: #fff; }
+          .pct { font-size: 0.75rem; color: var(--primary); font-weight: 700; }
+          .progress-lite {
+             height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;
+             .bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--neon-cyan)); }
+          }
+       }
+    }
     .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
     .mt-8 { margin-top: 2rem; }
     .mt-12 { margin-top: 3rem; }
@@ -509,6 +536,7 @@ export class DashboardComponent implements OnDestroy {
   malePercentage = signal(0);
   femalePercentage = signal(0);
   statusBreakdown = signal<{label: string, count: number, percent: number}[]>([]);
+  hamletBreakdown = signal<{label: string, count: number, percent: number}[]>([]);
 
   // Raw Data for Filtering
   rawFamilies: Family[] = [];
@@ -659,6 +687,18 @@ export class DashboardComponent implements OnDestroy {
       };
     });
     this.statusBreakdown.set(breakdown);
+
+    // Hamlet Analytics
+    const hamlets = Array.from(new Set(activeFamilies.map(f => f.hamlet).filter(Boolean)));
+    const hBreakdown = hamlets.map(h => {
+      const count = activeFamilies.filter(f => f.hamlet === h).length;
+      return {
+        label: h,
+        count: count,
+        percent: activeFamilies.length ? (count / activeFamilies.length) * 100 : 0
+      };
+    });
+    this.hamletBreakdown.set(hBreakdown.sort((a, b) => b.count - a.count));
   }
 
   async seedData() {
