@@ -1,26 +1,26 @@
 # 🏢 DigiWarga - Sistem Informasi Kependudukan Digital
 
-**DigiWarga** adalah solusi administrasi kependudukan modern berbasis web yang dirancang untuk mendukung transformasi digital di tingkat Desa/Kelurahan. Dibangun dengan framework **Angular 21** dan **Firebase**, sistem ini menawarkan performa tinggi dengan antarmuka **Cyber-Luxe** yang futuristik.
+**DigiWarga** adalah solusi administrasi kependudukan modern berbasis web yang dirancang untuk mendukung transformasi digital di tingkat Desa/Kelurahan. Dibangun dengan framework **Angular 21** dan **Supabase**, sistem ini menawarkan performa tinggi dengan antarmuka **Cyber-Luxe** yang futuristik dan sinkronisasi data real-time.
 
 ---
 
 ## ✨ Fitur Utama
-- 🔐 **Role Based Access Control (RBAC)**: Akses multi-level (Admin, Petugas, Warga) yang aman.
-- 🌐 **Portal Warga (Self-Service)**: Pendaftaran mandiri via Google Auth & pelacakan layanan.
-- 📜 **Smart Document Issuance**: Cetak & arsip otomatis Surat Keterangan / Pengantar resmi berformat PDF.
-- 📂 **Digital Document Repository**: Unggah dokumen pendukung mandiri (KTP/KK) langsung ke cloud.
-- 📊 **Dashboard Analytics**: Visualisasi statistik kependudukan real-time.
-- 👥 **Manajemen Penduduk**: Database NIK terpadu dengan pencarian & filter canggih.
-- 🏡 **Sistem Keluarga**: Pengelolaan Kartu Keluarga (KK) dengan tracking anggota otomatis.
+- 🔐 **Role Based Access Control (RBAC)**: Akses multi-level (Admin, Petugas, Warga) yang aman via Supabase Auth.
+- 🌐 **Portal Warga (Self-Service)**: Pendaftaran mandiri via Google Auth & pelacakan layanan secara real-time.
+- 🗺️ **Integrasi Wilayah Nasional**: Sinkronisasi data wilayah (Provinsi s/d Desa) sesuai standar Kemendagri.
+- 🏛️ **Village Insights**: Integrasi data profil desa, IDM, dan Dana Desa dari API Kemendesa.
+- 📜 **Smart Document Issuance**: Cetak & arsip otomatis Surat Keterangan resmi berformat PDF dengan header dinamis.
+- 📂 **Digital Repository**: Unggah dokumen pendukung (KTP/KK) langsung ke Supabase Storage.
+- 📊 **Dashboard Analytics**: Visualisasi statistik kependudukan dan progres layanan administratif.
 
 ---
 
 ## 🚀 Persiapan & Instalasi
 
 ### Prasyarat
-- [Node.js](https://nodejs.org/) (versi terbaru direkomendasikan)
+- [Node.js](https://nodejs.org/) (LTS direkomendasikan)
 - [Angular CLI](https://angular.dev/tools/cli)
-- Akun Firebase (untuk database & storage)
+- Akun [Supabase](https://supabase.com/) (untuk database, auth, & storage)
 
 ### Langkah Instalasi
 1. **Clone Repository**
@@ -34,17 +34,13 @@
    npm install
    ```
 
-3. **Konfigurasi Firebase**
-   Buka file `src/environments/environment.ts` dan masukkan kredensial proyek Firebase Anda:
+3. **Konfigurasi Supabase**
+   Buka file `src/environments/environment.ts` dan masukkan kredensial proyek Supabase Anda:
    ```typescript
    export const environment = {
-     firebase: {
-       apiKey: "...",
-       authDomain: "...",
-       projectId: "...",
-       storageBucket: "...",
-       messagingSenderId: "...",
-       appId: "..."
+     supabase: {
+       url: "https://your-project.supabase.co",
+       key: "your-anon-key"
      }
    };
    ```
@@ -58,10 +54,11 @@
 ---
 
 ## 🛠️ Arsitektur Proyek
-- **Frontend**: Angular 21 (Standalone Components & Signals).
-- **Backend (BaaS)**: Firebase (Firestore, Auth, Storage).
-- **Library PDF**: jsPDF & html2canvas.
-- **Styling**: Modern CSS with Glassmorphism principles.
+- **Frontend**: Angular 21 (Signals-based reactivity & Standalone Components).
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime).
+- **External APIs**: Wilayah.id (Kemendagri) & SID (Kemendesa).
+- **Reporting**: jsPDF & autoTable.
+- **Design System**: "Cyber-Luxe" (Custom CSS, Glassmorphism, Neon Accents).
 
 Untuk detail arsitektur teknis lebih mendalam, silakan buka: [BLUEPRINT.md](./BLUEPRINT.md)
 
@@ -74,7 +71,7 @@ Untuk detail arsitektur teknis lebih mendalam, silakan buka: [BLUEPRINT.md](./BL
 ---
 
 ## 🤝 Kontribusi
-Aplikasi ini dikembangkan untuk **Desa Contoh**. Kontribusi dan saran fitur baru sangat disambut untuk meningkatkan kualitas layanan kependudukan digital.
+Kontribusi dan saran fitur baru sangat disambut untuk meningkatkan kualitas layanan kependudukan digital di Indonesia.
 
 ---
 © 2026 **Pandu Talenta Digital** | Made with ❤️ for DigiWarga.

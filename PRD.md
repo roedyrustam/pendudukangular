@@ -1,60 +1,59 @@
 # Product Requirements Document (PRD) - DigiWarga
 
 **Project Name:** DigiWarga (Sistem Informasi Kependudukan Digital)  
-**Client:** Desa Contoh  
-**Status:** Version 1.2 (Multi-User & Service Automation)  
+**Client:** Desa/Kelurahan Indonesia  
+**Status:** Version 1.5 (Modernized Infrastructure & Regional Integration)  
 **Author:** Pandu Talenta Digital
 
 ---
 
 ## 1. Executive Summary
-DigiWarga adalah platform manajemen kependudukan modern yang dirancang untuk mengotomatisasi administrasi tingkat Desa/Kelurahan. Sistem ini menggantikan proses manual yang lambat dengan ekosistem digital berbasis cloud yang reaktif, aman, dan estetik.
+DigiWarga adalah platform manajemen kependudukan modern yang dirancang untuk mengotomatisasi administrasi tingkat Desa/Kelurahan. Dengan migrasi ke infrastruktur Supabase dan integrasi API Nasional (Kemendagri & Kemendesa), sistem ini menawarkan stabilitas data tinggi, sinkronisasi real-time, dan otomasi dokumen yang presisi.
 
 ## 2. Problem Statement
-- **Fragmentasi Data**: Data penduduk seringkali tersebar di spreadsheet manual atau dokumen fisik.
-- **Efisiensi Rendah**: Pembuatan surat keterangan dan laporan bulanan memakan waktu lama.
-- **Kurangnya Insight**: Sulit untuk melihat statistik kependudukan (usia, gender, pekerjaan) secara real-time.
-- **Keamanan Berkas**: Berkas fisik (KTP/KK) rentan hilang atau rusak.
+- **Fragmentasi Data**: Data kependudukan sering tidak sinkron dengan standar nasional.
+- **Efisiensi Rendah**: Pengisian data wilayah secara manual sering menyebabkan kesalahan input (typo).
+- **Kurangnya Validasi**: Data NIK dan KK sering tidak tervalidasi secara struktural.
+- **Transparansi**: Sulitnya melacak status pengajuan surat oleh warga secara mandiri.
 
 ## 3. Goals & Objectives
-- **Sentralisasi**: Satu sumber kebenaran (single source of truth) untuk data penduduk dan keluarga.
-- **Digitalisasi Berkas**: Mengarsipkan dokumen fisik ke dalam cloud storage.
-- **Automasi Pelaporan**: Menghasilkan PDF surat dan laporan statistik secara instan.
-- **User Experience Premium**: Antarmuka "Cyber-Luxe" yang meningkatkan kebanggaan dan kemudahan kerja staf admintrasi.
+- **Integrasi Nasional**: Sinkronisasi data wilayah (Provinsi hingga Desa) sesuai standar Kemendagri.
+- **Transparansi Layanan**: Citizen Portal yang memungkinkan warga memantau status pengajuan secara real-time.
+- **Otomasi Header Surat**: Dinamisasi header surat berdasarkan konfigurasi desa (Logo, Nama Pejabat, Alamat).
+- **Visualisasi Data**: Dashboard analitik yang menyajikan profil IDM (Indeks Desa Membangun) dan status Dana Desa.
 
 ## 4. Target User
-- **Administrator Desa**: Mengelola data harian, mengunggah berkas, dan mencetak surat.
-- **Kepala Desa/Lurah**: Memantau statistik kependudukan melalui dashboard untuk pengambilan keputusan.
+- **Administrator Desa**: Operator utama untuk manajemen warga dan surat.
+- **Kepala Desa/Lurah**: Pengambil keputusan yang memantau statistik dan validitas data.
+- **Warga Desa**: Pengguna mandiri yang mengajukan layanan administrasi online.
 
-## 5. Functional Requirements (MVP)
+## 5. Functional Requirements (Current)
 
 ### Core Modules
 | ID | Feature | Description |
 |---|---|---|
-| F01 | **Auth & Security** | Login dengan Firebase Auth, Google OAuth, & RBAC (Admin, Petugas, Warga). |
-| F02 | **Dashboard Analytics** | Visualisasi data gender, status layanan, dan pertumbuhan warga. |
-| F03 | **Population Management** | CRUD data penduduk, linking ke Kartu Keluarga (KK). |
-| F04 | **Family Management** | Pengelolaan data keluarga dengan tracking otomatis anggota. |
-| F05 | **Service Requests** | Pelacakan riwayat layanan administrasi (Pending -> Selesai). |
-| F06 | **Digital Repository** | Upload & manage scan dokumen (KTP/KK) via Firebase Storage. |
-| F07 | **PDF Reporting** | Cetak Biodata Penduduk dan Ekspor Laporan Tabel ke PDF. |
-| F08 | **Citizen Portal** | Self-Registration via Google Auth & validasi NIK mandiri. |
-| F09 | **Smart Document Issuance**| Cetak & arisp otomatis Surat Keterangan / Pengantar resmi berformat PDF. |
+| F01 | **Supabase Auth** | Autentikasi aman dengan Role-Based Access Control (Admin, Petugas, Warga). |
+| F02 | **Regional Sync** | Auto-complete data wilayah menggunakan API wilayah.id & Fallback system. |
+| F03 | **Population Management**| CRUD Penduduk dengan validasi tipe data PostgreSQL. |
+| F04 | **Family Management** | Relasi one-to-many antara Kartu Keluarga dan Anggota Keluarga. |
+| F05 | **Realtime Tracking** | Notifikasi status pengajuan layanan secara instan tanpa reload. |
+| F06 | **Document Archive** | Penyimpanan berkas digital (KTP/KK) di Supabase Storage. |
+| F07 | **Smart Letter Engine** | Generasi PDF Surat Keterangan otomatis dengan header dinamis. |
+| F08 | **Village Dashboard** | Statistik kependudukan & data finansial desa (Dana Desa/IDM). |
 
 ## 6. Non-Functional Requirements
-- **Performance**: Load data di bawah 2 detik menggunakan Firestore indexing.
-- **Availability**: Berbasis Cloud (Firebase) dengan uptime tinggi.
-- **Security**: Keamanan data di tingkat database (Firestore Security Rules).
-- **Responsive**: Bisa diakses secara optimal melalui laptop maupun tablet.
+- **Performance**: Optimalisasi loading menggunakan Angular Signals dan Supabase Indexing.
+- **Resilience**: API Fallback mechanism untuk data wilayah guna mencegah kegagalan sistem.
+- **UX Aesthetics**: Desain "Cyber-Luxe" yang responsif, modern, dan premium.
+- **Scalability**: Arsitektur serverless yang siap menangani ribuan data warga tanpa degradasi performa.
 
-## 7. Feature Roadmap (Future Enhancements)
-- **Phase 2**: Integrasi Notifikasi WhatsApp (WA Gateway) untuk status layanan.
-- **Phase 3**: Manajemen Wilayah (Tracking RT/RW dengan peta digital).
-- **Phase 4**: Sistem Tanda Tangan Digital (E-Signature) untuk surat resmi.
-- **Phase 5**: Audit Log transaksi sistem.
-
----
-*Dokumen ini merupakan acuan resmi untuk pengembangan dan implementasi sistem DigiWarga di Desa Contoh.*
+## 7. Feature Roadmap
+- **Next Phase**: Integrasi WhatsApp API untuk notifikasi otomatis pengajuan surat.
+- **Future**: Modul GIS (Geographic Information System) untuk pemetaan lokasi warga per RT/RW.
+- **Security**: Implementasi MFA (Multi-Factor Authentication) untuk akun Administrator.
 
 ---
-**Develop By : Pandu Talenta Digital | Fullstack By Roedy Rustan**
+*Dokumen ini merupakan acuan resmi pengembangan DigiWarga v1.5.*
+
+---
+**Developed By : Pandu Talenta Digital | Implementation By Roedy Rustan**
