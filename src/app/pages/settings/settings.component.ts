@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { RegionService } from '../../services/region.service';
+import { KemendesaService } from '../../services/kemendesa.service';
 import { RegionItem, VillageConfig } from '../../models/data.models';
 
 @Component({
@@ -510,6 +511,7 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
 export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private regionService = inject(RegionService);
+  private kemendesaService = inject(KemendesaService);
   user$ = this.authService.user$;
 
   activeTab = signal<'profile' | 'village'>('profile');
@@ -630,7 +632,7 @@ export class SettingsComponent implements OnInit {
       this.searchResults.set([]);
       return;
     }
-    this.kemendesaService.searchVillage(this.searchQuery).subscribe(results => {
+    this.kemendesaService.searchVillage(this.searchQuery).subscribe((results: any[]) => {
       this.searchResults.set(results);
     });
   }
@@ -655,7 +657,7 @@ export class SettingsComponent implements OnInit {
       ]);
 
       // Sync data from Kemendesa if possible
-      this.kemendesaService.getVillageProfile(this.selectedVillage).subscribe(profile => {
+      this.kemendesaService.getVillageProfile(this.selectedVillage).subscribe((profile: any) => {
         if (profile) {
           this.villageForm.village_head = profile.kepala_desa || this.villageForm.village_head;
           this.villageForm.village_address = profile.alamat || this.villageForm.village_address;
@@ -665,7 +667,7 @@ export class SettingsComponent implements OnInit {
       });
 
       // Sync IDM & Financial Data
-      this.kemendesaService.getVillageIdm(this.selectedVillage).subscribe(idm => {
+      this.kemendesaService.getVillageIdm(this.selectedVillage).subscribe((idm: any) => {
         if (idm) {
           this.villageForm.idm_status = idm.status;
           this.villageForm.idm_score = idm.skor;
