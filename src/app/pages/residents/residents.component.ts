@@ -99,22 +99,21 @@ import { Router } from '@angular/router';
             </div>
             <div class="input-group">
               <label>Hubungan</label>
-              <input [(ngModel)]="editForm.relationship" name="rel">
+              <select [(ngModel)]="editForm.relationship" name="rel">
+                <option *ngFor="let r of relationshipList" [value]="r">{{ r }}</option>
+              </select>
             </div>
             <div class="input-group">
               <label>Agama</label>
               <select [(ngModel)]="editForm.religion" name="religion">
-                <option value="Islam">Islam</option>
-                <option value="Kristen">Kristen</option>
-                <option value="Katolik">Katolik</option>
-                <option value="Hindu">Hindu</option>
-                <option value="Buddha">Buddha</option>
-                <option value="Konghucu">Konghucu</option>
+                <option *ngFor="let r of religionList" [value]="r">{{ r }}</option>
               </select>
             </div>
             <div class="input-group">
               <label>Pendidikan</label>
-              <input [(ngModel)]="editForm.education" name="education">
+              <select [(ngModel)]="editForm.education" name="education">
+                <option *ngFor="let e of educationList" [value]="e">{{ e }}</option>
+              </select>
             </div>
             <div class="input-group">
               <label>Status Kawin</label>
@@ -294,12 +293,29 @@ export class ResidentsComponent implements OnDestroy {
   private dataService = inject(DataService);
   private router = inject(Router);
   private pdfService = inject(PdfService);
+  occupationList = [
+    'Petani', 'Nelayan', 'Wiraswasta', 'PNS', 'TNI/Polri', 'Karyawan Swasta', 
+    'Buruh', 'Pelajar/Mahasiswa', 'Ibu Rumah Tangga', 'Tidak/Belum Bekerja', 'Pensiunan'
+  ];
+
+  religionList = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+
+  educationList = [
+    'TIDAK / BELUM SEKOLAH', 'BELUM TAMAT SD/SEDERAJAT', 'TAMAT SD / SEDERAJAT',
+    'SLTP/SEDERAJAT', 'SLTA / SEDERAJAT', 'DIPLOMA I / II',
+    'AKADEMI/ DIPLOMA III/S. MUDA', 'DIPLOMA IV/ STRATA I', 'STRATA II', 'STRATA III'
+  ];
+
+  relationshipList = [
+    'KEPALA KELUARGA', 'SUAMI', 'ISTRI', 'ANAK', 'MENANTU', 'CUCU', 
+    'ORANG TUA', 'MERTUA', 'FAMILI LAIN', 'PEMBANTU', 'LAINNYA'
+  ];
+
   residents = signal<Resident[]>([]);
   filteredResidents = signal<Resident[]>([]);
   searchTerm = '';
   filterGender = '';
   filterOccupation = '';
-  occupationList: string[] = [];
 
   residentToEdit = signal<Resident | null>(null);
   editForm: any = {};

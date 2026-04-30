@@ -31,20 +31,30 @@ export class LetterService {
 
     const doc = new jsPDF();
     const margin = 20;
-    let y = 30;
+    let y = 20; // Adjusted starting Y
 
     // --- HEADER (Kop Surat) ---
+    // Try to add Village Logo if exists
+    if (vc?.village_logo_url) {
+      try {
+        // We use a small hack to ensure the image is loaded (simple for base64 or public URLs)
+        doc.addImage(vc.village_logo_url, 'PNG', margin, 15, 20, 25);
+      } catch (e) {
+        console.error('Failed to add logo to PDF', e);
+      }
+    }
+
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(`PEMERINTAH ${regencyName.toUpperCase()}`, 105, y, { align: 'center' });
+    doc.text(`PEMERINTAH ${regencyName.toUpperCase()}`, 110, y, { align: 'center' });
     y += 7;
-    doc.text(districtName.toUpperCase(), 105, y, { align: 'center' });
+    doc.text(districtName.toUpperCase(), 110, y, { align: 'center' });
     y += 7;
-    doc.text(`KANTOR KEPALA ${villageName.toUpperCase()}`, 105, y, { align: 'center' });
+    doc.text(`KANTOR KEPALA ${villageName.toUpperCase()}`, 110, y, { align: 'center' });
     y += 5;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${villageAddress}, Telp: ${villagePhone}`, 105, y, { align: 'center' });
+    doc.text(`${villageAddress}, Telp: ${villagePhone}`, 110, y, { align: 'center' });
     y += 4;
     doc.setLineWidth(0.5);
     doc.line(margin, y, 210 - margin, y);
