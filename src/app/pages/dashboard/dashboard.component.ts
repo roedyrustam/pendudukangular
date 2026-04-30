@@ -405,7 +405,7 @@ export class DashboardComponent implements OnDestroy {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recent = activeResidents.filter(r => {
-      const createdAt = r.created_at?.toDate ? r.created_at.toDate() : new Date(r.created_at);
+      const createdAt = new Date(r.created_at as any);
       return createdAt >= thirtyDaysAgo;
     });
     this.recentResidentsCount.set(recent.length);

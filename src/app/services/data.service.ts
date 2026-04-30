@@ -120,16 +120,20 @@ export class DataService {
     const filePath = `residents/${nik}/${Date.now()}_${file.name}`;
     
     // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await this.supabase.storage
+    const uploadRes = await this.supabase.storage
       .from('residents')
       .upload(filePath, file);
+    
+    const uploadError = uploadRes.error;
 
     if (uploadError) throw uploadError;
 
     // Get public URL
-    const { data: urlData } = this.supabase.storage
+    const urlRes = this.supabase.storage
       .from('residents')
       .getPublicUrl(filePath);
+    
+    const urlData = urlRes.data;
 
     // Save metadata to Firestore (now Supabase)
     const docData: Omit<ResidentDocument, 'id'> = {
@@ -207,12 +211,12 @@ export class DataService {
   }
 
   async getResidentByNikSync(nik: string): Promise<Resident | null> {
-    const { data } = await this.supabase
+    const res = await this.supabase
       .from('residents')
       .select('*')
       .eq('nik', nik)
       .single();
-    return data as Resident;
+    return res.data as Resident;
   }
 
   async updateRequestFull(requestId: string, data: Partial<ServiceRequest>) {
@@ -223,12 +227,12 @@ export class DataService {
   }
   
   async getRequestById(requestId: string): Promise<ServiceRequest | null> {
-    const { data } = await this.supabase
+    const res = await this.supabase
       .from('services')
       .select('*')
       .eq('id', requestId)
       .single();
-    return data as ServiceRequest;
+    return res.data as ServiceRequest;
   }
 
   // --- REALTIME SUBSCRIPTIONS ---

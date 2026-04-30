@@ -222,15 +222,8 @@ export class LoginComponent implements OnInit {
     this.errorMessage.set('');
     
     try {
-      const cred = await this.authService.loginWithGoogle();
-      const profile = await this.authService.getProfile(cred.user.id);
-      
-      if (!profile) {
-        // New Google User - Needs NIK
-        this.isCompletingProfile.set(true);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
+      await this.authService.loginWithGoogle();
+      // Redirect happens here, so no need for profile check here
     } catch (e: any) {
       console.error(e);
       this.errorMessage.set('Gagal masuk dengan Google. Silakan coba lagi.');
@@ -241,7 +234,7 @@ export class LoginComponent implements OnInit {
 
   async finishGoogleProfile() {
     if (!this.nik) return;
-    const user = this.authService.getCurrentUser();
+    const user = await this.authService.getCurrentUser();
     if (!user) return;
 
     this.isLoading.set(true);

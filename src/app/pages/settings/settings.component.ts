@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -30,9 +30,9 @@ import { AuthService } from '../../services/auth.service';
               <label>Nama Lengkap / Display Name</label>
               <input [(ngModel)]="displayName" name="displayName" placeholder="Contoh: Admin DigiWarga" required>
             </div>
-            <div class="input-group mb-4">
+            <div class="input-group mb-4" *ngIf="user$ | async as user">
               <label>Email Address</label>
-              <input [value]="currentUser?.email" disabled class="opacity-50">
+              <input [value]="user.email" disabled class="opacity-50">
               <small class="text-xs text-muted mt-1 italic">* Email tidak dapat diubah secara langsung.</small>
             </div>
             <button type="submit" class="btn-primary w-full" [disabled]="loadingProfile()">
@@ -75,8 +75,8 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
-      <div class="footer-note mt-8 p-4 text-center glass-panel">
-        <p class="text-muted text-xs">Login aktif sejak: {{ currentUser?.metadata?.lastSignInTime | date:'medium' }}</p>
+      <div class="footer-note mt-8 p-4 text-center glass-panel" *ngIf="user$ | async as user">
+        <p class="text-muted text-xs">Login aktif sejak: {{ user.last_sign_in_at | date:'medium' }}</p>
       </div>
     </div>
   `,
@@ -156,13 +156,21 @@ import { AuthService } from '../../services/auth.service';
     .opacity-50 { opacity: 0.5; }
   `]
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
-  currentUser = this.authService.getCurrentUser();
+  user$ = this.authService.user$;
 
-  displayName = this.currentUser?.displayName || '';
+  displayName = '';
   newPassword = '';
   confirmPassword = '';
+
+  ngOnInit() {
+    this.user$.subscribe(user => {
+      if (user) {
+        this.displayName = user.user_metadata?.['display_name'] || user.email?.split('@')[0] || '';
+      }
+    });
+  }
 
   loadingProfile = signal(false);
   profileMessage = signal('');

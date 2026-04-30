@@ -282,11 +282,11 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   resetFamilyForm(): Family {
-    return { kk_number: '', head_of_family_name: '', address: '', rt_rw: '', district: '', regency: 'Bandung', province: 'Jawa Barat', created_at: null };
+    return { kk_number: '', head_of_family_name: '', address: '', rt_rw: '', district: '', regency: 'Bandung', province: 'Jawa Barat', created_at: '' };
   }
 
   resetResidentForm(): Resident {
-    return { nik: '', family_id: '', full_name: '', birth_place: '', birth_date: '', gender: 'Laki-laki', occupation: '', relationship: '', created_at: null };
+    return { nik: '', family_id: '', full_name: '', birth_place: '', birth_date: '', gender: 'Laki-laki', occupation: '', relationship: '', created_at: '' };
   }
 
   editFamily(family: Family) {

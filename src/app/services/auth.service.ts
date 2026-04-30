@@ -17,8 +17,8 @@ export class AuthService {
     this.supabase = createClient(environment.supabase.url, environment.supabase.key);
     
     // Initialize auth state
-    this.supabase.auth.getUser().then(({ data }) => {
-      this.authState.next(data.user);
+    this.supabase.auth.getUser().then((res) => {
+      this.authState.next(res.data.user);
     });
 
     // Listen for changes
@@ -77,8 +77,8 @@ export class AuthService {
   }
 
   async getCurrentUser() {
-    const { data } = await this.supabase.auth.getUser();
-    return data.user;
+    const res = await this.supabase.auth.getUser();
+    return res.data.user;
   }
 
   async updateUserProfile(displayName: string) {
