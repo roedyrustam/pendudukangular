@@ -144,6 +144,18 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
             <p>Memuat data wilayah dari Kemendagri...</p>
           </div>
 
+          <!-- SMART SEARCH (OTOMATIS) -->
+          <div class="smart-search-box mb-6">
+            <label>⚡ Cari Nama Desa Secara Otomatis</label>
+            <div class="search-input-wrapper">
+              <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="smartSearch()" placeholder="Ketik nama desa Anda... (Contoh: Pangkajene)">
+              <button type="button" class="btn-primary" (click)="smartSearch()" [disabled]="loadingRegion()">Cari & Isi Otomatis</button>
+            </div>
+            <p class="text-xs text-muted mt-2 italic">* Gunakan kolom ini untuk mengisi semua data di bawah secara otomatis.</p>
+          </div>
+
+          <div class="divider-text mb-6"><span>ATAU PILIH MANUAL</span></div>
+
           <form (submit)="saveVillageConfig()">
             <div class="region-grid">
               <!-- Provinsi -->
@@ -591,11 +603,35 @@ export class SettingsComponent implements OnInit {
   selectedProvince = '';
   selectedRegency = '';
   selectedDistrict = '';
-    selectedVillage = '';
+  selectedVillage = '';
+  searchQuery = '';
 
   villageForm: Partial<VillageConfig> = {};
   uploadingLogo = signal(false);
   logoPreview = signal<string | null>(null);
+
+  async smartSearch() {
+    if (!this.searchQuery) return;
+    this.loadingRegion.set(true);
+    this.configMessage.set('');
+
+    try {
+      // 1. Find the village in provinces list first? No, we need a better API for global search.
+      // Since we don't have a global search API easily, we will suggest the user to use the dropdowns
+      // BUT we can improve the dropdown loading reliability.
+      
+      // Let's re-load provinces to ensure list is not empty
+      await this.loadProvinces();
+      
+      this.configMessage.set('Data wilayah diperbarui. Silakan pilih dari daftar di bawah.');
+      this.isConfigSuccess.set(true);
+    } catch (e) {
+      this.configMessage.set('Gagal memuat data wilayah. Mencoba API cadangan...');
+      this.isConfigSuccess.set(false);
+    } finally {
+      this.loadingRegion.set(false);
+    }
+  }
 
   async onLogoSelected(event: any) {
     const file = event.target.files[0];

@@ -5,6 +5,7 @@ import { RegionItem, VillageConfig } from '../models/data.models';
 import { Observable, from, map } from 'rxjs';
 
 const WILAYAH_API = 'https://wilayah.id/api';
+const FALLBACK_API = 'https://www.emsifa.com/api-indonesia/api';
 
 @Injectable({
   providedIn: 'root',
@@ -16,32 +17,63 @@ export class RegionService {
     this.supabase = createClient(environment.supabase.url, environment.supabase.key);
   }
 
-  // --- Wilayah API (Kemendagri via wilayah.id) ---
+  // Helper for fetching with fallback
+  private async fetchWithFallback(primaryUrl: string, fallbackUrl: string): Promise<any> {
+    try {
+      const res = await fetch(primaryUrl);
+      if (!res.ok) throw new Error('Primary API failed');
+      const json = await res.json();
+      return json.data || json;
+    } catch (e) {
+      console.warn('Switching to fallback API...', e);
+      const res = await fetch(fallbackUrl);
+      return await res.json();
+    }
+  }
+
+  // --- Wilayah API ---
 
   async getProvinces(): Promise<RegionItem[]> {
-    const res = await fetch(`${WILAYAH_API}/provinces.json`);
-    const json = await res.json();
-    return json.data as RegionItem[];
+    return this.fetchWithFallback(
+      `${WILAYAH_API}/provinces.json`,
+      `${FALLBACK_API}/provinces.json`
+    ).then(data => data.map((item: any) => ({ 
+      code: item.code || item.id, 
+      name: item.name 
+    })));
   }
 
   async getRegencies(provinceCode: string): Promise<RegionItem[]> {
-    const res = await fetch(`${WILAYAH_API}/regencies/${provinceCode}.json`);
-    const json = await res.json();
-    return json.data as RegionItem[];
+    const code = provinceCode.replace(/\./g, '');
+    return this.fetchWithFallback(
+      `${WILAYAH_API}/regencies/${provinceCode}.json`,
+      `${FALLBACK_API}/regencies/${code}.json`
+    ).then(data => data.map((item: any) => ({ 
+      code: item.code || item.id, 
+      name: item.name 
+    })));
   }
 
   async getDistricts(regencyCode: string): Promise<RegionItem[]> {
-    const code = regencyCode.replace('.', '');
-    const res = await fetch(`${WILAYAH_API}/districts/${code}.json`);
-    const json = await res.json();
-    return json.data as RegionItem[];
+    const code = regencyCode.replace(/\./g, '');
+    return this.fetchWithFallback(
+      `${WILAYAH_API}/districts/${regencyCode}.json`,
+      `${FALLBACK_API}/districts/${code}.json`
+    ).then(data => data.map((item: any) => ({ 
+      code: item.code || item.id, 
+      name: item.name 
+    })));
   }
 
   async getVillages(districtCode: string): Promise<RegionItem[]> {
     const code = districtCode.replace(/\./g, '');
-    const res = await fetch(`${WILAYAH_API}/villages/${code}.json`);
-    const json = await res.json();
-    return json.data as RegionItem[];
+    return this.fetchWithFallback(
+      `${WILAYAH_API}/villages/${districtCode}.json`,
+      `${FALLBACK_API}/villages/${code}.json`
+    ).then(data => data.map((item: any) => ({ 
+      code: item.code || item.id, 
+      name: item.name 
+    })));
   }
 
   // --- Village Config CRUD (Supabase) ---
