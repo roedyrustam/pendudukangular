@@ -362,24 +362,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     }
     .stat-card { display: flex; align-items: center; gap: 1.5rem; }
     .stat-icon { font-size: 2.5rem; background: rgba(255, 255, 255, 0.05); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 1rem; }
-    .stat-value { font-size: 2.5rem; font-weight: 700;  color: var(--text-main);
-  line-height: 1.5;
-  overflow-x: hidden;
-  min-height: 100vh;
-}
-
-/* Common Utility Overrides */
-.text-xs { font-size: 0.75rem !important; }
-.text-muted { color: var(--text-muted) !important; }
-.mb-4 { margin-bottom: 1rem !important; }
-.mt-8 { margin-top: 2rem !important; }
-
-.badge {
-  padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
-  &.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
-  &.diproses { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
-  &.selesai { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-}
+    .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--primary); line-height: 1; margin: 0.2rem 0; }
     .stat-trend {
       font-size: 0.75rem;
       color: var(--text-muted);
@@ -410,7 +393,9 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .analytics-card { h3 { font-size: 1rem; margin-bottom: 1.5rem; opacity: 0.8; } }
     
     .chart-bar { display: flex; height: 35px; border-radius: 20px; overflow: hidden; background: rgba(255,255,255,0.05); }
-    .bar { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; transition: width 1s ease-out; }
+    .bar { height: 100%; }
+    
+
     .bar.male { background: linear-gradient(90deg, #3b82f6, #2563eb); }
     .bar.female { background: linear-gradient(90deg, #ec4899, #db2777); }
     
@@ -487,7 +472,6 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
        }
     }
     .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-    .mt-8 { margin-top: 2rem; }
     .mt-12 { margin-top: 3rem; }
     .gap-2 { gap: 0.5rem; }
     .text-primary { color: var(--primary); }
