@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole } from '../models/data.models';
+import { Family, Resident, ServiceRequest, ResidentDocument, AppUser, UserRole, Article, APBDes } from '../models/data.models';
 import { Observable, from, map } from 'rxjs';
 
 @Injectable({
@@ -258,5 +258,32 @@ export class DataService {
       .channel('public:families')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'families' }, callback)
       .subscribe();
+  }
+
+  // --- ARTICLES ---
+  getArticles(): Observable<Article[]> {
+    return from(
+      this.supabase
+        .from('articles')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ).pipe(map((res) => res.data as Article[]));
+  }
+
+  async addArticle(article: Partial<Article>) {
+    return this.supabase.from('articles').insert([article]);
+  }
+
+  // --- APBDes ---
+  getAPBDes(year?: number): Observable<APBDes[]> {
+    let query = this.supabase.from('apbdes').select('*');
+    if (year) {
+      query = query.eq('year', year);
+    }
+    return from(query.order('type', { ascending: true })).pipe(map((res) => res.data as APBDes[]));
+  }
+
+  async addAPBDes(data: Partial<APBDes>) {
+    return this.supabase.from('apbdes').insert([data]);
   }
 }

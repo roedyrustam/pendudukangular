@@ -111,3 +111,52 @@ export interface VillageConfig {
   updated_at?: string;
   created_at?: string;
 }
+
+export interface Article {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  image_url?: string;
+  caption?: string;
+  is_enabled: boolean;
+  is_headline: boolean;
+  category_id?: number;
+  user_id?: string;
+  hit_count: number;
+  source?: string;
+  source_url?: string;
+  document_url?: string;
+  created_at: string;
+}
+
+export interface APBDes {
+  id: number;
+  category_id?: number;
+  article_id?: number;
+  type: number; // 1: Pendapatan, 2: Belanja, 3: Pembiayaan
+  budget_name: string;
+  amount: number;
+  year: number;
+  phase?: string;
+  coordinator?: string;
+  bar_color: string;
+  created_at: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  item_code: string;
+  item_name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  condition: 'Good' | 'Fair' | 'Damaged';
+  location?: string;
+  procurement_year?: number;
+  price?: number;
+  source?: string;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+}

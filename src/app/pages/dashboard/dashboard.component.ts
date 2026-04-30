@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { RegionService } from '../../services/region.service';
 import { KemendesaService } from '../../services/kemendesa.service';
-import { ServiceRequest, AppUser, Resident, Family, VillageConfig } from '../../models/data.models';
+import { ServiceRequest, AppUser, Resident, Family, VillageConfig, Article, APBDes } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
@@ -130,21 +130,47 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
               </div>
             </div>
 
-            <div class="card-luxury cta-card">
-              <div class="cta-content">
-                 <h3>Siap mengelola data?</h3>
-                 <p class="text-muted mb-6">Mulai pendataan warga baru atau kelola kartu keluarga yang sudah ada dengan mudah.</p>
-                 <div class="flex gap-2">
-                    <button class="btn-primary" routerLink="/families">Kelola Keluarga</button>
-                    <button class="btn-outline" routerLink="/residents">Cari Penduduk</button>
-                 </div>
+            <!-- Budget Mini Widget -->
+            <div class="card-luxury budget-widget" *ngIf="budgetSummary()">
+              <div class="flex-between mb-4">
+                <h3>💰 Realisasi APBDes {{ budgetSummary()?.year }}</h3>
+                <button class="btn-text" routerLink="/apbdes">Detail</button>
               </div>
-              <div class="dev-tools mt-8">
-                <p class="text-xs text-muted mb-2">DEVELOPER TOOLS</p>
-                <button class="btn-secondary-sm" (click)="seedData()">Seed Sample Data</button>
+              <div class="budget-stat mb-4">
+                <label>Pendapatan</label>
+                <div class="flex-between">
+                  <span class="val">Rp {{ budgetSummary()?.income | number }}</span>
+                  <span class="pct text-xs text-primary">100%</span>
+                </div>
+                <div class="progress"><div class="bar income" style="width: 100%"></div></div>
+              </div>
+              <div class="budget-stat">
+                <label>Belanja / Pengeluaran</label>
+                <div class="flex-between">
+                  <span class="val">Rp {{ budgetSummary()?.expense | number }}</span>
+                  <span class="pct text-xs text-muted">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</span>
+                </div>
+                <div class="progress"><div class="bar expense" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Latest Articles / Portal Desa -->
+        <div class="articles-dashboard mt-8 fade-in" style="animation-delay: 0.2s">
+           <div class="flex-between mb-4">
+             <h3 class="flex items-center gap-2">📰 Berita & Pengumuman Desa</h3>
+             <button class="btn-text" routerLink="/articles">Ke Portal Berita</button>
+           </div>
+           <div class="articles-grid-mini">
+              <div *ngFor="let art of latestArticles()" class="card-luxury glass-panel art-mini-card" routerLink="/articles">
+                 <img [src]="art.image_url || 'assets/placeholder.jpg'" alt="News">
+                 <div class="p-3">
+                    <span class="text-xs text-muted">{{ art.created_at | date:'dd MMM' }}</span>
+                    <h4 class="text-sm mt-1 line-clamp-2">{{ art.title }}</h4>
+                 </div>
+              </div>
+           </div>
         </div>
       </ng-container>
 
@@ -350,6 +376,37 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       .count { font-weight: 700; font-size: 0.9rem; text-align: right; }
     }
 
+    .budget-widget {
+      .budget-stat {
+        label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem; }
+        .val { font-size: 1.1rem; font-weight: 700; }
+        .progress { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+        .bar { height: 100%; &.income { background: #34d399; } &.expense { background: #fb7185; } }
+      }
+    }
+
+    .articles-grid-mini {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      .art-mini-card {
+        padding: 0;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s;
+        &:hover { transform: translateY(-5px); border-color: var(--primary); }
+        img { width: 100%; height: 100px; object-fit: cover; }
+        h4 { font-weight: 600; line-height: 1.3; }
+      }
+    }
+
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
     .text-xs { font-size: 0.7rem; }
     .opacity-70 { opacity: 0.7; }
     .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
@@ -386,6 +443,8 @@ export class DashboardComponent implements OnDestroy {
   pendingRequestsCount = signal(0);
   recentResidentsCount = signal(0);
   latestRequests = signal<ServiceRequest[]>([]);
+  latestArticles = signal<Article[]>([]);
+  budgetSummary = signal<{year: number, income: number, expense: number, expensePercent: number} | null>(null);
 
   // Analytics
   maleCount = signal(0);
@@ -442,6 +501,25 @@ export class DashboardComponent implements OnDestroy {
           if (res && res.status) this.idmStatus.set(res.status);
           // Fallback demo status if API is mock or failing
           else if (!this.idmStatus()) this.idmStatus.set('Mandiri');
+        });
+      }
+    });
+
+    // Load Articles
+    this.dataService.getArticles().subscribe(data => {
+      this.latestArticles.set(data.slice(0, 4));
+    });
+
+    // Load Budget
+    this.dataService.getAPBDes(new Date().getFullYear()).subscribe(data => {
+      if (data.length > 0) {
+        const income = data.filter(i => i.type === 1).reduce((acc, curr) => acc + curr.amount, 0);
+        const expense = data.filter(i => i.type === 2).reduce((acc, curr) => acc + curr.amount, 0);
+        this.budgetSummary.set({
+          year: new Date().getFullYear(),
+          income,
+          expense,
+          expensePercent: income > 0 ? (expense / income) * 100 : 0
         });
       }
     });

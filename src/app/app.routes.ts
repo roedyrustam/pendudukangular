@@ -8,6 +8,8 @@ import { ResidentDetailComponent } from './pages/resident-detail/resident-detail
 import { SettingsComponent } from './pages/settings/settings.component';
 import { RegionInsightsComponent } from './pages/region-insights/region-insights.component';
 import { UsersComponent } from './pages/users/users.component';
+import { ArticlesComponent } from './pages/articles/articles.component';
+import { ApbdesComponent } from './pages/apbdes/apbdes.component';
 import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
@@ -24,6 +26,8 @@ export const routes: Routes = [
       { path: 'residents', component: ResidentsComponent },
       { path: 'residents/:nik', component: ResidentDetailComponent },
       { path: 'services', component: ServicesComponent },
+      { path: 'articles', component: ArticlesComponent },
+      { path: 'apbdes', component: ApbdesComponent },
       { path: 'region-insights', component: RegionInsightsComponent },
       { path: 'users', component: UsersComponent },
       { path: 'settings', component: SettingsComponent },
