@@ -305,28 +305,32 @@ export class ImportComponent {
   private mapSchema(item: any): any {
     if (this.targetTable === 'residents') {
       return {
-        nik: item.nik || item.id_pend,
-        full_name: item.nama || item.full_name,
-        birth_place: item.tempatlahir || item.birth_place,
-        birth_date: item.tanggallahir || item.birth_date,
-        gender: item.sex === '1' || item.gender === 'Laki-laki' ? 'Laki-laki' : 'Perempuan',
-        occupation: item.pekerjaan_id || item.occupation,
+        nik: item.nik || item.id_pend || item.nik_id,
+        full_name: item.nama || item.full_name || item.nama_penduduk,
+        birth_place: item.tempatlahir || item.birth_place || item.tempat_lahir,
+        birth_date: item.tanggallahir || item.birth_date || item.tgl_lahir,
+        gender: (item.sex === '1' || item.sex === 1 || item.gender === 'Laki-laki') ? 'Laki-laki' : 'Perempuan',
+        occupation: item.pekerjaan_id || item.occupation || item.pekerjaan,
         family_id: item.id_kk || item.family_id || item.no_kk,
-        address: item.alamat || item.address,
-        created_at: new Date().toISOString()
+        address: item.alamat || item.address || item.alamat_sekarang,
+        status_dasar: item.status_dasar === '1' || item.status_dasar === 1 ? 'HIDUP' : (item.status_dasar === '2' ? 'MATI' : 'HIDUP'),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
     }
     if (this.targetTable === 'families') {
       return {
-        kk_number: item.no_kk || item.kk_number,
-        head_of_family_name: item.nama_kepala || item.head_of_family_name,
-        address: item.alamat || item.address,
-        rt: item.rt,
-        rw: item.rw,
-        district: item.kecamatan || item.district,
-        created_at: new Date().toISOString()
+        kk_number: item.no_kk || item.kk_number || item.id_kk,
+        head_of_family_name: item.nama_kepala || item.head_of_family_name || item.kepala_keluarga,
+        address: item.alamat || item.address || item.alamat_jalan,
+        rt: item.rt || '00',
+        rw: item.rw || '00',
+        district: item.kecamatan || item.district || 'Kecamatan',
+        social_class: item.kelas_sosial || 'Sedang',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
     }
-    return item;
+    return { ...item, created_at: new Date().toISOString() };
   }
 }

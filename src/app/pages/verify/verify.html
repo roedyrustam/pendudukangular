@@ -1,56 +1,150 @@
 <div class="verify-container luxury-bg min-h-screen flex items-center justify-center p-4">
-  <div class="verify-card card-luxury max-w-lg w-full p-8 text-center">
-    <div class="brand mb-6 text-2xl font-bold text-gradient">DigiWarga Verifier</div>
+  <div class="security-backdrop"></div>
+  
+  <div class="verify-card card-luxury max-w-lg w-full p-10 text-center relative overflow-hidden">
+    <!-- Security Glow Effect -->
+    <div class="glow-orb" [class.success]="!loading() && !error() && request()?.status === 'Selesai'" [class.error]="error()"></div>
+    
+    <div class="brand-header mb-8">
+      <div class="text-gradient font-black text-3xl tracking-tighter">DIGIWARGA</div>
+      <div class="text-xs text-primary tracking-[0.3em] font-bold mt-1">OFFICIAL VERIFIER</div>
+    </div>
 
+    <!-- LOADING STATE -->
     <ng-container *ngIf="loading()">
-      <div class="spinner mx-auto mb-4"></div>
-      <p>Memverifikasi Dokumen...</p>
+      <div class="loading-animation mb-6">
+        <div class="scan-line"></div>
+        <div class="spinner-premium"></div>
+      </div>
+      <p class="text-muted animate-pulse">Menghubungkan ke Blockchain & Database Desa...</p>
     </ng-container>
 
+    <!-- ERROR STATE -->
     <ng-container *ngIf="!loading() && error()">
-      <div class="status-icon text-red mt-4 text-5xl">❌</div>
-      <h2 class="text-xl font-bold mt-4 mb-2">Verifikasi Gagal</h2>
-      <p class="text-muted">{{ error() }}</p>
+      <div class="status-icon-wrapper error mb-6">
+        <span class="icon">🚫</span>
+      </div>
+      <h2 class="text-2xl font-bold mb-3 text-red-400">Verifikasi Gagal</h2>
+      <div class="error-box p-4 rounded-xl border border-red-500/20 bg-red-500/5 mb-6">
+        <p class="text-sm text-red-300">{{ error() }}</p>
+      </div>
+      <p class="text-xs text-muted mb-6">Dokumen ini tidak terdaftar dalam sistem resmi kami atau telah kedaluwarsa.</p>
     </ng-container>
 
+    <!-- SUCCESS STATE -->
     <ng-container *ngIf="!loading() && !error() && request()">
-      <div class="status-icon text-green mt-4 text-5xl" *ngIf="request()?.status === 'Selesai'">✅</div>
-      <div class="status-icon text-orange mt-4 text-5xl" *ngIf="request()?.status !== 'Selesai'">⚠️</div>
+      <div class="status-icon-wrapper" [class.success]="request()?.status === 'Selesai'" [class.warning]="request()?.status !== 'Selesai'">
+        <span class="icon">{{ request()?.status === 'Selesai' ? '🛡️' : '⏳' }}</span>
+        <div class="verified-seal" *ngIf="request()?.status === 'Selesai'">VERIFIED</div>
+      </div>
       
-      <h2 class="text-2xl font-bold mt-4 mb-2">
-        {{ request()?.status === 'Selesai' ? 'Dokumen Otentik' : 'Dokumen Belum Disahkan' }}
+      <h2 class="text-3xl font-black mb-2" [class.text-primary]="request()?.status === 'Selesai'">
+        {{ request()?.status === 'Selesai' ? 'DOKUMEN ASLI' : 'PROSES VALIDASI' }}
       </h2>
-      <p class="text-muted mb-6">Sistem mencatat bahwa surat ini sah dikeluarkan oleh Desa Maju Jaya.</p>
+      <p class="text-sm text-muted mb-8 leading-relaxed">
+        Dokumen ini telah terverifikasi secara digital melalui sistem administrasi desa terpadu DigiWarga.
+      </p>
 
-      <div class="data-box bg-dark/50 p-4 rounded-lg text-left mb-6 border border-white/10">
-        <p class="mb-2"><span class="text-muted">Jenis Layanan:</span> <br> <strong>{{ request()?.service_type }}</strong></p>
-        <p class="mb-2"><span class="text-muted">Diberikan Kepada:</span> <br> <strong>{{ resident()?.full_name || 'NN' }} ({{ request()?.nik }})</strong></p>
-        <p class="mb-0"><span class="text-muted">Tanggal Pengesahan:</span> <br> <strong>{{ request()?.processed_at | date:'dd MMMM yyyy HH:mm' }}</strong></p>
+      <div class="verification-details card-luxury bg-white/5 p-6 rounded-2xl text-left border border-white/10 mb-8">
+        <div class="detail-row">
+          <label>ID DOKUMEN</label>
+          <div class="val monospace">{{ request()?.id }}</div>
+        </div>
+        <div class="detail-row">
+          <label>JENIS LAYANAN</label>
+          <div class="val">{{ request()?.service_type }}</div>
+        </div>
+        <div class="detail-row">
+          <label>PEMEGANG DOKUMEN</label>
+          <div class="val">{{ resident()?.full_name || 'N/A' }}</div>
+        </div>
+        <div class="detail-row">
+          <label>NIK</label>
+          <div class="val monospace">{{ request()?.nik }}</div>
+        </div>
+        <div class="detail-row no-border">
+          <label>TANGGAL PENGESAHAN</label>
+          <div class="val">{{ (request()?.processed_at || request()?.created_at) | date:'dd MMMM yyyy, HH:mm' }} WITA</div>
+        </div>
       </div>
 
-      <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-primary full-width block">
-        Unduh Salinan Digital
+      <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-primary-luxury w-full py-4 text-lg font-bold">
+        <span>📄</span> UNDUH SALINAN RESMI
       </a>
     </ng-container>
+
+    <div class="footer-note mt-10 text-[10px] text-muted uppercase tracking-widest opacity-50">
+      &copy; 2026 Pemerintah Desa Maju Jaya • Sistem DigiWarga v3.0
+    </div>
   </div>
 </div>
 
 <style>
 .verify-container {
-  min-height: 100vh;
-  background: var(--darkness);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #111827 0%, #030712 100%);
 }
-.brand {
-  letter-spacing: 2px;
+.security-backdrop {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
-.status-icon {
-  text-shadow: 0 0 20px currentColor;
+.verify-card {
+  z-index: 10;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(25px);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
 }
-.text-green { color: #10b981; }
-.text-red { color: #ef4444; }
-.text-orange { color: #f59e0b; }
-.data-box p { font-size: 0.95rem; line-height: 1.4; }
+.glow-orb {
+  position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 100px; background: var(--primary);
+  filter: blur(80px); opacity: 0.15; transition: all 1s ease;
+}
+.glow-orb.success { background: #10b981; opacity: 0.25; }
+.glow-orb.error { background: #ef4444; opacity: 0.25; }
+
+.status-icon-wrapper {
+  width: 100px; height: 100px; margin: 0 auto 2rem;
+  background: rgba(255,255,255,0.03); border-radius: 50%;
+  display: flex; items-center; justify-content: center;
+  position: relative; border: 1px solid rgba(255,255,255,0.1);
+  .icon { font-size: 3rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
+  &.success { border-color: #10b981; background: rgba(16,185,129,0.05); .icon { filter: drop-shadow(0 0 15px #10b981); } }
+  &.warning { border-color: #f59e0b; background: rgba(245,158,11,0.05); }
+  &.error { border-color: #ef4444; background: rgba(239,68,68,0.05); }
+}
+
+.verified-seal {
+  position: absolute; bottom: -5px; background: #10b981; color: #000;
+  font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(16,185,129,0.4);
+}
+
+.verification-details {
+  .detail-row {
+    padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    label { display: block; font-size: 10px; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
+    .val { font-size: 0.95rem; font-weight: 600; color: #fff; }
+    .monospace { font-family: monospace; letter-spacing: 0.5px; color: var(--primary); }
+    &.no-border { border-bottom: none; }
+  }
+}
+
+.btn-primary-luxury {
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+  color: white; border: none; border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+  &:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5); }
+}
+
+.spinner-premium {
+  width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.05);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 1s infinite linear; margin: 0 auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
