@@ -80,3 +80,28 @@ export interface ResidentDocument {
   is_requirement?: boolean; // syarat_surat (apakah dokumen ini syarat permohonan)
   created_at: string; // tgl_upload
 }
+
+// --- Region / Wilayah API (wilayah.id / Kemendagri) ---
+export interface RegionItem {
+  code: string;
+  name: string;
+}
+
+export interface VillageConfig {
+  id?: string;
+  province_code: string;
+  province_name: string;
+  regency_code: string;
+  regency_name: string;
+  district_code: string;
+  district_name: string;
+  village_code: string;
+  village_name: string;
+  village_head?: string;      // Nama Kepala Desa
+  village_address?: string;   // Alamat Kantor Desa
+  village_phone?: string;     // No Telp Kantor
+  village_email?: string;     // Email Desa
+  village_logo_url?: string;  // URL Logo Desa
+  updated_at?: string;
+  created_at?: string;
+}

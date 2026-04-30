@@ -442,6 +442,6 @@ export class ResidentDetailComponent implements OnInit {
 
   async downloadBiodata(resident: Resident) {
     const family = await (this.family$ ? new Promise<Family | undefined>(resolve => this.family$.subscribe((f: Family | undefined) => resolve(f))) : Promise.resolve(undefined));
-    this.pdfService.generateResidentBiodata(resident, family as Family);
+    await this.pdfService.generateResidentBiodata(resident, family as Family);
   }
 }

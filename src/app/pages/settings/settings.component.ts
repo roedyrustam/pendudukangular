@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { RegionService } from '../../services/region.service';
+import { RegionItem, VillageConfig } from '../../models/data.models';
 
 @Component({
   selector: 'app-settings',
@@ -10,11 +12,22 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="settings-container fade-in">
       <header class="mb-8">
-        <h2 class="title-gradient">Pengaturan Akun</h2>
-        <p class="text-muted">Kelola informasi profil dan keamanan login Anda.</p>
+        <h2 class="title-gradient">Pengaturan Sistem</h2>
+        <p class="text-muted">Kelola informasi profil, keamanan, dan konfigurasi wilayah desa.</p>
       </header>
 
-      <div class="settings-grid">
+      <!-- Tab Navigation -->
+      <div class="tab-nav glass-panel mb-8">
+        <button [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')">
+          👤 Profil & Keamanan
+        </button>
+        <button [class.active]="activeTab() === 'village'" (click)="activeTab.set('village')">
+          🏘️ Konfigurasi Desa
+        </button>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div *ngIf="activeTab() === 'profile'" class="settings-grid">
         <!-- Profile Card -->
         <div class="card-luxury glass-panel p-6">
           <div class="section-title mb-6">
@@ -75,12 +88,179 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
+      <!-- VILLAGE CONFIG TAB -->
+      <div *ngIf="activeTab() === 'village'" class="village-config-section">
+        
+        <!-- Current Village Info (if exists) -->
+        <div *ngIf="currentConfig()" class="card-luxury glass-panel p-6 mb-6 village-current">
+          <div class="section-title mb-4">
+            <span class="icon">📍</span>
+            <div>
+              <h3>Konfigurasi Aktif</h3>
+              <p class="text-xs text-muted">Wilayah desa yang saat ini terdaftar di sistem.</p>
+            </div>
+          </div>
+          <div class="current-info-grid">
+            <div class="info-chip">
+              <span class="chip-label">Provinsi</span>
+              <span class="chip-value">{{ currentConfig()?.province_name }}</span>
+              <span class="chip-code">{{ currentConfig()?.province_code }}</span>
+            </div>
+            <div class="info-chip">
+              <span class="chip-label">Kabupaten/Kota</span>
+              <span class="chip-value">{{ currentConfig()?.regency_name }}</span>
+              <span class="chip-code">{{ currentConfig()?.regency_code }}</span>
+            </div>
+            <div class="info-chip">
+              <span class="chip-label">Kecamatan</span>
+              <span class="chip-value">{{ currentConfig()?.district_name }}</span>
+              <span class="chip-code">{{ currentConfig()?.district_code }}</span>
+            </div>
+            <div class="info-chip highlight">
+              <span class="chip-label">Desa / Kelurahan</span>
+              <span class="chip-value">{{ currentConfig()?.village_name }}</span>
+              <span class="chip-code">{{ currentConfig()?.village_code }}</span>
+            </div>
+          </div>
+          <div class="current-meta mt-4" *ngIf="currentConfig()?.village_head || currentConfig()?.village_phone">
+            <span *ngIf="currentConfig()?.village_head">🧑‍💼 {{ currentConfig()?.village_head }}</span>
+            <span *ngIf="currentConfig()?.village_phone">📞 {{ currentConfig()?.village_phone }}</span>
+            <span *ngIf="currentConfig()?.village_email">✉️ {{ currentConfig()?.village_email }}</span>
+          </div>
+        </div>
+
+        <div class="card-luxury glass-panel p-6">
+          <div class="section-title mb-6">
+            <span class="icon">🏘️</span>
+            <div>
+              <h3>{{ currentConfig() ? 'Ubah' : 'Daftarkan' }} Konfigurasi Desa</h3>
+              <p class="text-xs text-muted">Pilih wilayah berdasarkan data Kemendagri (API wilayah.id)</p>
+            </div>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div *ngIf="loadingRegion()" class="loading-region">
+            <div class="spinner-small"></div>
+            <p>Memuat data wilayah dari Kemendagri...</p>
+          </div>
+
+          <form (submit)="saveVillageConfig()">
+            <div class="region-grid">
+              <!-- Provinsi -->
+              <div class="input-group">
+                <label>
+                  Provinsi
+                  <span class="badge-count" *ngIf="provinces().length">{{ provinces().length }} data</span>
+                </label>
+                <select [(ngModel)]="selectedProvince" name="province" (change)="onProvinceChange()" required>
+                  <option value="">-- Pilih Provinsi --</option>
+                  <option *ngFor="let p of provinces()" [value]="p.code">{{ p.name }}</option>
+                </select>
+              </div>
+
+              <!-- Kabupaten/Kota -->
+              <div class="input-group">
+                <label>
+                  Kabupaten / Kota
+                  <span class="badge-count" *ngIf="regencies().length">{{ regencies().length }} data</span>
+                </label>
+                <select [(ngModel)]="selectedRegency" name="regency" (change)="onRegencyChange()" required [disabled]="!selectedProvince">
+                  <option value="">-- Pilih Kabupaten / Kota --</option>
+                  <option *ngFor="let r of regencies()" [value]="r.code">{{ r.name }}</option>
+                </select>
+              </div>
+
+              <!-- Kecamatan -->
+              <div class="input-group">
+                <label>
+                  Kecamatan
+                  <span class="badge-count" *ngIf="districts().length">{{ districts().length }} data</span>
+                </label>
+                <select [(ngModel)]="selectedDistrict" name="district" (change)="onDistrictChange()" required [disabled]="!selectedRegency">
+                  <option value="">-- Pilih Kecamatan --</option>
+                  <option *ngFor="let d of districts()" [value]="d.code">{{ d.name }}</option>
+                </select>
+              </div>
+
+              <!-- Desa/Kelurahan -->
+              <div class="input-group">
+                <label>
+                  Desa / Kelurahan
+                  <span class="badge-count" *ngIf="villages().length">{{ villages().length }} data</span>
+                </label>
+                <select [(ngModel)]="selectedVillage" name="village" required [disabled]="!selectedDistrict">
+                  <option value="">-- Pilih Desa / Kelurahan --</option>
+                  <option *ngFor="let v of villages()" [value]="v.code">{{ v.name }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Village Detail Fields -->
+            <div class="village-detail-section mt-6" *ngIf="selectedVillage">
+              <h4 class="mb-4 text-muted">Detail Informasi Desa</h4>
+              <div class="region-grid">
+                <div class="input-group">
+                  <label>Nama Kepala Desa</label>
+                  <input [(ngModel)]="villageForm.village_head" name="village_head" placeholder="Nama Kepala Desa">
+                </div>
+                <div class="input-group">
+                  <label>Alamat Kantor Desa</label>
+                  <input [(ngModel)]="villageForm.village_address" name="village_address" placeholder="Jl. Raya Desa...">
+                </div>
+                <div class="input-group">
+                  <label>No. Telepon Kantor</label>
+                  <input [(ngModel)]="villageForm.village_phone" name="village_phone" placeholder="021-xxxxxxx">
+                </div>
+                <div class="input-group">
+                  <label>Email Desa</label>
+                  <input [(ngModel)]="villageForm.village_email" name="village_email" placeholder="desa@example.go.id">
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full mt-6" 
+              [disabled]="!selectedVillage || savingConfig()">
+              {{ savingConfig() ? 'Menyimpan Konfigurasi...' : '💾 Simpan Konfigurasi Desa' }}
+            </button>
+          </form>
+
+          <div *ngIf="configMessage()" class="status-msg mt-4" [class.success]="isConfigSuccess()">
+            {{ configMessage() }}
+          </div>
+        </div>
+      </div>
+
       <div class="footer-note mt-8 p-4 text-center glass-panel" *ngIf="user$ | async as user">
         <p class="text-muted text-xs">Login aktif sejak: {{ user.last_sign_in_at | date:'medium' }}</p>
       </div>
     </div>
   `,
   styles: [`
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-radius: 1rem;
+      overflow: hidden;
+      padding: 0.25rem;
+      button {
+        flex: 1;
+        padding: 0.85rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        &:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        &.active {
+          background: var(--primary);
+          color: #fff;
+          box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+      }
+    }
     .settings-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -103,8 +283,15 @@ import { AuthService } from '../../services/auth.service';
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-      input {
+      label { 
+        font-size: 0.8rem; 
+        color: var(--text-muted); 
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      input, select {
         background: rgba(255,255,255,0.05);
         border: 1px solid var(--border-color);
         padding: 0.8rem 1rem;
@@ -117,7 +304,9 @@ import { AuthService } from '../../services/auth.service';
           background: rgba(255,255,255,0.08);
           box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
         }
+        &:disabled { opacity: 0.35; cursor: not-allowed; }
       }
+      select { appearance: none; }
     }
     .btn-outline {
       background: none;
@@ -154,12 +343,94 @@ import { AuthService } from '../../services/auth.service';
     }
     .w-full { width: 100%; }
     .opacity-50 { opacity: 0.5; }
+
+    /* Village Config Styles */
+    .region-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .badge-count {
+      font-size: 0.65rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary);
+      padding: 0.15rem 0.5rem;
+      border-radius: 1rem;
+      font-weight: 700;
+    }
+    .loading-region {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      margin-bottom: 1.5rem;
+      p { font-size: 0.85rem; color: var(--text-muted); }
+    }
+    .spinner-small {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .village-current {
+      .current-info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+      }
+      .info-chip {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        transition: all 0.3s;
+        .chip-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .chip-value { font-size: 1rem; font-weight: 600; color: #fff; }
+        .chip-code { font-size: 0.7rem; color: var(--primary); font-family: monospace; }
+        &.highlight {
+          border-color: var(--primary);
+          background: rgba(99, 102, 241, 0.08);
+          box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+      }
+      .current-meta {
+        display: flex;
+        gap: 2rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+        span { font-size: 0.8rem; color: var(--text-muted); }
+      }
+    }
+
+    .village-detail-section {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      h4 { font-size: 0.9rem; font-weight: 600; }
+    }
+
+    @media (max-width: 768px) {
+      .region-grid { grid-template-columns: 1fr; }
+      .village-current .current-info-grid { grid-template-columns: 1fr 1fr; }
+    }
   `]
 })
 export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
+  private regionService = inject(RegionService);
   user$ = this.authService.user$;
 
+  activeTab = signal<'profile' | 'village'>('profile');
+
+  // Profile
   displayName = '';
   newPassword = '';
   confirmPassword = '';
@@ -170,8 +441,29 @@ export class SettingsComponent implements OnInit {
         this.displayName = user.user_metadata?.['display_name'] || user.email?.split('@')[0] || '';
       }
     });
+
+    // Load provinces on init
+    this.loadProvinces();
+
+    // Load existing config
+    this.regionService.getVillageConfig().subscribe(config => {
+      if (config) {
+        this.currentConfig.set(config);
+        this.villageForm = { ...config };
+        // Pre-populate selections
+        this.selectedProvince = config.province_code;
+        this.selectedRegency = config.regency_code;
+        this.selectedDistrict = config.district_code;
+        this.selectedVillage = config.village_code;
+        // Load cascading data
+        this.regionService.getRegencies(config.province_code).then(d => this.regencies.set(d));
+        this.regionService.getDistricts(config.regency_code).then(d => this.districts.set(d));
+        this.regionService.getVillages(config.district_code).then(d => this.villages.set(d));
+      }
+    });
   }
 
+  // --- Profile & Security ---
   loadingProfile = signal(false);
   profileMessage = signal('');
   isProfileSuccess = signal(false);
@@ -225,4 +517,122 @@ export class SettingsComponent implements OnInit {
       this.loadingSecurity.set(false);
     }
   }
+
+  // --- Village Configuration ---
+  provinces = signal<RegionItem[]>([]);
+  regencies = signal<RegionItem[]>([]);
+  districts = signal<RegionItem[]>([]);
+  villages = signal<RegionItem[]>([]);
+  
+  currentConfig = signal<VillageConfig | null>(null);
+  loadingRegion = signal(false);
+  savingConfig = signal(false);
+  configMessage = signal('');
+  isConfigSuccess = signal(false);
+
+  selectedProvince = '';
+  selectedRegency = '';
+  selectedDistrict = '';
+  selectedVillage = '';
+
+  villageForm: Partial<VillageConfig> = {};
+
+  async loadProvinces() {
+    this.loadingRegion.set(true);
+    try {
+      const data = await this.regionService.getProvinces();
+      this.provinces.set(data);
+    } catch (e) {
+      console.error('Failed to load provinces', e);
+    } finally {
+      this.loadingRegion.set(false);
+    }
+  }
+
+  async onProvinceChange() {
+    this.regencies.set([]);
+    this.districts.set([]);
+    this.villages.set([]);
+    this.selectedRegency = '';
+    this.selectedDistrict = '';
+    this.selectedVillage = '';
+
+    if (!this.selectedProvince) return;
+    this.loadingRegion.set(true);
+    try {
+      const data = await this.regionService.getRegencies(this.selectedProvince);
+      this.regencies.set(data);
+    } catch (e) { console.error(e); }
+    finally { this.loadingRegion.set(false); }
+  }
+
+  async onRegencyChange() {
+    this.districts.set([]);
+    this.villages.set([]);
+    this.selectedDistrict = '';
+    this.selectedVillage = '';
+
+    if (!this.selectedRegency) return;
+    this.loadingRegion.set(true);
+    try {
+      const data = await this.regionService.getDistricts(this.selectedRegency);
+      this.districts.set(data);
+    } catch (e) { console.error(e); }
+    finally { this.loadingRegion.set(false); }
+  }
+
+  async onDistrictChange() {
+    this.villages.set([]);
+    this.selectedVillage = '';
+
+    if (!this.selectedDistrict) return;
+    this.loadingRegion.set(true);
+    try {
+      const data = await this.regionService.getVillages(this.selectedDistrict);
+      this.villages.set(data);
+    } catch (e) { console.error(e); }
+    finally { this.loadingRegion.set(false); }
+  }
+
+  async saveVillageConfig() {
+    if (!this.selectedVillage) return;
+
+    const provinceName = this.provinces().find(p => p.code === this.selectedProvince)?.name || '';
+    const regencyName = this.regencies().find(r => r.code === this.selectedRegency)?.name || '';
+    const districtName = this.districts().find(d => d.code === this.selectedDistrict)?.name || '';
+    const villageName = this.villages().find(v => v.code === this.selectedVillage)?.name || '';
+
+    const config: VillageConfig = {
+      id: this.currentConfig()?.id,
+      province_code: this.selectedProvince,
+      province_name: provinceName,
+      regency_code: this.selectedRegency,
+      regency_name: regencyName,
+      district_code: this.selectedDistrict,
+      district_name: districtName,
+      village_code: this.selectedVillage,
+      village_name: villageName,
+      village_head: this.villageForm.village_head || '',
+      village_address: this.villageForm.village_address || '',
+      village_phone: this.villageForm.village_phone || '',
+      village_email: this.villageForm.village_email || '',
+      village_logo_url: this.villageForm.village_logo_url || '',
+      created_at: this.currentConfig()?.created_at,
+    };
+
+    this.savingConfig.set(true);
+    this.configMessage.set('');
+    try {
+      await this.regionService.saveVillageConfig(config);
+      this.isConfigSuccess.set(true);
+      this.configMessage.set(`✅ Konfigurasi desa "${villageName}" (${this.selectedVillage}) berhasil disimpan!`);
+      this.currentConfig.set(config);
+    } catch (err: any) {
+      this.isConfigSuccess.set(false);
+      this.configMessage.set('Gagal menyimpan konfigurasi: ' + (err.message || err));
+    } finally {
+      this.savingConfig.set(false);
+    }
+  }
 }
+

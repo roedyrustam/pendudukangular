@@ -1,21 +1,39 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Resident, Family } from '../models/data.models';
+import { Resident, Family, VillageConfig } from '../models/data.models';
+import { RegionService } from './region.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PdfService {
+  private regionService = inject(RegionService);
+  private _villageConfig: VillageConfig | null = null;
 
-  generateResidentBiodata(resident: Resident, family?: Family) {
+  /** Call once to cache village config for all PDF operations */
+  async loadVillageConfig() {
+    if (!this._villageConfig) {
+      try {
+        this._villageConfig = await firstValueFrom(this.regionService.getVillageConfig());
+      } catch (e) { /* ignore */ }
+    }
+    return this._villageConfig;
+  }
+
+  private get villageName(): string {
+    return this._villageConfig?.village_name || 'DigiWarga';
+  }
+  async generateResidentBiodata(resident: Resident, family?: Family) {
+    await this.loadVillageConfig();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Header
     doc.setFontSize(18);
     doc.setTextColor(40);
-    doc.text('BIODATA PENDUDUK DIGIWARGA', pageWidth / 2, 20, { align: 'center' });
+    doc.text(`BIODATA PENDUDUK — ${this.villageName.toUpperCase()}`, pageWidth / 2, 20, { align: 'center' });
     
     doc.setDrawColor(200);
     doc.line(20, 25, pageWidth - 20, 25);
@@ -76,17 +94,18 @@ export class PdfService {
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 20, footerY);
-    doc.text('Sistem Informasi Kependudukan DigiWarga', pageWidth - 20, footerY, { align: 'right' });
+    doc.text(`Sistem Kependudukan — ${this.villageName}`, pageWidth - 20, footerY, { align: 'right' });
 
     doc.save(`Biodata_${resident.nik}.pdf`);
   }
 
-  generateResidentsReport(residents: Resident[], filterTitle: string = 'Seluruh Penduduk') {
+  async generateResidentsReport(residents: Resident[], filterTitle: string = 'Seluruh Penduduk') {
+    await this.loadVillageConfig();
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFontSize(18);
-    doc.text('LAPORAN DATA PENDUDUK', pageWidth / 2, 15, { align: 'center' });
+    doc.text(`LAPORAN DATA PENDUDUK — ${this.villageName.toUpperCase()}`, pageWidth / 2, 15, { align: 'center' });
     
     doc.setFontSize(11);
     doc.text(`Kriteria: ${filterTitle}`, pageWidth / 2, 22, { align: 'center' });
@@ -115,13 +134,14 @@ export class PdfService {
     doc.save(`Laporan_Penduduk_${Date.now()}.pdf`);
   }
 
-  generateFamilyCard(family: Family, members: Resident[]) {
+  async generateFamilyCard(family: Family, members: Resident[]) {
+    await this.loadVillageConfig();
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Title
     doc.setFontSize(18);
-    doc.text('PROFIL KARTU KELUARGA', pageWidth / 2, 20, { align: 'center' });
+    doc.text(`PROFIL KARTU KELUARGA — ${this.villageName.toUpperCase()}`, pageWidth / 2, 20, { align: 'center' });
     doc.setFontSize(14);
     doc.text(`No. ${family.kk_number}`, pageWidth / 2, 28, { align: 'center' });
 

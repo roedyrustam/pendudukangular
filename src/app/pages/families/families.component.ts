@@ -1,7 +1,8 @@
 import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
-import { Family, Resident } from '../../models/data.models';
+import { RegionService } from '../../services/region.service';
+import { Family, Resident, VillageConfig } from '../../models/data.models';
 import { FormsModule } from '@angular/forms';
 import { PdfService } from '../../services/pdf.service';
 
@@ -266,6 +267,7 @@ import { PdfService } from '../../services/pdf.service';
 export class FamiliesComponent implements OnDestroy {
   private dataService = inject(DataService);
   private pdfService = inject(PdfService);
+  private regionService = inject(RegionService);
   families = signal<Family[]>([]);
   showAddFamily = signal(false);
   familyToEdit = signal<Family | null>(null);
@@ -274,12 +276,22 @@ export class FamiliesComponent implements OnDestroy {
   members = signal<Resident[]>([]);
   allResidents = signal<Resident[]>([]);
   private subscriptions: any[] = [];
+  private villageConfig: VillageConfig | null = null;
 
   familyForm: Family = this.resetFamilyForm();
   newResident: Resident = this.resetResidentForm();
 
   constructor() {
     this.refreshData();
+
+    // Load Village Config for auto-fill
+    this.regionService.getVillageConfig().subscribe(config => {
+      if (config) {
+        this.villageConfig = config;
+        // Update default form values
+        this.familyForm = this.resetFamilyForm();
+      }
+    });
 
     // Realtime Subscriptions
     this.subscriptions.push(
@@ -311,6 +323,7 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   resetFamilyForm(): Family {
+    const vc = this.villageConfig;
     return { 
       kk_number: '', 
       head_of_family_name: '', 
@@ -320,9 +333,9 @@ export class FamiliesComponent implements OnDestroy {
       rt: '', 
       rw: '', 
       hamlet: '', 
-      district: '', 
-      regency: 'Bandung', 
-      province: 'Jawa Barat', 
+      district: vc?.district_name || '', 
+      regency: vc?.regency_name || '', 
+      province: vc?.province_name || '', 
       social_class: 'Sedang', 
       print_date: '', 
       created_at: '' 
@@ -382,10 +395,10 @@ export class FamiliesComponent implements OnDestroy {
      }
   }
 
-  downloadFamilyPDF() {
+  async downloadFamilyPDF() {
     const fam = this.selectedFamily();
     if (fam) {
-      this.pdfService.generateFamilyCard(fam, this.members());
+      await this.pdfService.generateFamilyCard(fam, this.members());
     }
   }
 }

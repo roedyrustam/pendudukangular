@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
-import { ServiceRequest, AppUser, Resident, Family } from '../../models/data.models';
+import { RegionService } from '../../services/region.service';
+import { ServiceRequest, AppUser, Resident, Family, VillageConfig } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
@@ -22,7 +23,13 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
           </div>
         </div>
         <div class="flex-between">
-          <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
+          <div>
+            <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
+            <p *ngIf="villageConfig()" class="village-label mt-2">
+              📍 {{ villageConfig()?.village_name }}, {{ villageConfig()?.district_name }}, {{ villageConfig()?.regency_name }}
+              <span class="village-code">{{ villageConfig()?.village_code }}</span>
+            </p>
+          </div>
           <div class="territory-filter" *ngIf="profile.role !== 'warga'">
             <label class="text-xs text-muted mr-2">Filter Wilayah (RT/RW):</label>
             <select class="custom-select" [ngModel]="selectedRt()" (ngModelChange)="onRtChange($event)">
@@ -164,7 +171,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
              <div class="kk-badge mt-2">No. KK: {{ family.kk_number }}</div>
              <p class="text-xs text-muted mt-4">Alamat Terdaftar:</p>
              <p class="text-sm">{{ family.address }}</p>
-             <p class="text-sm">{{ family.rt_rw }} - {{ family.district }}</p>
+             <p class="text-sm">RT {{ family.rt || '-' }}/RW {{ family.rw || '-' }} - {{ family.hamlet || '' }} {{ family.district }}</p>
              <button class="btn-primary mt-6 w-full" routerLink="/services">Ajukan Layanan Baru</button>
           </div>
 
@@ -190,6 +197,19 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       padding: 3rem;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
       h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    }
+    .village-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      .village-code {
+        font-family: monospace;
+        font-size: 0.7rem;
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary);
+        padding: 0.1rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-left: 0.5rem;
+      }
     }
     .custom-select {
       background: rgba(255, 255, 255, 0.05);
@@ -325,8 +345,10 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 export class DashboardComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
+  private regionService = inject(RegionService);
 
   userProfile$ = this.authService.userData$;
+  villageConfig = signal<VillageConfig | null>(null);
   
   // Warga Specific Data
   residentProfile$: Observable<Resident | undefined> = this.userProfile$.pipe(
@@ -393,6 +415,11 @@ export class DashboardComponent implements OnDestroy {
         this.refreshData();
       })
     );
+
+    // Load Village Config
+    this.regionService.getVillageConfig().subscribe(config => {
+      if (config) this.villageConfig.set(config);
+    });
   }
 
   refreshData() {
@@ -469,20 +496,28 @@ export class DashboardComponent implements OnDestroy {
   }
 
   async seedData() {
-    const sampleFamily = {
+    // Get village config for auto-fill
+    const vc = this.villageConfig();
+
+    const sampleFamily: Family = {
       kk_number: '327301234567' + Math.floor(Math.random() * 9000 + 1000),
+      head_of_family_nik: '327301010170' + Math.floor(Math.random() * 9000 + 1000),
       head_of_family_name: 'Budi Santoso',
       address: 'Jl. Merdeka No. 10',
       rt_rw: '01/05',
-      district: 'Cicendo',
-      regency: 'Bandung',
-      province: 'Jawa Barat',
+      rt: '001',
+      rw: '005',
+      hamlet: 'Dusun Mekar',
+      district: vc?.district_name || 'Cicendo',
+      regency: vc?.regency_name || 'Bandung',
+      province: vc?.province_name || 'Jawa Barat',
+      social_class: 'Sedang',
       created_at: ''
     };
 
     await this.dataService.addFamily(sampleFamily);
     await this.dataService.addResident({
-      nik: '327301010170' + Math.floor(Math.random() * 9000 + 1000),
+      nik: sampleFamily.head_of_family_nik!,
       family_id: sampleFamily.kk_number,
       full_name: 'Budi Santoso',
       birth_place: 'Bandung',
@@ -490,6 +525,14 @@ export class DashboardComponent implements OnDestroy {
       gender: 'Laki-laki',
       occupation: 'Wiraswasta',
       relationship: 'Kepala Keluarga',
+      religion: 'Islam',
+      education: 'SMA/Sederajat',
+      marital_status: 'Kawin',
+      blood_type: 'O',
+      citizenship: 'WNI',
+      father_name: 'Ahmad Santoso',
+      mother_name: 'Siti Aminah',
+      address: sampleFamily.address,
       created_at: ''
     });
 

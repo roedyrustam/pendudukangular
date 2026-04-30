@@ -367,11 +367,11 @@ export class ResidentsComponent implements OnDestroy {
     }
   }
 
-  exportToPdf() {
+  async exportToPdf() {
     let filterTitle = 'Seluruh Wilayah';
     if (this.filterGender || this.filterOccupation || this.searchTerm) {
       filterTitle = `Filer: ${this.filterGender || 'Semua'} | ${this.filterOccupation || 'Semua'} | ${this.searchTerm || '-'}`;
     }
-    this.pdfService.generateResidentsReport(this.filteredResidents(), filterTitle);
+    await this.pdfService.generateResidentsReport(this.filteredResidents(), filterTitle);
   }
 }
