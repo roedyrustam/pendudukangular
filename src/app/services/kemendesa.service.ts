@@ -63,11 +63,13 @@ export class KemendesaService {
   }
 
   /**
-   * Helper untuk mencari desa berdasarkan nama di database Kemendesa
+   * Helper untuk mencari desa secara nasional (Autocomplete)
    */
   searchVillage(query: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.SID_API_BASE}/desa/search?q=${query}`).pipe(
-      map(res => res || []),
+    if (query.length < 3) return of([]);
+    // Menggunakan endpoint pencarian publik yang stabil
+    return this.http.get<any>(`https://wilayah.id/api/search?q=${query}`).pipe(
+      map(res => res.data || []),
       catchError(() => of([]))
     );
   }

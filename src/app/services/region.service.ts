@@ -1,5 +1,5 @@
-import { Injectable, inject } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Injectable } from '@angular/core';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { RegionItem, VillageConfig } from '../models/data.models';
 import { Observable, from, map } from 'rxjs';
@@ -17,12 +17,12 @@ export class RegionService {
     this.supabase = createClient(environment.supabase.url, environment.supabase.key);
   }
 
-  // Helper for fetching with fallback
   private async fetchWithFallback(primaryUrl: string, fallbackUrl: string): Promise<any> {
     try {
       const res = await fetch(primaryUrl);
       if (!res.ok) throw new Error('Primary API failed');
       const json = await res.json();
+      // Handle wilayah.id structure { data: [...] } or direct array
       return json.data || json;
     } catch (e) {
       console.warn('Switching to fallback API...', e);
@@ -30,8 +30,6 @@ export class RegionService {
       return await res.json();
     }
   }
-
-  // --- Wilayah API ---
 
   async getProvinces(): Promise<RegionItem[]> {
     return this.fetchWithFallback(
@@ -44,10 +42,11 @@ export class RegionService {
   }
 
   async getRegencies(provinceCode: string): Promise<RegionItem[]> {
-    const code = provinceCode.replace(/\./g, '');
+    // Format code for API (remove dots for fallback)
+    const cleanCode = provinceCode.replace(/\./g, '');
     return this.fetchWithFallback(
       `${WILAYAH_API}/regencies/${provinceCode}.json`,
-      `${FALLBACK_API}/regencies/${code}.json`
+      `${FALLBACK_API}/regencies/${cleanCode}.json`
     ).then(data => data.map((item: any) => ({ 
       code: item.code || item.id, 
       name: item.name 
@@ -55,10 +54,10 @@ export class RegionService {
   }
 
   async getDistricts(regencyCode: string): Promise<RegionItem[]> {
-    const code = regencyCode.replace(/\./g, '');
+    const cleanCode = regencyCode.replace(/\./g, '');
     return this.fetchWithFallback(
       `${WILAYAH_API}/districts/${regencyCode}.json`,
-      `${FALLBACK_API}/districts/${code}.json`
+      `${FALLBACK_API}/districts/${cleanCode}.json`
     ).then(data => data.map((item: any) => ({ 
       code: item.code || item.id, 
       name: item.name 
@@ -66,62 +65,55 @@ export class RegionService {
   }
 
   async getVillages(districtCode: string): Promise<RegionItem[]> {
-    const code = districtCode.replace(/\./g, '');
+    const cleanCode = districtCode.replace(/\./g, '');
     return this.fetchWithFallback(
       `${WILAYAH_API}/villages/${districtCode}.json`,
-      `${FALLBACK_API}/villages/${code}.json`
+      `${FALLBACK_API}/villages/${cleanCode}.json`
     ).then(data => data.map((item: any) => ({ 
       code: item.code || item.id, 
       name: item.name 
     })));
   }
 
-  // --- Village Config CRUD (Supabase) ---
-
   getVillageConfig(): Observable<VillageConfig | null> {
     return from(
       this.supabase
         .from('village_config')
         .select('*')
+        .order('created_at', { ascending: false })
         .limit(1)
         .single()
-    ).pipe(map(res => res.data as VillageConfig | null));
+    ).pipe(
+      map(res => res.data as VillageConfig)
+    );
   }
 
   async saveVillageConfig(config: VillageConfig) {
-    // Upsert — insert or update the single config row
-    const payload = {
-      ...config,
-      updated_at: new Date().toISOString(),
-      created_at: config.created_at || new Date().toISOString(),
-    };
-
-    if (config.id) {
-      return this.supabase
+    const { id, ...payload } = config;
+    if (id) {
+      const { error } = await this.supabase
         .from('village_config')
         .update(payload)
-        .eq('id', config.id);
+        .eq('id', id);
+      if (error) throw error;
     } else {
-      return this.supabase
+      const { error } = await this.supabase
         .from('village_config')
         .insert([payload]);
+      if (error) throw error;
     }
   }
 
   async uploadVillageLogo(file: File): Promise<string> {
     const fileName = `logo_${Date.now()}.${file.name.split('.').pop()}`;
     const filePath = `logos/${fileName}`;
-
-    const { data, error } = await this.supabase.storage
+    const { error } = await this.supabase.storage
       .from('village-logos')
       .upload(filePath, file);
-
     if (error) throw error;
-
     const { data: { publicUrl } } = this.supabase.storage
       .from('village-logos')
       .getPublicUrl(filePath);
-
     return publicUrl;
   }
 }

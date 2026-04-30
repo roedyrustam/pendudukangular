@@ -146,15 +146,20 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
 
           <!-- SMART SEARCH (OTOMATIS) -->
           <div class="smart-search-box mb-6">
-            <label>⚡ Cari Nama Desa Secara Otomatis</label>
+            <label>⚡ Cari & Sinkronkan Desa Secara Otomatis</label>
             <div class="search-input-wrapper">
-              <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="smartSearch()" placeholder="Ketik nama desa Anda... (Contoh: Pangkajene)">
-              <button type="button" class="btn-primary" (click)="smartSearch()" [disabled]="loadingRegion()">Cari & Isi Otomatis</button>
+              <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Ketik nama desa... (Contoh: Pangkajene)">
+              <div class="search-results-popover" *ngIf="searchResults().length > 0">
+                <div class="result-item" *ngFor="let res of searchResults()" (click)="selectSearchResult(res)">
+                  <div class="res-name">{{ res.village_name || res.name }}</div>
+                  <div class="res-path">{{ res.district_name }} > {{ res.regency_name }} > {{ res.province_name }}</div>
+                </div>
+              </div>
             </div>
-            <p class="text-xs text-muted mt-2 italic">* Gunakan kolom ini untuk mengisi semua data di bawah secara otomatis.</p>
+            <p class="text-xs text-muted mt-2 italic">* Pilih desa dari hasil pencarian untuk sinkronisasi otomatis seluruh data wilayah.</p>
           </div>
 
-          <div class="divider-text mb-6"><span>ATAU PILIH MANUAL</span></div>
+          <div class="divider-text mb-6"><span>ATAU KONFIGURASI MANUAL</span></div>
 
           <form (submit)="saveVillageConfig()">
             <div class="region-grid">
@@ -605,32 +610,63 @@ export class SettingsComponent implements OnInit {
   selectedDistrict = '';
   selectedVillage = '';
   searchQuery = '';
+  searchResults = signal<any[]>([]);
 
   villageForm: Partial<VillageConfig> = {};
   uploadingLogo = signal(false);
   logoPreview = signal<string | null>(null);
 
-  async smartSearch() {
-    if (!this.searchQuery) return;
+  onSearchInput() {
+    if (this.searchQuery.length < 3) {
+      this.searchResults.set([]);
+      return;
+    }
+    this.kemendesaService.searchVillage(this.searchQuery).subscribe(results => {
+      this.searchResults.set(results);
+    });
+  }
+
+  async selectSearchResult(res: any) {
     this.loadingRegion.set(true);
-    this.configMessage.set('');
+    this.searchResults.set([]);
+    this.searchQuery = res.village_name || res.name;
 
     try {
-      // 1. Find the village in provinces list first? No, we need a better API for global search.
-      // Since we don't have a global search API easily, we will suggest the user to use the dropdowns
-      // BUT we can improve the dropdown loading reliability.
-      
-      // Let's re-load provinces to ensure list is not empty
-      await this.loadProvinces();
-      
-      this.configMessage.set('Data wilayah diperbarui. Silakan pilih dari daftar di bawah.');
+      // res usually contains codes: province_code, regency_code, etc.
+      this.selectedProvince = res.province_code;
+      this.selectedRegency = res.regency_code;
+      this.selectedDistrict = res.district_code;
+      this.selectedVillage = res.code || res.village_code;
+
+      // Force load cascading lists so dropdowns are in sync
+      await Promise.all([
+        this.regionService.getRegencies(this.selectedProvince).then(d => this.regencies.set(d)),
+        this.regionService.getDistricts(this.selectedRegency).then(d => this.districts.set(d)),
+        this.regionService.getVillages(this.selectedDistrict).then(d => this.villages.set(d))
+      ]);
+
+      // Sync data from Kemendesa if possible
+      this.kemendesaService.getVillageProfile(this.selectedVillage).subscribe(profile => {
+        if (profile) {
+          this.villageForm.village_head = profile.kepala_desa;
+          this.villageForm.village_address = profile.alamat;
+          this.villageForm.village_phone = profile.telepon;
+          this.villageForm.village_email = profile.email;
+        }
+      });
+
+      this.configMessage.set(`✅ Desa ${this.searchQuery} berhasil disinkronkan!`);
       this.isConfigSuccess.set(true);
     } catch (e) {
-      this.configMessage.set('Gagal memuat data wilayah. Mencoba API cadangan...');
-      this.isConfigSuccess.set(false);
+      console.error(e);
+      this.configMessage.set('⚠️ Sinkronisasi parsial berhasil, silakan periksa kembali data di bawah.');
     } finally {
       this.loadingRegion.set(false);
     }
+  }
+
+  async smartSearch() {
+    // Legacy method, replaced by selectSearchResult
   }
 
   async onLogoSelected(event: any) {
