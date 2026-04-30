@@ -194,47 +194,50 @@ import { of, switchMap, take } from 'rxjs';
   `,
   styles: [`
     .services-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 1.5rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;
     }
     .service-card {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      &:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 30px -10px var(--primary-glow); }
-      .icon-box { font-size: 2.5rem; background: rgba(255,255,255,0.02); width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 1rem; }
-      .info { flex: 1; h3 { font-size: 1.1rem; margin-bottom: 0.25rem; } p { font-size: 0.8rem; color: var(--text-muted); } }
-      .btn-primary-sm { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+      display: flex; flex-direction: column; padding: 2rem; border-radius: 1.5rem;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;
+      &:hover { transform: translateY(-10px) scale(1.02); border-color: var(--primary); box-shadow: 0 20px 40px -10px var(--primary-glow); background: rgba(255,255,255,0.05); }
+      .icon-box { font-size: 3rem; margin-bottom: 1.5rem; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(99,102,241,0.1); border-radius: 1rem; }
+      .info { h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; } p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem; } }
     }
-    .mt-12 { margin-top: 3rem; }
+    .btn-primary-sm { 
+       background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px;
+       transition: 0.3s; &:hover { background: #4f46e5; box-shadow: 0 5px 15px var(--primary-glow); }
+    }
     .luxury-table {
-      width: 100%;
-      border-collapse: collapse;
-      th { text-align: left; padding: 1rem 1.5rem; color: var(--text-muted); font-size: 0.8rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); }
-      td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
-      .nik-cell { color: var(--primary); font-family: monospace; }
+      width: 100%; border-collapse: collapse;
+      th { text-align: left; padding: 1.25rem 1.5rem; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); }
+      td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+      .nik-cell { color: var(--primary); font-weight: 600; font-family: monospace; }
       .badge {
-        padding: 0.2rem 0.6rem;
-        border-radius: 1rem;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        font-weight: 600;
+        padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
         &.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
         &.diproses { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
         &.selesai { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        &.ditolak { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
       }
     }
-    .form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-    .form-card { width: 450px; padding: 2rem; }
-    .form-grid { display: grid; gap: 1.25rem; }
-    .input-group { display: flex; flex-direction: column; gap: 0.5rem; label { font-size: 0.8rem; color: var(--text-muted); } }
-    input { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 0.5rem; color: white; outline: none; &:focus { border-color: var(--primary); } }
-    .upload-area { border: 2px dashed var(--border-color); text-align: center; padding: 1.5rem; color: var(--text-muted); span { font-size: 1.5rem; } p { font-size: 0.8rem; margin: 0.5rem 0; } small { font-size: 0.7rem; } }
+    .form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { 
+       width: 100%; max-width: 600px; padding: 3rem; max-height: 90vh; overflow-y: auto; 
+       &::-webkit-scrollbar { width: 6px; }
+       &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    }
+    .input-group { 
+       display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;
+       label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+       input, select, textarea { 
+          background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.85rem 1rem; border-radius: 0.75rem; color: white; outline: none; transition: 0.2s;
+          &:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
+       }
+       select option { background: #111827; color: white; }
+    }
     .form-actions { display: flex; justify-content: flex-end; gap: 1rem; }
-    .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; }
+    .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 600; &:hover { color: #fff; } }
     .toast-success { position: fixed; bottom: 2rem; right: 2rem; display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.1); backdrop-filter: blur(10px); animation: slideUp 0.3s ease; z-index: 2000; }
     @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .p-0 { padding: 0 !important; }
