@@ -98,6 +98,9 @@ export interface VillageConfig {
   village_code: string;
   village_name: string;
   village_head?: string;      // Nama Kepala Desa
+  village_head_nip?: string;  // NIP Kepala Desa
+  village_secretary?: string; // Nama Sekretaris Desa
+  zip_code?: string;          // Kode Pos
   village_address?: string;   // Alamat Kantor Desa
   village_phone?: string;     // No Telp Kantor
   village_email?: string;     // Email Desa

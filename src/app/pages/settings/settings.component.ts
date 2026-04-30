@@ -204,6 +204,18 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
                   <input [(ngModel)]="villageForm.village_head" name="village_head" placeholder="Nama Kepala Desa">
                 </div>
                 <div class="input-group">
+                  <label>NIP Kepala Desa</label>
+                  <input [(ngModel)]="villageForm.village_head_nip" name="village_head_nip" placeholder="NIP (Jika ada)">
+                </div>
+                <div class="input-group">
+                  <label>Sekretaris Desa</label>
+                  <input [(ngModel)]="villageForm.village_secretary" name="village_secretary" placeholder="Nama Sekretaris Desa">
+                </div>
+                <div class="input-group">
+                  <label>Kode Pos</label>
+                  <input [(ngModel)]="villageForm.zip_code" name="zip_code" placeholder="Contoh: 40171">
+                </div>
+                <div class="input-group" style="grid-column: 1 / -1;">
                   <label>Alamat Kantor Desa</label>
                   <input [(ngModel)]="villageForm.village_address" name="village_address" placeholder="Jl. Raya Desa...">
                 </div>
@@ -681,6 +693,9 @@ export class SettingsComponent implements OnInit {
       village_code: this.selectedVillage,
       village_name: villageName,
       village_head: this.villageForm.village_head || '',
+      village_head_nip: this.villageForm.village_head_nip || '',
+      village_secretary: this.villageForm.village_secretary || '',
+      zip_code: this.villageForm.zip_code || '',
       village_address: this.villageForm.village_address || '',
       village_phone: this.villageForm.village_phone || '',
       village_email: this.villageForm.village_email || '',
