@@ -3,13 +3,17 @@
 :root {
   --primary: #6366f1;
   --primary-glow: rgba(99, 102, 241, 0.4);
+  --secondary: #ec4899;
+  --darkness: #05060b;
   --bg-dark: #0f172a;
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(30, 41, 59, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-bg: rgba(15, 23, 42, 0.6);
   --glass-border: rgba(255, 255, 255, 0.1);
+  --neon-cyan: #22d3ee;
+  --neon-indigo: #818cf8;
 }
 
 * {
@@ -20,7 +24,10 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-dark);
+  background-color: var(--darkness);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
   color: var(--text-main);
   line-height: 1.5;
   overflow-x: hidden;
@@ -29,8 +36,8 @@ body {
 
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--glass-border);
 }
 
@@ -39,74 +46,90 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 1.5rem;
   padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: hidden;
   
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transition: 0.5s;
+  }
+
   &:hover {
-    transform: translateY(-4px);
-    border-color: var(--primary);
-    box-shadow: 0 10px 30px -10px var(--primary-glow);
+    transform: translateY(-8px) scale(1.01);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 20px 40px -20px var(--primary-glow);
+    background: rgba(30, 41, 59, 0.6);
+    
+    &::before { left: 100%; }
   }
 }
 
 .title-gradient {
-  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  background: linear-gradient(135deg, #fff 0%, var(--neon-indigo) 50%, var(--neon-cyan) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 button.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
   color: white;
   border: none;
   border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
+  padding: 0.85rem 1.75rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 15px -5px var(--primary-glow);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
 
   &:hover {
-    transform: scale(1.02);
+    transform: translateY(-2px);
     box-shadow: 0 8px 25px -5px var(--primary-glow);
+    filter: brightness(1.1);
   }
 
   &:active {
-    transform: scale(0.98);
+    transform: translateY(0);
   }
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 /* Utility Classes */
-.mb-6 { margin-bottom: 1.5rem; }
-.mt-6 { margin-top: 1.5rem; }
-.text-muted { color: var(--text-muted); }
-.text-sm { font-size: 0.875rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mt-12 { margin-top: 3rem; }
+.text-muted { color: var(--text-muted); font-size: 0.9rem; }
+.text-xs { font-size: 0.75rem; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--darkness);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(255,255,255,0.1);
   border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  &:hover { background: var(--primary); }
 }

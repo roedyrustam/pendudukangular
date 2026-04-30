@@ -193,7 +193,7 @@ export class LoginComponent implements OnInit {
   ngOnInit() {
     this.authService.user$.pipe(take(1)).subscribe(async user => {
       if (user) {
-        const profile = await this.authService.getProfile(user.uid);
+        const profile = await this.authService.getProfile(user.id);
         if (!profile) {
           this.isCompletingProfile.set(true);
         } else {
@@ -223,7 +223,7 @@ export class LoginComponent implements OnInit {
     
     try {
       const cred = await this.authService.loginWithGoogle();
-      const profile = await this.authService.getProfile(cred.user.uid);
+      const profile = await this.authService.getProfile(cred.user.id);
       
       if (!profile) {
         // New Google User - Needs NIK

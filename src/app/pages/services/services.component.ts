@@ -48,7 +48,7 @@ import { of, switchMap, take } from 'rxjs';
             <tr *ngFor="let req of recentRequests()" 
               (click)="canManage() ? openManagementModal(req) : null" 
               [class.clickable-row]="canManage()">
-              <td>{{ req.created_at?.toDate() | date:'dd MMM yyyy HH:mm' }}</td>
+              <td>{{ (req.created_at ? (req.created_at.toDate ? req.created_at.toDate() : req.created_at) : null) | date:'dd MMM yyyy HH:mm' }}</td>
               <td class="nik-cell">{{ req.nik }}</td>
               <td>{{ req.service_type }}</td>
               <td>{{ req.reason }}</td>

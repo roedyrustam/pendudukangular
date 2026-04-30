@@ -10,18 +10,22 @@
 }
 
 .sidebar {
-  padding: 2rem;
+  padding: 2.5rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
   z-index: 10;
   border-right: 1px solid var(--border-color);
+  background: rgba(5, 6, 11, 0.4);
 
   .logo-area {
+    padding: 0 1rem;
+    .title-gradient { font-size: 1.75rem; margin-bottom: 0.25rem; }
     .tagline {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
   }
 
@@ -35,22 +39,29 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: 1rem;
       text-decoration: none;
       color: var(--text-muted);
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      border: 1px solid transparent;
+
+      .icon { font-size: 1.25rem; transition: transform 0.3s; }
 
       &:hover {
         background: rgba(255, 255, 255, 0.05);
         color: var(--text-main);
+        transform: translateX(5px);
+        .icon { transform: scale(1.2); }
       }
 
       &.active {
-        background: var(--primary-glow);
+        background: rgba(99, 102, 241, 0.1);
         color: var(--primary);
         font-weight: 600;
-        border: 1px solid var(--primary);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        box-shadow: 0 4px 20px -10px var(--primary-glow);
+        .icon { filter: drop-shadow(0 0 5px var(--primary)); }
       }
     }
   }
@@ -60,55 +71,63 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 1rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
 
       .avatar {
-        width: 40px;
-        height: 40px;
-        background: var(--primary);
-        border-radius: 50%;
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, var(--primary), var(--neon-cyan));
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
+        box-shadow: 0 4px 15px var(--primary-glow);
       }
 
       .user-info {
+        flex: 1;
         .username {
           font-weight: 600;
           font-size: 0.9rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 120px;
         }
         .role {
-          font-size: 0.7rem;
-          color: var(--text-muted);
+          font-size: 0.65rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
-        .btn-logout {
-          background: none;
-          border: none;
-          font-size: 1.2rem;
-          cursor: pointer;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
-          margin-left: auto;
-          transition: all 0.2s;
-          &:hover {
-            background: rgba(239, 68, 68, 0.1);
-            transform: scale(1.1);
-          }
+      }
+
+      .btn-logout {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.75rem;
+        transition: all 0.2s;
+        &:hover {
+          background: rgba(239, 68, 68, 0.1);
+          border-color: rgba(239, 68, 68, 0.2);
+          transform: scale(1.1);
         }
       }
     }
     .branding {
-      padding: 0.75rem 0.5rem 0.5rem;
+      padding: 1rem 0.5rem 0;
       border-top: 1px solid rgba(255,255,255,0.05);
-      margin: 0.5rem 1rem 0;
       p {
-        font-size: 0.6rem;
-        color: rgba(255,255,255,0.25);
-        margin: 0;
+        font-size: 0.55rem;
+        color: rgba(255,255,255,0.2);
+        margin-bottom: 0.2rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        line-height: 1.4;
+        letter-spacing: 0.1em;
       }
     }
   }
@@ -118,23 +137,33 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--darkness);
 
   .top-nav {
-    height: 70px;
-    padding: 0 2rem;
+    height: 80px;
+    padding: 0 3rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--border-color);
+    background: rgba(5, 6, 11, 0.6);
 
     .search-bar {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 0.5rem 1rem;
-      border-radius: 0.75rem;
-      width: 400px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 1.25rem;
+      border-radius: 1rem;
+      width: 450px;
+      transition: all 0.3s;
+
+      &:focus-within {
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 20px -10px var(--primary-glow);
+      }
 
       input {
         background: none;
@@ -142,21 +171,22 @@
         color: white;
         width: 100%;
         outline: none;
-        font-family: inherit;
-
-        &::placeholder {
-          color: var(--text-muted);
-        }
+        font-size: 0.9rem;
+        &::placeholder { color: var(--text-muted); }
       }
     }
   }
 
   .content-area {
     flex: 1;
-    padding: 2rem;
+    padding: 3rem;
     overflow-y: auto;
-    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+    background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.03) 0%, transparent 60%);
   }
+}
+
+@media (max-width: 1200px) {
+  .layout-container { grid-template-columns: 240px 1fr; }
 }
 
 @media (max-width: 1024px) {
@@ -164,13 +194,17 @@
     grid-template-columns: 80px 1fr;
   }
   .sidebar {
-    padding: 1rem;
-    .tagline, span:not(.icon), .user-info {
+    padding: 1.5rem 0.75rem;
+    .tagline, span:not(.icon), .user-info, .branding {
       display: none;
     }
+    .logo-area { padding: 0; text-align: center; .title-gradient { font-size: 1.2rem; } }
     .nav-item {
       justify-content: center;
       padding: 1rem;
+      .icon { margin: 0; }
     }
+    .user-profile { padding: 0.5rem; justify-content: center; .btn-logout { margin: 0; } }
   }
+  .main-content .top-nav { padding: 0 1.5rem; .search-bar { width: 250px; } }
 }

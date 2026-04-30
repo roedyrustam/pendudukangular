@@ -168,7 +168,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                 <div *ngFor="let req of myRequests$ | async" class="request-item">
                   <div class="req-info">
                      <span class="req-type">{{ req.service_type }}</span>
-                     <span class="req-date text-xs text-muted">{{ req.created_at?.toDate() | date:'dd MMM yyyy' }}</span>
+                      <span class="req-date text-xs text-muted">{{ (req.created_at ? (req.created_at.toDate ? req.created_at.toDate() : req.created_at) : null) | date:'dd MMM yyyy' }}</span>
                   </div>
                   <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
                 </div>
