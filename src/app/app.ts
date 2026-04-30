@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -14,8 +13,10 @@ import { AuthService } from './services/auth.service';
 export class App {
   authService = inject(AuthService);
   protected readonly title = signal('digiwarga');
+  private router = inject(Router);
 
-  logout() {
-    this.authService.logout();
+  async logout() {
+    await this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
