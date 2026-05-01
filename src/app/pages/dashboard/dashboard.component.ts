@@ -15,350 +15,323 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
-      <div class="welcome-banner card-luxury mb-6 fade-in">
+      <header class="welcome-banner card-luxury mb-8 fade-in">
         <div class="flex-between items-center">
           <div class="welcome-text">
-            <div class="flex items-center gap-3 mb-1">
-              <h1 class="title-gradient">Halo, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
+            <div class="flex items-center gap-3 mb-2">
+              <h1 class="title-gradient text-3xl font-extrabold">Halo, {{ profile.displayName || profile.email?.split('@')?.[0] }}! 👋</h1>
               <div class="live-sync-indicator" title="Realtime Active">
                 <span class="pulse-dot"></span>
                 <span class="label">LIVE</span>
               </div>
             </div>
-            <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
-            <p *ngIf="villageConfig()" class="village-label mt-2">
+            <p class="tagline text-slate-600 font-bold">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
+            <p *ngIf="villageConfig()" class="village-label mt-3 text-primary font-bold">
               📍 {{ villageConfig()?.village_name }} • {{ villageConfig()?.district_name }}
-              <span *ngIf="idmStatus()" class="idm-badge ml-2" [attr.data-status]="idmStatus()">IDM: {{ idmStatus() }}</span>
+              <span *ngIf="idmStatus()" class="idm-badge ml-3" [attr.data-status]="idmStatus()">IDM: {{ idmStatus() }}</span>
             </p>
           </div>
           
-          <div class="territory-filter card-luxury p-4 glass-panel" *ngIf="profile.role !== 'warga'">
-            <label class="text-xs text-muted mb-2 block">Pilih Wilayah (RT/RW):</label>
+          <section class="territory-filter card-luxury p-6 glass-panel" *ngIf="profile.role !== 'warga'" aria-label="Filter Wilayah">
+            <label class="text-[10px] font-extrabold text-primary mb-3 block tracking-widest uppercase">FILTER WILAYAH (RT/RW)</label>
             <select class="custom-select" [ngModel]="selectedRt()" (ngModelChange)="onRtChange($event)">
-              <option value="">Semua Wilayah</option>
+              <option value="">Seluruh Wilayah Desa</option>
               <option *ngFor="let rt of availableRts()" [value]="rt">{{ rt }}</option>
             </select>
-          </div>
+          </section>
         </div>
-      </div>
+      </header>
 
       <ng-container *ngIf="profile.role !== 'warga'">
-      <!-- 1. Executive Quick Stats (4-Column) -->
-      <div class="quick-stats-grid mb-6 fade-in">
-        <div class="stat-card card-luxury glass-panel">
-          <div class="stat-icon-mini">👥</div>
+      <!-- 1. Executive Quick Stats -->
+      <section class="quick-stats-grid mb-8 fade-in" aria-label="Statistik Eksekutif">
+        <article class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini azure">👥</div>
           <div class="stat-details">
             <span class="label">Total Penduduk</span>
             <div class="flex items-baseline gap-2">
               <span class="value">{{ totalResidents() }}</span>
-              <span class="trend text-success">+{{ recentResidentsCount() }}</span>
+              <span class="trend-indicator plus">+{{ recentResidentsCount() }}</span>
             </div>
           </div>
-        </div>
-        <div class="stat-card card-luxury glass-panel">
-          <div class="stat-icon-mini">🏘️</div>
+        </article>
+        <article class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini azure">🏘️</div>
           <div class="stat-details">
-            <span class="label">Total KK</span>
+            <span class="label">Total Keluarga</span>
             <span class="value">{{ totalFamilies() }}</span>
           </div>
-        </div>
-        <div class="stat-card card-luxury glass-panel">
-          <div class="stat-icon-mini">📥</div>
+        </article>
+        <article class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini azure">📥</div>
           <div class="stat-details">
             <span class="label">Antrian Layanan</span>
             <div class="flex items-baseline gap-2">
               <span class="value">{{ activeRequestsCount() }}</span>
-              <span class="trend" [class.pending]="pendingRequestsCount() > 0">{{ pendingRequestsCount() }} Baru</span>
+              <span class="trend-indicator" [class.warning]="pendingRequestsCount() > 0">{{ pendingRequestsCount() }} Baru</span>
             </div>
           </div>
-        </div>
-        <div class="stat-card card-luxury glass-panel">
-          <div class="stat-icon-mini">📦</div>
+        </article>
+        <article class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini azure">📦</div>
           <div class="stat-details">
-            <span class="label">Aset Desa</span>
+            <span class="label">Aset Inventaris</span>
             <span class="value">{{ inventoryCount() }}</span>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      <!-- 2. Main Work Area (Grid 2/3 & 1/3) -->
-      <div class="dashboard-main-grid fade-in">
-        <!-- Center Panel: Analytics & Maps -->
-        <div class="center-panel">
+      <!-- 2. Main Work Area -->
+      <main class="dashboard-main-grid fade-in">
+        <section class="center-panel">
           <div class="bento-grid">
-            <div class="card-luxury analytics-card bento-item">
-              <h3>📊 Demografi Gender</h3>
-              <div class="chart-bar">
+            <article class="card-luxury analytics-card bento-item">
+              <h3 class="bento-title">📊 Demografi Gender</h3>
+              <div class="chart-bar-luxury">
                 <div class="bar male" [style.width.%]="malePercentage()"></div>
                 <div class="bar female" [style.width.%]="femalePercentage()"></div>
               </div>
               <div class="chart-labels mt-4">
-                <div class="label"><span class="dot male"></span> {{ malePercentage() }}% Laki-laki</div>
-                <div class="label"><span class="dot female"></span> {{ femalePercentage() }}% Perempuan</div>
+                <div class="label"><span class="dot male"></span> <b>{{ malePercentage() }}%</b> Laki-laki</div>
+                <div class="label"><span class="dot female"></span> <b>{{ femalePercentage() }}%</b> Perempuan</div>
               </div>
-            </div>
+            </article>
 
-            <div class="card-luxury analytics-card bento-item">
-              <h3>📋 Status Layanan</h3>
-              <div class="status-funnel">
+            <article class="card-luxury analytics-card bento-item">
+              <h3 class="bento-title">📋 Status Layanan</h3>
+              <div class="status-funnel mt-2">
                 <div class="funnel-item" *ngFor="let s of statusBreakdown().slice(0,3)">
                   <div class="funnel-label-box flex items-center gap-2">
                     <span class="dot" [attr.data-status]="s.label"></span>
-                    <label class="text-xs">{{ s.label }}</label>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">{{ s.label }}</label>
                   </div>
                   <div class="funnel-bar-bg"><div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div></div>
-                  <span class="count text-xs">{{ s.count }}</span>
+                  <span class="count text-slate-800 font-bold">{{ s.count }}</span>
                 </div>
               </div>
-            </div>
+            </article>
 
-            <div class="card-luxury analytics-card bento-item span-2">
-              <h3>🏘️ Distribusi Wilayah</h3>
+            <article class="card-luxury analytics-card bento-item span-2">
+              <h3 class="bento-title">🏘️ Distribusi Wilayah Teraktif</h3>
               <div class="hamlet-grid">
                  <div class="hamlet-item" *ngFor="let h of hamletBreakdown().slice(0,4)">
-                    <div class="flex-between mb-1">
-                       <span class="name text-xs">{{ h.label }}</span>
-                       <span class="pct text-xs">{{ h.count }} KK</span>
+                    <div class="flex-between mb-2">
+                       <span class="name text-slate-700 font-bold text-xs">{{ h.label }}</span>
+                       <span class="pct font-extrabold text-primary">{{ h.count }} KK</span>
                     </div>
                     <div class="progress-lite">
                        <div class="bar" [style.width.%]="h.percent"></div>
                     </div>
                  </div>
               </div>
-            </div>
+            </article>
           </div>
 
           <!-- Quick Actions Hub -->
-          <div class="quick-actions-hub card-luxury glass-panel mt-6">
-            <h3>⚡ Akses Cepat</h3>
+          <section class="quick-actions-hub card-luxury glass-panel mt-8">
+            <h3 class="bento-title mb-6">⚡ Pintasan Administrasi</h3>
             <div class="actions-grid">
               <button class="action-btn" routerLink="/families">
-                <span class="icon">➕</span>
-                <span>Tambah KK</span>
+                <span class="icon">🏠</span>
+                <span class="label">Input KK</span>
               </button>
               <button class="action-btn" routerLink="/services">
                 <span class="icon">📄</span>
-                <span>Buat Surat</span>
+                <span class="label">Buat Surat</span>
               </button>
               <button class="action-btn" routerLink="/articles">
                 <span class="icon">✍️</span>
-                <span>Tulis Berita</span>
+                <span class="label">Update Berita</span>
               </button>
               <button class="action-btn" routerLink="/import">
                 <span class="icon">💾</span>
-                <span>Backup Data</span>
+                <span class="label">Backup</span>
               </button>
             </div>
-          </div>
-        </div>
+          </section>
+        </section>
 
-        <!-- Side Panel: Urgent & Finance -->
-        <div class="side-panel">
-          <div class="card-luxury bento-item mb-6">
-            <div class="flex-between mb-4">
-              <h3>📥 Aktivitas Layanan</h3>
-              <button class="btn-text-sm" routerLink="/services">Semua</button>
+        <aside class="side-panel">
+          <section class="card-luxury bento-item mb-8">
+            <div class="flex-between mb-6">
+              <h3 class="bento-title">📥 Antrian Terbaru</h3>
+              <button class="btn-text-sm" routerLink="/services">Lihat Semua</button>
             </div>
             <div class="request-list-compact">
-              <div *ngFor="let req of latestRequests().slice(0,3)" class="request-item-small">
+              <article *ngFor="let req of latestRequests().slice(0,3)" class="request-item-small card-luxury glass-panel p-3">
                 <div class="req-circle" [attr.data-status]="req.status">{{ req.service_type[0] }}</div>
                 <div class="req-body">
-                   <p class="type">{{ req.service_type }}</p>
-                   <p class="nik">{{ req.nik }}</p>
+                   <p class="type text-slate-800 font-bold">{{ req.service_type }}</p>
+                   <p class="nik text-[10px] text-muted">{{ req.nik }}</p>
                 </div>
-                <span class="status-icon" [attr.data-status]="req.status"></span>
-              </div>
-              <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-4">Antrian kosong.</p>
+                <span class="status-dot" [attr.data-status]="req.status"></span>
+              </article>
+              <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-6">Antrian kosong.</p>
             </div>
-          </div>
+          </section>
 
           <!-- Finance Widget -->
-          <div class="card-luxury budget-widget bento-item" *ngIf="budgetSummary()">
-            <div class="flex-between mb-4">
-              <h3>💰 Realisasi APBDes</h3>
+          <section class="card-luxury budget-widget bento-item" *ngIf="budgetSummary()">
+            <div class="flex-between mb-6">
+              <h3 class="bento-title">💰 Anggaran APBDes</h3>
               <span class="year-badge">{{ budgetSummary()?.year }}</span>
             </div>
-            <div class="finance-card glass-panel p-4 mb-4">
-              <label class="text-[10px] text-muted">TOTAL PENDAPATAN</label>
-              <p class="val text-lg">Rp {{ budgetSummary()?.income | number }}</p>
+            <div class="finance-display card-luxury bg-slate-50 p-6 mb-6">
+              <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest">TOTAL PENDAPATAN DESA</label>
+              <p class="val text-2xl font-extrabold text-slate-900">Rp {{ budgetSummary()?.income | number }}</p>
             </div>
             <div class="finance-progress">
-              <div class="flex-between mb-1">
-                <span class="text-xs">Persentase Serapan</span>
-                <span class="text-xs font-bold text-primary">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</span>
+              <div class="flex-between mb-2">
+                <span class="text-xs font-bold text-slate-600">Realisasi Serapan</span>
+                <span class="text-sm font-extrabold text-primary">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</span>
               </div>
-              <div class="progress-lite"><div class="bar" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
+              <div class="progress-lite-large"><div class="bar" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
+        </aside>
+      </main>
 
-        <!-- Latest Articles / Portal Desa -->
-        <div class="articles-dashboard mt-8 fade-in" style="animation-delay: 0.2s">
-           <div class="flex-between mb-4">
-             <h3 class="flex items-center gap-2">📰 Berita & Pengumuman Desa</h3>
-             <button class="btn-text" routerLink="/articles">Ke Portal Berita</button>
-           </div>
-           <div class="articles-grid-mini">
-              <div *ngFor="let art of latestArticles()" class="card-luxury glass-panel art-mini-card" routerLink="/articles">
-                 <img [src]="art.image_url || 'assets/placeholder.jpg'" alt="News">
-                 <div class="p-3">
-                    <span class="text-xs text-muted">{{ art.created_at | date:'dd MMM' }}</span>
-                    <h4 class="text-sm mt-1 line-clamp-2">{{ art.title }}</h4>
-                 </div>
-              </div>
-           </div>
-        </div>
-
+      <!-- Latest Articles -->
+      <section class="articles-dashboard mt-12 fade-in">
+         <header class="flex-between mb-8">
+           <h3 class="flex items-center gap-3 bento-title">📰 Berita & Pengumuman Desa</h3>
+           <button class="btn-outline" routerLink="/articles">Buka Portal Berita ➡️</button>
+         </header>
+         <div class="articles-grid-mini">
+            <article *ngFor="let art of latestArticles()" class="card-luxury art-mini-card" routerLink="/articles">
+               <img [src]="art.image_url || 'assets/placeholder.jpg'" alt="News Thumbnail" class="art-img">
+               <div class="p-5">
+                  <span class="text-[10px] font-extrabold text-primary uppercase tracking-widest">{{ art.created_at | date:'dd MMM yyyy' }}</span>
+                  <h4 class="text-slate-800 font-bold mt-2 line-clamp-2">{{ art.title }}</h4>
+               </div>
+            </article>
+         </div>
+      </section>
       </ng-container>
 
       <!-- WARGA VIEW -->
       <ng-container *ngIf="profile.role === 'warga'">
-        <div class="dashboard-grid fade-in">
-          <div class="card-luxury personal-info-card" *ngIf="residentProfile$ | async as resident">
-            <div class="flex-between mb-4">
-              <h3>Profil Saya</h3>
-              <button class="btn-text-sm" [routerLink]="['/residents', resident.nik]">Detail Lengkap</button>
+        <main class="dashboard-grid fade-in grid grid-cols-12 gap-8">
+          <section class="col-span-4 card-luxury personal-info-card" *ngIf="residentProfile$ | async as resident">
+            <header class="flex-between mb-8">
+              <h3 class="bento-title">Profil Personal</h3>
+              <button class="btn-text-sm" [routerLink]="['/residents', resident.nik]">Detail Profil 👁️</button>
+            </header>
+            <div class="info-group mb-6">
+              <label class="text-[10px] font-bold text-primary tracking-widest uppercase">NOMOR INDUK KEPENDUDUKAN</label>
+              <p class="text-xl font-extrabold text-slate-900 nik-cell">{{ resident.nik }}</p>
             </div>
-            <div class="info-item">
-              <label>NIK</label>
-              <p>{{ resident.nik }}</p>
+            <div class="info-group mb-6">
+              <label class="text-[10px] font-bold text-primary tracking-widest uppercase">NAMA LENGKAP</label>
+              <p class="text-lg font-bold text-slate-800">{{ resident.full_name }}</p>
             </div>
-            <div class="info-item mt-2">
-              <label>Nama Lengkap</label>
-              <p>{{ resident.full_name }}</p>
+            <div class="info-group">
+              <label class="text-[10px] font-bold text-primary tracking-widest uppercase">STATUS PEKERJAAN</label>
+              <p class="text-slate-700 font-bold">{{ resident.occupation || 'TIDAK TERDEFINISI' }}</p>
             </div>
-            <div class="info-item mt-2">
-              <label>Pekerjaan</label>
-              <p>{{ resident.occupation }}</p>
-            </div>
-          </div>
+          </section>
 
-          <div class="card-luxury family-card" *ngIf="familyData$ | async as family">
-             <h3>Data Keluarga</h3>
-             <div class="kk-badge mt-2">No. KK: {{ family.kk_number }}</div>
-             <p class="text-xs text-muted mt-4">Alamat Terdaftar:</p>
-             <p class="text-sm">{{ family.address }}</p>
-             <p class="text-sm">RT {{ family.rt || '-' }}/RW {{ family.rw || '-' }} - {{ family.hamlet || '' }} {{ family.district }}</p>
-             <button class="btn-primary mt-6 w-full" routerLink="/services">Ajukan Layanan Baru</button>
-          </div>
+          <section class="col-span-4 card-luxury family-card" *ngIf="familyData$ | async as family">
+             <h3 class="bento-title mb-8">Data Keluarga & Domisili</h3>
+             <div class="kk-display-badge">No. KK: {{ family.kk_number }}</div>
+             <div class="mt-8">
+                <label class="text-[10px] font-bold text-primary tracking-widest uppercase mb-2 block">ALAMAT TERDAFTAR</label>
+                <p class="text-slate-800 font-bold leading-relaxed">{{ family.address }}</p>
+                <p class="text-slate-600 font-medium">RT {{ family.rt || '-' }} / RW {{ family.rw || '-' }} - {{ family.hamlet || '' }}</p>
+                <p class="text-slate-600 font-medium">{{ family.district }}</p>
+             </div>
+             <button class="btn-primary mt-8 w-full" routerLink="/services">Ajukan Layanan Online 📑</button>
+          </section>
 
-          <div class="card-luxury requests-card">
-             <h3>Pengajuan Saya</h3>
-             <div class="request-list mt-4">
-                <div *ngFor="let req of myRequests$ | async" class="request-item">
+          <section class="col-span-4 card-luxury requests-card">
+             <h3 class="bento-title mb-8">Status Pengajuan Layanan</h3>
+             <div class="request-list">
+                <article *ngFor="let req of myRequests$ | async" class="request-item-mini mb-4 p-4 card-luxury bg-slate-50 flex-between">
                   <div class="req-info">
-                     <span class="req-type">{{ req.service_type }}</span>
-                      <span class="req-date text-xs text-muted">{{ req.created_at | date:'dd MMM yyyy' }}</span>
+                     <p class="text-slate-800 font-bold text-sm">{{ req.service_type }}</p>
+                     <p class="text-[10px] text-muted">{{ req.created_at | date:'dd MMM yyyy' }}</p>
                   </div>
                   <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+                </article>
+                <div *ngIf="(myRequests$ | async)?.length === 0" class="empty-state-mini text-center py-12">
+                   <p class="text-muted text-sm font-bold">Belum ada riwayat pengajuan.</p>
                 </div>
-                <p *ngIf="(myRequests$ | async)?.length === 0" class="text-xs text-muted text-center py-4">Belum ada pengajuan.</p>
              </div>
-          </div>
-        </div>
+          </section>
+        </main>
       </ng-container>
     </div>
   `,
   styles: [`
+    .dashboard-container { padding: 1rem; }
     .welcome-banner {
-      padding: 3rem;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
-      h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+      padding: 3.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      border: 1px solid var(--glass-border);
     }
     .idm-badge {
-      font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.6rem; border-radius: 2rem;
+      font-size: 0.65rem; font-weight: 900; padding: 0.25rem 0.75rem; border-radius: 2rem; color: white;
       &[data-status='Mandiri'] { background: #10b981; }
       &[data-status='Maju'] { background: #3b82f6; }
       &[data-status='Berkembang'] { background: #f59e0b; }
     }
     .quick-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.25rem;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
       .stat-card {
-        display: flex; align-items: center; gap: 1rem; padding: 1.25rem;
-        .stat-icon-mini { font-size: 1.5rem; background: rgba(255,255,255,0.05); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; }
+        display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem;
+        .stat-icon-mini { 
+          width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+          &.azure { background: rgba(37, 99, 235, 0.05); }
+        }
         .stat-details {
-          .label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; display: block; margin-bottom: 0.15rem; }
-          .value { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1; }
-          .trend { font-size: 0.7rem; font-weight: 700; &.pending { color: #f59e0b; } }
-          .text-success { color: #10b981; }
+          .label { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; display: block; }
+          .value { font-size: 1.75rem; font-weight: 800; color: #000; line-height: 1; }
+          .trend-indicator { font-size: 0.7rem; font-weight: 800; &.plus { color: #10b981; } &.warning { color: #f59e0b; } }
         }
       }
     }
-    .dashboard-main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
-    .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .dashboard-main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+    .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
     .span-2 { grid-column: span 2; }
-    .analytics-card { h3 { font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; } }
-    .quick-actions-hub {
-      padding: 1.5rem;
-      h3 { font-size: 0.85rem; margin-bottom: 1.25rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
-      .actions-grid {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
-        .action-btn {
-          background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 1rem; border-radius: 1rem;
-          display: flex; flex-direction: column; align-items: center; gap: 0.75rem; cursor: pointer; transition: all 0.3s;
-          &:hover { background: var(--primary-glow); border-color: var(--primary); transform: translateY(-3px); }
-          .icon { font-size: 1.5rem; }
-          span:not(.icon) { font-size: 0.75rem; font-weight: 600; color: white; }
-        }
-      }
-    }
-    .request-list-compact {
-      display: flex; flex-direction: column; gap: 0.75rem;
-      .request-item-small {
-        display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: 0.75rem; border: 1px solid var(--border-color);
-        .req-circle {
-           width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;
-           &[data-status='Selesai'] { background: #10b981; color: white; }
-           &[data-status='Diproses'] { background: #3b82f6; color: white; }
-           &[data-status='Pending'] { background: #f59e0b; color: white; }
-        }
-        .req-body { flex: 1; .type { font-size: 0.8rem; font-weight: 600; margin: 0; } .nik { font-size: 0.65rem; color: var(--text-muted); font-family: monospace; } }
-        .status-icon { width: 8px; height: 8px; border-radius: 50%; &[data-status='Selesai'] { background: #10b981; box-shadow: 0 0 8px #10b981; } &[data-status='Diproses'] { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; } &[data-status='Pending'] { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; } }
-      }
-    }
-    .finance-card { background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border-radius: 1rem; .val { font-family: monospace; font-weight: 700; color: #fff; } }
-    .year-badge { background: var(--primary); color: white; padding: 0.15rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 800; }
-    .chart-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .bento-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.1em; }
+    
+    .chart-bar-luxury { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: #f1f5f9; }
     .bar.male { background: #3b82f6; }
     .bar.female { background: #ec4899; }
     .dot { width: 8px; height: 8px; border-radius: 50%; &.male { background: #3b82f6; } &.female { background: #ec4899; } }
-    .label { font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
-    .status-funnel { display: flex; flex-direction: column; gap: 0.75rem; }
-    .funnel-item { 
-      display: grid; grid-template-columns: 80px 1fr 30px; align-items: center; gap: 0.75rem;
-      label { font-size: 0.75rem; color: var(--text-muted); }
-      .funnel-bar-bg { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; }
-      .funnel-bar { height: 100%; &[data-status='Selesai'] { background: #10b981; } &[data-status='Diproses'] { background: #3b82f6; } &[data-status='Pending'] { background: #f59e0b; } }
-      .count { font-weight: 700; font-size: 0.8rem; text-align: right; }
+    
+    .status-funnel { .funnel-item { display: grid; grid-template-columns: 100px 1fr 40px; align-items: center; gap: 1rem; margin-bottom: 1rem; } }
+    .funnel-bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; .funnel-bar { height: 100%; transition: 0.6s; } }
+    .funnel-bar[data-status='Selesai'] { background: #10b981; }
+    .funnel-bar[data-status='Diproses'] { background: #3b82f6; }
+    .funnel-bar[data-status='Pending'] { background: #f59e0b; }
+    
+    .progress-lite { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; .bar { height: 100%; background: var(--primary); } }
+    .progress-lite-large { height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; .bar { height: 100%; background: var(--primary); } }
+    
+    .action-btn {
+      background: #f8fafc; border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 1.5rem;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem; cursor: pointer; transition: all 0.4s var(--apple-ease);
+      &:hover { transform: translateY(-5px); background: white; border-color: var(--primary); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+      .icon { font-size: 1.75rem; }
+      .label { font-size: 0.75rem; font-weight: 800; color: #000; }
     }
-    .hamlet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .progress-lite { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; .bar { height: 100%; background: var(--primary); } }
-    @media (max-width: 1200px) { .dashboard-main-grid { grid-template-columns: 1.5fr 1fr; } }
-    @media (max-width: 1080px) { .quick-stats-grid { grid-template-columns: 1fr 1fr; } .dashboard-main-grid { grid-template-columns: 1fr; } .quick-actions-hub .actions-grid { grid-template-columns: 1fr 1fr; } }
-    .articles-grid-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; .art-mini-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.3s; &:hover { transform: translateY(-5px); border-color: var(--primary); } img { width: 100%; height: 80px; object-fit: cover; } h4 { font-weight: 600; line-height: 1.3; font-size: 0.8rem; } } }
-    .dev-tools-dashboard { border: 1px dashed var(--primary); background: rgba(99, 102, 241, 0.05); }
-    .btn-primary-sm { background: var(--primary); color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-    .badge {
-      padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
-      &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
-      &.petugas { background: rgba(99, 102, 241, 0.2); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); }
-      &.warga { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    
+    .request-item-small {
+      display: flex; align-items: center; gap: 1rem; transition: 0.3s;
+      &:hover { border-color: var(--primary); }
+      .req-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 900; color: white; }
+      .req-circle[data-status='Selesai'] { background: #10b981; }
+      .req-circle[data-status='Diproses'] { background: #3b82f6; }
+      .req-circle[data-status='Pending'] { background: #f59e0b; }
+      .status-dot { width: 10px; height: 10px; border-radius: 50%; &[data-status='Selesai'] { background: #10b981; } &[data-status='Diproses'] { background: #3b82f6; } &[data-status='Pending'] { background: #f59e0b; } }
     }
-    .live-sync-indicator {
-      display: flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.25rem 0.6rem; border-radius: 1rem;
-      .pulse-dot { width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
-      .label { font-size: 0.6rem; font-weight: 700; color: #10b981; }
-    }
-    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .custom-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.85rem; outline: none; }
-    .personal-info-card, .family-card, .requests-card { padding: 2rem; }
-    .info-item { label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; } p { font-weight: 600; color: white; } }
-    .kk-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-family: monospace; font-size: 1rem; display: inline-block; font-weight: 700; }
-    .btn-text-sm { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; &:hover { text-decoration: underline; } }
+    
+    .art-mini-card { padding: 0; overflow: hidden; transition: 0.4s; &:hover { transform: translateY(-8px); border-color: var(--primary); } .art-img { width: 100%; height: 120px; object-fit: cover; } }
+    .kk-display-badge { background: #000; color: white; padding: 0.75rem 1.5rem; border-radius: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 800; display: inline-block; }
+    .custom-select { background: white; border: 1px solid var(--glass-border); color: #000; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 700; cursor: pointer; }
+    .year-badge { background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 900; }
+  `]
   `]
 })
 export class DashboardComponent implements OnDestroy {

@@ -162,20 +162,23 @@ button.btn-primary {
 
 /* Luxury Form Inputs */
 .custom-input, select, .custom-select {
-  background: rgba(255,255,255,0.03);
+  background: #f8fafc;
   border: 1px solid var(--glass-border);
   border-radius: 1rem;
   padding: 0.75rem 1.25rem;
-  color: white;
+  color: #000;
+  font-weight: 600;
   transition: all 0.3s var(--apple-ease);
   outline: none;
   width: 100%;
 
   &:focus {
     border-color: var(--primary);
-    background: rgba(255,255,255,0.06);
-    box-shadow: 0 0 0 4px rgba(92, 98, 236, 0.1);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
   }
+  
+  &::placeholder { color: #94a3b8; font-weight: 400; }
 }
 
 /* Custom Scrollbar */
@@ -184,13 +187,13 @@ button.btn-primary {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--darkness);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: #cbd5e1;
   border-radius: 10px;
-  border: 2px solid var(--darkness);
+  border: 2px solid #f1f5f9;
   &:hover { background: var(--primary); }
 }
 
@@ -201,24 +204,26 @@ button.btn-primary {
   border-spacing: 0;
   
   th {
-    background: rgba(255,255,255,0.02);
+    background: #f8fafc;
     padding: 1.5rem;
-    color: var(--text-muted);
+    color: #475569;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 2px solid var(--glass-border);
   }
   
   td {
     padding: 1.5rem;
+    color: #000;
+    font-weight: 500;
     border-bottom: 1px solid var(--glass-border);
     transition: background 0.3s var(--apple-ease);
   }
   
   tr:hover td {
-    background: rgba(255,255,255,0.02);
+    background: #f1f5f9;
   }
 }
 

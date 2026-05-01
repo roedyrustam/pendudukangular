@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { PdfService } from '../../services/pdf.service';
-import { Resident } from '../../models/data.models';
+import { Resident, Family } from '../../models/data.models';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -11,15 +11,15 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="header-actions mb-8 fade-in">
+    <header class="header-actions mb-8 fade-in">
       <div class="titles">
         <h2 class="title-gradient">Data Penduduk Terpadu</h2>
         <p class="text-muted">Manajemen data individu berbasis NIK seluruh wilayah</p>
         <div class="flex gap-3 mt-6">
-          <button class="btn-primary" (click)="isAddModalOpen.set(true)">
+          <button class="btn-primary" (click)="isAddModalOpen.set(true)" aria-label="Tambah Penduduk Baru">
              Tambah Penduduk ➕
           </button>
-          <button class="btn-outline" (click)="exportToPdf()">
+          <button class="btn-outline" (click)="exportToPdf()" aria-label="Ekspor Laporan PDF">
              Ekspor Laporan PDF 📄
           </button>
         </div>
@@ -28,21 +28,21 @@ import { Router } from '@angular/router';
       <div class="header-right flex flex-col items-end">
         <div class="search-bar mb-4">
           <span class="icon">🔍</span>
-          <input [(ngModel)]="searchTerm" (input)="filterResidents()" placeholder="Cari NIK atau Nama...">
+          <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Cari NIK atau Nama..." aria-label="Cari data penduduk">
         </div>
         <div class="live-sync-indicator">
           <div class="pulse-dot"></div>
           <span class="label">LIVE DATA SYNC</span>
         </div>
       </div>
-    </div>
+    </header>
 
     <!-- Filter Bar -->
-    <div class="filters-container card-luxury mb-8 p-6 fade-in">
+    <section class="filters-container card-luxury mb-8 p-6 fade-in" aria-label="Panel Filter Data">
        <div class="flex gap-6 flex-wrap items-center">
           <div class="filter-group">
             <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">JENIS KELAMIN</label>
-            <select [(ngModel)]="filterGender" (change)="filterResidents()" class="custom-select">
+            <select [ngModel]="filterGender()" (ngModelChange)="filterGender.set($event)" class="custom-select" aria-label="Filter Gender">
               <option value="">Semua Gender</option>
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
@@ -50,60 +50,51 @@ import { Router } from '@angular/router';
           </div>
           <div class="filter-group">
             <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">PEKERJAAN</label>
-            <select [(ngModel)]="filterOccupation" (change)="filterResidents()" class="custom-select">
+            <select [ngModel]="filterOccupation()" (ngModelChange)="filterOccupation.set($event)" class="custom-select" aria-label="Filter Pekerjaan">
               <option value="">Semua Pekerjaan</option>
-              <option *ngFor="let job of occupationList" [value]="job">{{ job }}</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">WILAYAH</label>
-            <select [(ngModel)]="filterHamlet" (change)="filterResidents()" class="custom-select">
-              <option value="">Semua Dusun</option>
-              <option value="Dusun I">Dusun I</option>
-              <option value="Dusun II">Dusun II</option>
-              <option value="Dusun III">Dusun III</option>
+              <option *ngFor="let job of occupationList()" [value]="job">{{ job }}</option>
             </select>
           </div>
           <div class="filter-group ml-auto">
              <label class="text-[10px] font-extrabold text-primary mb-2 block text-right tracking-widest uppercase">TAMPILAN</label>
-             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 120px;">
+             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 120px;" aria-label="Jumlah baris per halaman">
                 <option [ngValue]="10">10 Baris</option>
                 <option [ngValue]="25">25 Baris</option>
                 <option [ngValue]="50">50 Baris</option>
              </select>
           </div>
        </div>
-    </div>
+    </section>
 
     <!-- Summary Stats Bar -->
-    <div class="grid grid-cols-12 gap-6 mb-8 fade-in">
-       <div class="col-span-4 stat-card card-luxury">
+    <section class="grid grid-cols-12 gap-6 mb-8 fade-in" aria-label="Ringkasan Statistik">
+       <article class="col-span-4 stat-card card-luxury">
           <div class="flex justify-between items-start mb-4">
             <span class="icon-box azure">📊</span>
             <span class="badge secondary">FILTERED</span>
           </div>
           <div class="value">{{ filteredResidents().length }} <small class="text-sm">Jiwa</small></div>
           <div class="label">Penduduk Terfilter</div>
-       </div>
-       <div class="col-span-4 stat-card card-luxury">
+       </article>
+       <article class="col-span-4 stat-card card-luxury">
           <div class="flex justify-between items-start mb-4">
             <span class="icon-box azure">👨</span>
             <span class="badge secondary">LAKI-LAKI</span>
           </div>
           <div class="value">{{ countGender('Laki-laki') }}</div>
           <div class="label">Total Laki-laki</div>
-       </div>
-       <div class="col-span-4 stat-card card-luxury">
+       </article>
+       <article class="col-span-4 stat-card card-luxury">
           <div class="flex justify-between items-start mb-4">
             <span class="icon-box azure">👩</span>
             <span class="badge secondary">PEREMPUAN</span>
           </div>
           <div class="value">{{ countGender('Perempuan') }}</div>
           <div class="label">Total Perempuan</div>
-       </div>
-    </div>
+       </article>
+    </section>
 
-    <div class="card-luxury p-0 overflow-hidden fade-in">
+    <main class="card-luxury p-0 overflow-hidden fade-in">
       <table class="luxury-table">
         <thead>
           <tr>
@@ -132,9 +123,9 @@ import { Router } from '@angular/router';
             <td><span class="badge secondary">{{ r.relationship }}</span></td>
             <td><span class="kk-link" (click)="viewFamily(r.family_id)">{{ r.family_id }}</span></td>
             <td class="actions-cell text-right">
-              <button class="btn-icon" (click)="viewProfile(r.nik)" title="Lihat Profil">👁️</button>
-              <button class="btn-icon" (click)="editResident(r)" title="Edit">✏️</button>
-              <button class="btn-icon delete" (click)="deleteResident(r.nik)" title="Hapus">🗑️</button>
+              <button class="btn-icon" (click)="viewProfile(r.nik)" title="Lihat Profil" aria-label="Lihat Profil">👁️</button>
+              <button class="btn-icon" (click)="editResident(r)" title="Edit" aria-label="Edit Data">✏️</button>
+              <button class="btn-icon delete" (click)="deleteResident(r.nik)" title="Hapus" aria-label="Hapus Data">🗑️</button>
             </td>
           </tr>
           <tr *ngIf="filteredResidents().length === 0">
@@ -147,11 +138,11 @@ import { Router } from '@angular/router';
       </table>
 
       <!-- Pagination Footer -->
-      <div class="pagination-bar glass-panel p-6 flex-between" *ngIf="filteredResidents().length > 0">
+      <footer class="pagination-bar glass-panel p-6 flex-between" *ngIf="filteredResidents().length > 0">
          <div class="pagination-info">
             Menampilkan <b>{{ startIndex() + 1 }}-{{ endIndex() }}</b> dari <b>{{ totalRecords() }}</b> Penduduk
          </div>
-         <div class="pagination-controls flex gap-2">
+         <nav class="pagination-controls flex gap-2" aria-label="Navigasi Halaman">
             <button class="btn-page" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
                Sebelumnya
             </button>
@@ -159,25 +150,26 @@ import { Router } from '@angular/router';
                <button *ngFor="let p of getVisiblePages()" 
                   class="btn-page-num" 
                   [class.active]="p === currentPage()"
-                  (click)="goToPage(p)">
+                  (click)="goToPage(p)"
+                  [attr.aria-label]="'Halaman ' + p">
                   {{ p }}
                </button>
             </div>
             <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
                Selanjutnya
             </button>
-         </div>
-      </div>
-    </div>
+         </nav>
+      </footer>
+    </main>
 
     <!-- Modals -->
+    <!-- Add Modal -->
     <div *ngIf="isAddModalOpen()" class="form-overlay fade-in" (click)="isAddModalOpen.set(false)">
       <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <div class="modal-header mb-8">
+        <header class="modal-header mb-8">
           <h2 class="title-gradient">Tambah Data Penduduk</h2>
           <p class="text-muted">Masukkan informasi kependudukan sesuai dokumen resmi.</p>
-        </div>
-        
+        </header>
         <form (submit)="addNewResident()" class="form-grid">
            <div class="input-group">
               <label>NIK (16 DIGIT)</label>
@@ -187,12 +179,42 @@ import { Router } from '@angular/router';
               <label>Nama Lengkap</label>
               <input [(ngModel)]="addForm.full_name" name="name" placeholder="Sesuai KTP" required class="custom-input">
            </div>
-           <div class="form-footer mt-8 col-span-2 flex justify-end gap-3">
+           <footer class="form-footer mt-8 col-span-2 flex justify-end gap-3">
               <button type="button" class="btn-outline" (click)="isAddModalOpen.set(false)">Batal</button>
               <button type="submit" class="btn-primary" [disabled]="loadingAdd()">
                  {{ loadingAdd() ? 'Sedang Menyimpan...' : 'Simpan Data Penduduk' }}
               </button>
+           </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div *ngIf="residentToEdit()" class="form-overlay fade-in" (click)="residentToEdit.set(null)">
+      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
+        <header class="modal-header mb-8">
+          <h2 class="title-gradient">Edit Data: {{ residentToEdit()?.full_name }}</h2>
+          <p class="text-muted">Perbarui data kependudukan dengan informasi terbaru.</p>
+        </header>
+        <form (submit)="updateResident()" class="form-grid">
+           <div class="input-group">
+              <label>Pekerjaan</label>
+              <select [(ngModel)]="editForm.occupation" name="occ" class="custom-select">
+                <option *ngFor="let job of staticOccupations" [value]="job">{{ job }}</option>
+              </select>
            </div>
+           <div class="input-group">
+              <label>Status Dasar</label>
+              <select [(ngModel)]="editForm.status_dasar" name="status" class="custom-select">
+                <option value="HIDUP">HIDUP</option>
+                <option value="MATI">MATI</option>
+                <option value="PINDAH">PINDAH</option>
+              </select>
+           </div>
+           <footer class="form-footer mt-8 col-span-2 flex justify-end gap-3">
+              <button type="button" class="btn-outline" (click)="residentToEdit.set(null)">Batal</button>
+              <button type="submit" class="btn-primary">Update Data</button>
+           </footer>
         </form>
       </div>
     </div>
@@ -265,83 +287,55 @@ export class ResidentsComponent implements OnDestroy {
   private router = inject(Router);
   private pdfService = inject(PdfService);
 
-  occupationList = [
-    'Petani', 'Nelayan', 'Wiraswasta', 'PNS', 'TNI/Polri', 'Karyawan Swasta', 
-    'Buruh', 'Pelajar/Mahasiswa', 'Ibu Rumah Tangga', 'Tidak/Belum Bekerja', 'Pensiunan'
-  ];
+  // Constants
+  staticOccupations = ['Petani', 'Nelayan', 'Wiraswasta', 'PNS', 'Buruh', 'Karyawan', 'Lainnya'];
 
-  religionList = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
-
-  educationList = [
-    'TIDAK / BELUM SEKOLAH', 'BELUM TAMAT SD/SEDERAJAT', 'TAMAT SD / SEDERAJAT',
-    'SLTP/SEDERAJAT', 'SLTA / SEDERAJAT', 'DIPLOMA I / II',
-    'AKADEMI/ DIPLOMA III/S. MUDA', 'DIPLOMA IV/ STRATA I', 'STRATA II', 'STRATA III'
-  ];
-
-  relationshipList = [
-    'KEPALA KELUARGA', 'SUAMI', 'ISTRI', 'ANAK', 'MENANTU', 'CUCU', 
-    'ORANG TUA', 'MERTUA', 'FAMILI LAIN', 'PEMBANTU', 'LAINNYA'
-  ];
-
+  // Signals
   residents = signal<Resident[]>([]);
-  families = signal<any[]>([]);
-  filteredResidents = signal<Resident[]>([]);
-  searchTerm = '';
-  filterGender = '';
-  filterOccupation = '';
-  filterHamlet = '';
-  filterStatus = '';
-
+  families = signal<Family[]>([]);
+  searchTerm = signal('');
+  filterGender = signal('');
+  filterOccupation = signal('');
+  filterHamlet = signal('');
+  
   currentPage = signal(1);
   pageSize = signal(10);
+  isAddModalOpen = signal(false);
+  loadingAdd = signal(false);
+  residentToEdit = signal<Resident | null>(null);
+  editForm: Partial<Resident> = {};
+
+  // Reactive Derived State
+  filteredResidents = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const gender = this.filterGender();
+    const occ = this.filterOccupation();
+    const ham = this.filterHamlet();
+
+    return this.residents().filter(r => {
+      const searchStr = (r.nik + (r.full_name || '') + (r.family_id || '')).toLowerCase();
+      return (!term || searchStr.includes(term)) &&
+             (!gender || r.gender === gender) &&
+             (!occ || r.occupation === occ) &&
+             (!ham || r.hamlet === ham);
+    });
+  });
 
   paginatedResidents = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
-    const end = start + this.pageSize();
-    return this.filteredResidents().slice(start, end);
+    return this.filteredResidents().slice(start, start + this.pageSize());
   });
+
+  occupationList = computed(() => 
+    [...new Set(this.residents().map(r => r.occupation))].filter(Boolean).sort() as string[]
+  );
 
   totalRecords = computed(() => this.filteredResidents().length);
   totalPages = computed(() => Math.ceil(this.totalRecords() / this.pageSize()));
   startIndex = computed(() => (this.currentPage() - 1) * this.pageSize());
   endIndex = computed(() => Math.min(this.startIndex() + this.pageSize(), this.totalRecords()));
 
-  goToPage(p: number) {
-    if (p >= 1 && p <= this.totalPages()) {
-      this.currentPage.set(p);
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const pages: number[] = [];
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) pages.push(i);
-    } else {
-      if (current <= 4) {
-        for (let i = 1; i <= 5; i++) pages.push(i);
-      } else if (current >= total - 3) {
-        for (let i = total - 4; i <= total; i++) pages.push(i);
-      } else {
-        for (let i = current - 2; i <= current + 2; i++) pages.push(i);
-      }
-    }
-    return pages;
-  }
-
-  isAddModalOpen = signal(false);
-  loadingAdd = signal(false);
-  addForm: Partial<Resident> = {
-    gender: 'Laki-laki',
-    relationship: 'ANAK',
-    religion: 'Islam',
-    education: 'SLTA / SEDERAJAT',
-    status_dasar: 'HIDUP'
-  };
-
-  residentToEdit = signal<Resident | null>(null);
-  editForm: any = {};
+  addForm: Partial<Resident> = { gender: 'Laki-laki', relationship: 'ANAK', religion: 'Islam' };
   private subscriptions: any[] = [];
 
   constructor() {
@@ -350,74 +344,56 @@ export class ResidentsComponent implements OnDestroy {
   }
 
   refreshData() {
-    this.dataService.getResidents().subscribe(data => {
-      this.residents.set(data);
-      this.filterResidents(); 
-      this.occupationList = [...new Set(data.map(r => r.occupation))].filter(Boolean).sort();
-    });
-    this.dataService.getFamilies().subscribe(data => this.families.set(data));
+    this.dataService.getResidents().subscribe(d => this.residents.set(d));
+    this.dataService.getFamilies().subscribe(d => this.families.set(d));
   }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach(s => s.unsubscribe());
+  ngOnDestroy() { this.subscriptions.forEach(s => s.unsubscribe()); }
+
+  goToPage(p: number) { if (p >= 1 && p <= this.totalPages()) this.currentPage.set(p); }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages();
+    const curr = this.currentPage();
+    const pages: number[] = [];
+    if (total <= 7) for (let i = 1; i <= total; i++) pages.push(i);
+    else {
+      if (curr <= 4) for (let i = 1; i <= 5; i++) pages.push(i);
+      else if (curr >= total - 3) for (let i = total - 4; i <= total; i++) pages.push(i);
+      else for (let i = curr - 2; i <= curr + 2; i++) pages.push(i);
+    }
+    return pages;
   }
 
-  filterResidents() {
-    const term = this.searchTerm.toLowerCase();
-    const filtered = this.residents().filter(r => {
-      let matches = true;
-      const searchStr = (r.nik + (r.full_name || '') + (r.family_id || '')).toLowerCase();
-      if (term && !searchStr.includes(term)) matches = false;
-      if (this.filterGender && r.gender !== this.filterGender) matches = false;
-      if (this.filterOccupation && r.occupation !== this.filterOccupation) matches = false;
-      if (this.filterHamlet && r.hamlet !== this.filterHamlet) matches = false;
-      if (this.filterStatus && (r.status_dasar || 'HIDUP') !== this.filterStatus) matches = false;
-      return matches;
-    });
-    this.filteredResidents.set(filtered);
-    this.currentPage.set(1);
-  }
+  countGender(g: string) { return this.filteredResidents().filter(r => r.gender === g).length; }
+  viewProfile(n: string) { this.router.navigate(['/residents', n]); }
+  viewFamily(k: string) { this.router.navigate(['/families'], { queryParams: { search: k } }); }
 
-  countGender(gender: string): number {
-    return this.filteredResidents().filter(r => r.gender === gender).length;
-  }
-
-  viewProfile(nik: string) { this.router.navigate(['/residents', nik]); }
-  viewFamily(kk: string) { this.router.navigate(['/families'], { queryParams: { search: kk } }); }
-
-  editResident(resident: Resident) {
-    this.residentToEdit.set(resident);
-    this.editForm = { ...resident };
-  }
+  editResident(r: Resident) { this.residentToEdit.set(r); this.editForm = { ...r }; }
 
   async addNewResident() {
-    if (!this.addForm.nik || !this.addForm.full_name || !this.addForm.family_id) {
-      alert('NIK, Nama Lengkap, dan No. KK wajib diisi.');
-      return;
-    }
     this.loadingAdd.set(true);
     try {
       await this.dataService.addResident(this.addForm as Resident);
       this.isAddModalOpen.set(false);
-      this.addForm = { gender: 'Laki-laki', relationship: 'ANAK', religion: 'Islam', education: 'SLTA / SEDERAJAT', status_dasar: 'HIDUP' };
-    } catch (err: any) { alert('Gagal menambah penduduk: ' + err.message); } 
+      this.addForm = { gender: 'Laki-laki', relationship: 'ANAK' };
+    } catch (e: any) { alert(e.message); } 
     finally { this.loadingAdd.set(false); }
   }
 
   async updateResident() {
-    try { await this.dataService.updateResident(this.editForm); this.residentToEdit.set(null); } 
-    catch (err: any) { alert('Gagal memperbarui data: ' + err.message); }
+    try {
+      await this.dataService.updateResident(this.editForm);
+      this.residentToEdit.set(null);
+    } catch (e: any) { alert(e.message); }
   }
 
-  async deleteResident(nik: string) {
-    if (confirm('Apakah Anda yakin ingin menghapus data penduduk ini?')) {
-      await this.dataService.deleteResident(nik);
-    }
+  async deleteResident(n: string) {
+    if (confirm('Hapus data?')) await this.dataService.deleteResident(n);
   }
 
   async exportToPdf() {
-    const filterTitle = `Data Kependudukan - Terfilter: ${this.filteredResidents().length} Jiwa`;
-    await this.pdfService.generateResidentsReport(this.filteredResidents(), filterTitle);
+    await this.pdfService.generateResidentsReport(this.filteredResidents(), 'Laporan Terfilter');
   }
 }
   `,

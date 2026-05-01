@@ -10,21 +10,21 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="header-actions mb-6 fade-in">
+    <header class="header-actions mb-6 fade-in">
       <div class="titles">
         <h2 class="title-gradient">Analisis Kelayakan Bantuan (Bansos)</h2>
         <p class="text-muted">Rekomendasi penerima bantuan berdasarkan klasifikasi sosial dan ekonomi.</p>
       </div>
       <div class="flex gap-2">
-         <button class="btn-outline" (click)="exportAnalysis()">📥 Export PDF</button>
+         <button class="btn-outline" (click)="exportAnalysis()" aria-label="Ekspor Analisis Bansos ke PDF">📥 Export PDF</button>
       </div>
-    </div>
+    </header>
 
-    <div class="filter-bar card-luxury mb-6 p-6 fade-in">
+    <section class="filter-bar card-luxury mb-6 p-6 fade-in" aria-label="Filter Analisis">
        <div class="flex gap-6 items-center flex-wrap">
           <div class="input-group">
              <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Kategori Bantuan</label>
-             <select [(ngModel)]="selectedCategory" class="custom-select">
+             <select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)" class="custom-select" aria-label="Pilih Kategori Bantuan">
                 <option value="PKH">PKH (Program Keluarga Harapan)</option>
                 <option value="BLT">BLT (Bantuan Langsung Tunai)</option>
                 <option value="BPNT">BPNT (Bantuan Pangan Non Tunai)</option>
@@ -32,20 +32,20 @@ import { FormsModule } from '@angular/forms';
           </div>
           <div class="input-group">
              <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Batas Skor Layak</label>
-             <input type="number" [(ngModel)]="scoreThreshold" class="custom-input" style="width: 100px;">
+             <input type="number" [ngModel]="scoreThreshold()" (ngModelChange)="scoreThreshold.set($event)" class="custom-input" style="width: 100px;" aria-label="Batas Skor Kelayakan">
           </div>
           <div class="input-group ml-auto">
              <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Tampilkan</label>
-             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 80px;">
+             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 80px;" aria-label="Jumlah data per halaman">
                 <option [ngValue]="10">10</option>
                 <option [ngValue]="25">25</option>
                 <option [ngValue]="50">50</option>
              </select>
           </div>
        </div>
-    </div>
+    </section>
 
-    <div class="analysis-grid fade-in">
+    <main class="analysis-grid fade-in">
        <div class="card-luxury p-0 overflow-hidden">
           <table class="luxury-table">
              <thead>
@@ -86,11 +86,11 @@ import { FormsModule } from '@angular/forms';
           </table>
           
           <!-- Pagination Controls -->
-          <div class="pagination-bar glass-panel p-4 flex-between">
+          <footer class="pagination-bar glass-panel p-4 flex-between">
              <div class="pagination-info">
                 Menampilkan <b>{{ startIndex() + 1 }}-{{ endIndex() }}</b> dari <b>{{ totalRecords() }}</b> Keluarga
              </div>
-             <div class="pagination-controls flex gap-2">
+             <nav class="pagination-controls flex gap-2" aria-label="Navigasi Halaman Analisis">
                 <button class="btn-page" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">
                    Sebelumnya
                 </button>
@@ -98,22 +98,23 @@ import { FormsModule } from '@angular/forms';
                    <button *ngFor="let p of getVisiblePages()" 
                       class="btn-page-num" 
                       [class.active]="p === currentPage()"
-                      (click)="currentPage.set(p)">
+                      (click)="currentPage.set(p)"
+                      [attr.aria-label]="'Halaman ' + p">
                       {{ p }}
                    </button>
                 </div>
                 <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">
                    Selanjutnya
                 </button>
-             </div>
-          </div>
+             </nav>
+          </footer>
 
           <div *ngIf="analyzedData().length === 0" class="empty-state">
              <div class="text-4xl mb-4">🔍</div>
              <p>Data tidak tersedia atau belum dianalisis.</p>
           </div>
        </div>
-    </div>
+    </main>
   `,
   styles: [`
     .luxury-table {

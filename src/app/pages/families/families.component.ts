@@ -11,52 +11,61 @@ import { PdfService } from '../../services/pdf.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="header-actions mb-6">
-      <h2 class="title-gradient">Manajemen Kartu Keluarga</h2>
-      <button class="btn-primary" (click)="showAddFamily.set(true)">Tambah KK Baru</button>
-    </div>
+    <header class="header-actions mb-8 fade-in">
+      <div class="titles">
+        <h2 class="title-gradient">Manajemen Kartu Keluarga</h2>
+        <p class="text-muted">Administrasi data hubungan keluarga dan domisili terpusat.</p>
+      </div>
+      <div class="flex gap-3">
+        <button class="btn-primary" (click)="showAddFamily.set(true)" aria-label="Tambah Kartu Keluarga Baru">
+           Tambah KK Baru 🏠
+        </button>
+      </div>
+    </header>
 
     <!-- Modal Form KK Baru / Edit -->
-    <div *ngIf="showAddFamily() || familyToEdit()" class="form-overlay" (click)="closeFamilyForm()">
+    <div *ngIf="showAddFamily() || familyToEdit()" class="form-overlay fade-in" (click)="closeFamilyForm()">
       <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <h3>{{ familyToEdit() ? 'Update Data' : 'Registrasi' }} Kartu Keluarga</h3>
+        <header class="modal-header mb-8">
+           <h3 class="title-gradient">{{ familyToEdit() ? 'Update Data' : 'Registrasi' }} Kartu Keluarga</h3>
+           <p class="text-muted">Pastikan nomor KK dan data kepala keluarga sesuai dengan dokumen fisik.</p>
+        </header>
         <form (submit)="saveFamily()">
           <div class="form-grid">
             <div class="input-group">
-              <label>Nomor KK</label>
-              <input [(ngModel)]="familyForm.kk_number" name="kk" placeholder="16 digit nomor KK" required [disabled]="!!familyToEdit()">
+              <label>Nomor KK (16 Digit)</label>
+              <input [(ngModel)]="familyForm.kk_number" name="kk" placeholder="16 digit nomor KK" required [disabled]="!!familyToEdit()" class="custom-input">
             </div>
             <div class="input-group">
               <label>NIK Kepala Keluarga</label>
-              <input [(ngModel)]="familyForm.head_of_family_nik" name="head_nik" placeholder="16 digit NIK">
+              <input [(ngModel)]="familyForm.head_of_family_nik" name="head_nik" placeholder="16 digit NIK" class="custom-input">
             </div>
             <div class="input-group">
               <label>Kepala Keluarga</label>
-              <input [(ngModel)]="familyForm.head_of_family_name" name="head" placeholder="Nama lengkap" required>
+              <input [(ngModel)]="familyForm.head_of_family_name" name="head" placeholder="Nama lengkap sesuai KTP" required class="custom-input">
             </div>
             <div class="input-group" style="grid-column: 1 / -1;">
               <label>Alamat Lengkap</label>
-              <input [(ngModel)]="familyForm.address" name="addr" placeholder="Jalan / Perumahan" required>
+              <input [(ngModel)]="familyForm.address" name="addr" placeholder="Jalan / No. Rumah / Perumahan" required class="custom-input">
             </div>
             <div class="input-group">
-              <label>RT</label>
-              <input [(ngModel)]="familyForm.rt" name="rt" placeholder="001">
+              <label>RT / RW</label>
+              <div class="flex gap-2">
+                 <input [(ngModel)]="familyForm.rt" name="rt" placeholder="RT" class="custom-input" style="width: 80px;">
+                 <input [(ngModel)]="familyForm.rw" name="rw" placeholder="RW" class="custom-input" style="width: 80px;">
+              </div>
             </div>
             <div class="input-group">
-              <label>RW</label>
-              <input [(ngModel)]="familyForm.rw" name="rw" placeholder="002">
-            </div>
-            <div class="input-group">
-              <label>Dusun</label>
-              <input [(ngModel)]="familyForm.hamlet" name="hamlet" placeholder="Dusun">
-            </div>
-            <div class="input-group">
-              <label>Kecamatan</label>
-              <input [(ngModel)]="familyForm.district" name="dist" placeholder="Kecamatan" required>
+              <label>Wilayah / Dusun</label>
+              <select [(ngModel)]="familyForm.hamlet" name="hamlet" class="custom-select">
+                 <option value="Dusun I">Dusun I</option>
+                 <option value="Dusun II">Dusun II</option>
+                 <option value="Dusun III">Dusun III</option>
+              </select>
             </div>
             <div class="input-group">
               <label>Kelas Sosial</label>
-              <select [(ngModel)]="familyForm.social_class" name="social_class">
+              <select [(ngModel)]="familyForm.social_class" name="social_class" class="custom-select">
                 <option value="Sangat Miskin">Sangat Miskin</option>
                 <option value="Miskin">Miskin</option>
                 <option value="Sedang">Sedang</option>
@@ -65,112 +74,117 @@ import { PdfService } from '../../services/pdf.service';
             </div>
             <div class="input-group">
               <label>Tanggal Cetak KK</label>
-              <input type="date" [(ngModel)]="familyForm.print_date" name="print_date">
+              <input type="date" [(ngModel)]="familyForm.print_date" name="print_date" class="custom-input">
             </div>
           </div>
-          <div class="form-actions mt-6">
-            <button type="button" class="btn-text" (click)="closeFamilyForm()">Batal</button>
+          <footer class="form-actions mt-8 flex justify-end gap-3">
+            <button type="button" class="btn-outline" (click)="closeFamilyForm()">Batal</button>
             <button type="submit" class="btn-primary">{{ familyToEdit() ? 'Simpan Perubahan' : 'Simpan Data' }}</button>
-          </div>
+          </footer>
         </form>
       </div>
     </div>
 
     <!-- Modal Form Detail & Anggota -->
-    <div *ngIf="selectedFamily()" class="form-overlay" (click)="selectedFamily.set(null)">
+    <div *ngIf="selectedFamily()" class="form-overlay fade-in" (click)="selectedFamily.set(null)">
       <div class="form-card card-luxury glass-panel wide" (click)="$event.stopPropagation()">
-        <header class="modal-header">
+        <header class="modal-header flex justify-between items-start">
           <div class="titles">
-            <h3>Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
-            <p class="text-muted">KK: {{ selectedFamily()?.kk_number }}</p>
+            <h3 class="title-gradient">Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
+            <p class="text-muted font-bold">NOMOR KK: {{ selectedFamily()?.kk_number }}</p>
           </div>
-          <button class="btn-outline btn-sm" (click)="downloadFamilyPDF()">🖨️ Cetak Profil Keluarga</button>
+          <button class="btn-outline" (click)="downloadFamilyPDF()" aria-label="Cetak Kartu Keluarga">🖨️ Cetak Profil PDF</button>
         </header>
 
-        <section class="resident-section mt-6">
-          <div class="section-header">
-            <h4>Daftar Anggota Keluarga</h4>
-            <button class="btn-sm btn-primary" (click)="showAddResident.set(true)">+ Tambah Anggota</button>
+        <section class="resident-section mt-8">
+          <div class="section-header flex justify-between items-center mb-6">
+            <h4 class="text-slate-800 font-extrabold uppercase tracking-widest text-xs">Anggota Keluarga Terdaftar</h4>
+            <button class="btn-primary btn-sm" (click)="showAddResident.set(true)">+ Tambah Anggota</button>
           </div>
 
-          <div class="members-list mt-4">
-             <div *ngFor="let r of members()" class="member-item">
-               <span class="nik">{{ r.nik }}</span>
-               <span class="name">{{ r.full_name }}</span>
-               <span class="rel badge">{{ r.relationship }}</span>
-               <button class="btn-delete-sm" (click)="deleteMember(r.nik)">🗑️</button>
-             </div>
-             <p *ngIf="members().length === 0" class="text-muted py-4">Belum ada anggota terdaftar.</p>
+          <div class="members-list">
+             <article *ngFor="let r of members()" class="member-item card-luxury p-4 mb-3 flex justify-between items-center">
+               <div class="flex gap-4 items-center">
+                  <span class="nik-cell text-sm">{{ r.nik }}</span>
+                  <span class="name text-slate-800 font-bold">{{ r.full_name }}</span>
+               </div>
+               <div class="flex gap-3 items-center">
+                  <span class="badge secondary">{{ r.relationship }}</span>
+                  <button class="btn-icon delete" (click)="deleteMember(r.nik)" title="Hapus Anggota">🗑️</button>
+               </div>
+             </article>
+             <p *ngIf="members().length === 0" class="empty-state">Belum ada anggota terdaftar.</p>
           </div>
         </section>
 
         <!-- Nested Add Resident Form -->
-        <div *ngIf="showAddResident()" class="add-resident-box card-luxury mt-4">
-          <h5>Input Anggota Keluarga Baru</h5>
-          <div class="form-grid-3 mt-2">
-            <input [(ngModel)]="newResident.nik" placeholder="NIK (16 digit)">
-            <input [(ngModel)]="newResident.full_name" placeholder="Nama Lengkap">
-            <select [(ngModel)]="newResident.gender">
+        <section *ngIf="showAddResident()" class="add-resident-box card-luxury bg-slate-50 mt-6 p-6 border-dashed border-2 border-slate-200">
+          <h5 class="font-bold mb-4">Input Anggota Keluarga Baru</h5>
+          <div class="form-grid-3">
+            <input [(ngModel)]="newResident.nik" placeholder="NIK (16 digit)" class="custom-input">
+            <input [(ngModel)]="newResident.full_name" placeholder="Nama Lengkap" class="custom-input">
+            <select [(ngModel)]="newResident.gender" class="custom-select">
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
             </select>
-            <input [(ngModel)]="newResident.relationship" placeholder="Hubungan (Anak, Istri, dll)">
-            <input [(ngModel)]="newResident.occupation" placeholder="Pekerjaan">
           </div>
-          <div class="mt-4 flex gap-2">
-             <button class="btn-sm btn-primary" (click)="saveResident()">Simpan Anggota</button>
-             <button class="btn-sm btn-text" (click)="showAddResident.set(false)">Batal</button>
+          <div class="mt-4 flex gap-2 justify-end">
+             <button class="btn-outline btn-sm" (click)="showAddResident.set(false)">Batal</button>
+             <button class="btn-primary btn-sm" (click)="saveResident()">Simpan Anggota</button>
           </div>
-        </div>
+        </section>
 
-        <div class="form-actions mt-6">
-          <button class="btn-primary" (click)="selectedFamily.set(null)">Tutup</button>
-        </div>
+        <footer class="form-actions mt-8 pt-6 border-t border-slate-100 flex justify-end">
+          <button class="btn-primary" (click)="selectedFamily.set(null)">Selesai & Tutup</button>
+        </footer>
       </div>
     </div>
 
     <!-- List KK -->
-    <div class="families-grid">
-      <div *ngFor="let f of paginatedFamilies()" class="card-luxury family-card">
-        <div class="card-header">
-          <div class="icon">🏠</div>
+    <main class="families-grid fade-in">
+      <article *ngFor="let f of paginatedFamilies()" class="card-luxury family-card">
+        <header class="card-header">
+          <div class="icon-box azure">🏠</div>
           <div class="head-info">
-            <h4>{{ f.head_of_family_name }}</h4>
-            <p>{{ f.kk_number }}</p>
+            <h4 class="text-slate-800">{{ f.head_of_family_name }}</h4>
+            <p class="nik-cell text-xs">{{ f.kk_number }}</p>
           </div>
-          <div class="card-actions">
-            <button class="btn-icon" (click)="editFamily(f)" title="Edit">✏️</button>
-            <button class="btn-icon delete" (click)="deleteFamily(f.kk_number)" title="Hapus">🗑️</button>
+          <div class="card-actions flex gap-1">
+            <button class="btn-icon" (click)="editFamily(f)" title="Edit KK">✏️</button>
+            <button class="btn-icon delete" (click)="deleteFamily(f.kk_number)" title="Hapus KK">🗑️</button>
+          </div>
+        </header>
+        <div class="card-body py-4">
+          <p class="address text-slate-600 text-sm mb-3">{{ f.address }}</p>
+          <div class="card-meta flex justify-between items-center">
+            <span class="badge secondary">{{ f.hamlet }}</span>
+            <span class="member-count font-bold text-primary">{{ getMemberCount(f.kk_number) }} <small>Anggota</small></span>
           </div>
         </div>
-        <div class="card-body">
-          <p class="address">{{ f.address }}</p>
-          <div class="card-meta">
-            <span class="sub">{{ f.district }}</span>
-            <span class="member-badge">{{ getMemberCount(f.kk_number) }} Anggota</span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <button class="btn-outline w-full" (click)="openDetail(f)">Kelola Anggota</button>
-        </div>
-      </div>
-    </div>
+        <footer class="card-footer mt-auto pt-4 border-t border-slate-50">
+          <button class="btn-outline w-full" (click)="openDetail(f)">Kelola Anggota Keluarga</button>
+        </footer>
+      </article>
+    </main>
 
     <!-- Pagination Controls -->
-    <div class="pagination-container mt-8" *ngIf="families().length > pageSize()">
-      <div class="pagination-info">
-        Menampilkan {{ startRange() }} - {{ endRange() }} dari {{ families().length }} KK
+    <footer class="pagination-container mt-12 glass-panel p-6 flex justify-between items-center fade-in" *ngIf="families().length > pageSize()">
+      <div class="pagination-info text-muted">
+        Menampilkan <b>{{ startRange() }} - {{ endRange() }}</b> dari <b>{{ families().length }}</b> Kartu Keluarga
       </div>
-      <div class="pagination-controls">
-        <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Prev</button>
-        <button *ngFor="let p of totalPagesArray()" 
-                (click)="goToPage(p)" 
-                [class.active]="currentPage() === p">
-          {{ p }}
-        </button>
-        <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Next</button>
-      </div>
-    </div>
+      <nav class="pagination-controls flex gap-2" aria-label="Navigasi Halaman KK">
+        <button class="btn-page" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Sebelumnya</button>
+        <div class="page-numbers flex gap-1">
+          <button *ngFor="let p of totalPagesArray()" 
+                  (click)="goToPage(p)" 
+                  class="btn-page-num"
+                  [class.active]="currentPage() === p">
+            {{ p }}
+          </button>
+        </div>
+        <button class="btn-page" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Selanjutnya</button>
+      </nav>
+    </footer>
   `,
   styles: [`
     .families-grid {
@@ -181,105 +195,45 @@ import { PdfService } from '../../services/pdf.service';
     .family-card {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      height: 100%;
+      transition: all 0.4s var(--apple-ease);
+      &:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); }
       .card-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        position: relative;
-        .icon { font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 0.5rem; }
-        .head-info { flex: 1; min-width: 0; h4 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } p { margin: 0; font-size: 0.8rem; color: var(--primary); } }
-        .card-actions { display: flex; gap: 0.25rem; }
+        display: flex; align-items: center; gap: 1rem;
+        .head-info { flex: 1; min-width: 0; h4 { margin: 0; font-weight: 800; } }
       }
-      .card-body {
-        flex: 1;
-        .address { font-size: 0.9rem; margin-bottom: 0.5rem; }
-        .card-meta { 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: center; 
-          .sub { font-size: 0.75rem; color: var(--text-muted); }
-          .member-badge { font-size: 0.7rem; background: rgba(99, 102, 241, 0.1); color: #a5b4fc; padding: 0.1rem 0.6rem; border-radius: 1rem; border: 1px solid rgba(165, 180, 252, 0.2); }
-        }
-      }
+    }
+    .icon-box {
+      width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+      &.azure { background: rgba(37, 99, 235, 0.05); color: var(--primary); }
     }
     .form-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      position: fixed; inset: 0; background: rgba(241, 245, 249, 0.8); backdrop-filter: blur(15px);
       display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
-    .form-card {
-      width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 3rem;
-      &::-webkit-scrollbar { width: 6px; }
-      &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-      &.wide { max-width: 950px; }
+    .form-card { width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 4rem; &.wide { max-width: 1000px; } }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    
+    .custom-input, .custom-select {
+       width: 100%; background: #f8fafc; border: 1px solid var(--glass-border);
+       color: #000; padding: 1rem; border-radius: 1rem; outline: none; font-weight: 600;
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .input-group {
-      display: flex; flex-direction: column; gap: 0.5rem;
-      label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-    input, select {
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
-      color: white; padding: 0.85rem 1rem; border-radius: 0.75rem; outline: none;
-      transition: all 0.2s;
-      &:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
-    }
-    select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 1rem center;
-      background-size: 1.2em;
-      padding-right: 3rem !important;
-      cursor: pointer;
-    }
-    select option { background-color: #0f172a !important; color: white !important; }
-    .btn-outline {
-      background: none;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      padding: 0.6rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
-      &:hover { background: var(--primary); color: white; }
-    }
-    .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; }
-    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
     .btn-icon {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-color);
-      padding: 0.3rem;
-      border-radius: 0.4rem;
-      cursor: pointer;
-      font-size: 0.8rem;
-      &:hover { border-color: var(--primary); }
-      &.delete:hover { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+      background: white; border: 1px solid var(--glass-border); width: 34px; height: 34px;
+      border-radius: 10px; cursor: pointer; transition: 0.3s;
+      &:hover { border-color: var(--primary); color: var(--primary); }
+      &.delete:hover { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); }
     }
-    .btn-delete-sm { background: none; border: none; cursor: pointer; opacity: 0.5; &:hover { opacity: 1; } }
-    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
-    .member-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem;
-      background: rgba(255,255,255,0.02);
-      border-radius: 0.5rem;
-      margin-bottom: 0.5rem;
-      gap: 1rem;
-      .nik { color: var(--primary); font-weight: 600; width: 140px; }
-      .name { flex: 1; }
-      .badge { background: var(--primary-glow); padding: 0.1rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; }
+    .pagination-container { background: rgba(255,255,255,0.5); border-top: 1px solid var(--glass-border); border-radius: 2rem; }
+    .btn-page-num {
+       width: 36px; height: 36px; border-radius: 10px; border: none; background: transparent;
+       color: var(--text-muted); font-weight: 700; cursor: pointer;
+       &.active { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
     }
-    .w-full { width: 100%; }
-    .flex { display: flex; }
-    .gap-2 { gap: 0.5rem; }
-    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+  `]
+dding-bottom: 1rem; }
   `]
 })
 export class FamiliesComponent implements OnDestroy {
