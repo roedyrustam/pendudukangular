@@ -76,7 +76,6 @@ import { APBDes } from '../../models/data.models';
                   <button class="btn-icon-sm text-red" (click)="deleteBudget(item.id!)">🗑️</button>
                 </div>
               </td>
-              </td>
             </tr>
           </tbody>
         </table>
@@ -250,7 +249,7 @@ export class ApbdesComponent implements OnInit {
     }
   }
 
-  async deleteBudget(id: string) {
+  async deleteBudget(id: number) {
     if (confirm('Hapus data anggaran ini?')) {
       try {
         await this.dataService.deleteAPBDes(id);

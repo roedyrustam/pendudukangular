@@ -253,7 +253,7 @@ export class ArticlesComponent implements OnInit {
     }
   }
 
-  async deleteArticle(id: string) {
+  async deleteArticle(id: number) {
     if (confirm('Hapus artikel ini permanen?')) {
       try {
         await this.dataService.deleteArticle(id);

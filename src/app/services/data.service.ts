@@ -281,7 +281,7 @@ export class DataService {
       .eq('id', article.id);
   }
 
-  async deleteArticle(id: string) {
+  async deleteArticle(id: number) {
     return this.supabase.from('articles').delete().eq('id', id);
   }
 
@@ -305,7 +305,7 @@ export class DataService {
       .eq('id', data.id);
   }
 
-  async deleteAPBDes(id: string) {
+  async deleteAPBDes(id: number) {
     return this.supabase.from('apbdes').delete().eq('id', id);
   }
 
