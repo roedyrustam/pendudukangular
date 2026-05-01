@@ -15,27 +15,25 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
-      <div class="welcome-banner card-luxury mb-8 fade-in">
-        <div class="flex items-center gap-3">
-          <h1 class="title-gradient">Selamat Datang, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
-          <div class="live-sync-indicator" title="Realtime Active">
-            <span class="pulse-dot"></span>
-            <span class="label">LIVE</span>
-          </div>
-        </div>
-        <div class="flex-between">
-          <div>
+      <div class="welcome-banner card-luxury mb-6 fade-in">
+        <div class="flex-between items-center">
+          <div class="welcome-text">
+            <div class="flex items-center gap-3 mb-1">
+              <h1 class="title-gradient">Halo, {{ profile.displayName || profile.email?.split('@')?.[0] }}!</h1>
+              <div class="live-sync-indicator" title="Realtime Active">
+                <span class="pulse-dot"></span>
+                <span class="label">LIVE</span>
+              </div>
+            </div>
             <p class="tagline">Akses sistem kependudukan Anda sebagai <span class="badge" [class]="profile.role">{{ profile.role | uppercase }}</span></p>
             <p *ngIf="villageConfig()" class="village-label mt-2">
-              📍 {{ villageConfig()?.village_name }}, {{ villageConfig()?.district_name }}, {{ villageConfig()?.regency_name }}
-              <span class="village-code">{{ villageConfig()?.village_code }}</span>
-              <span *ngIf="idmStatus()" class="idm-badge ml-2" [attr.data-status]="idmStatus()">
-                IDM: {{ idmStatus() }}
-              </span>
+              📍 {{ villageConfig()?.village_name }} • {{ villageConfig()?.district_name }}
+              <span *ngIf="idmStatus()" class="idm-badge ml-2" [attr.data-status]="idmStatus()">IDM: {{ idmStatus() }}</span>
             </p>
           </div>
-          <div class="territory-filter" *ngIf="profile.role !== 'warga'">
-            <label class="text-xs text-muted mr-2">Filter Wilayah (RT/RW):</label>
+          
+          <div class="territory-filter card-luxury p-4 glass-panel" *ngIf="profile.role !== 'warga'">
+            <label class="text-xs text-muted mb-2 block">Pilih Wilayah (RT/RW):</label>
             <select class="custom-select" [ngModel]="selectedRt()" (ngModelChange)="onRtChange($event)">
               <option value="">Semua Wilayah</option>
               <option *ngFor="let rt of availableRts()" [value]="rt">{{ rt }}</option>
@@ -77,30 +75,28 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
           </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div class="analytics-grid mt-8 fade-in" style="animation-delay: 0.1s">
-          <div class="card-luxury analytics-card">
+        <!-- Optimized Bento Grid Analytics -->
+        <div class="bento-grid mt-6 fade-in">
+          <!-- Gender Analytics -->
+          <div class="card-luxury analytics-card bento-item">
             <h3>📊 Demografi Gender</h3>
             <div class="chart-simple">
               <div class="chart-bar">
-                <div class="bar male" [style.width.%]="malePercentage()">
-                   <span>Laki-laki ({{ malePercentage() }}%)</span>
-                </div>
-                <div class="bar female" [style.width.%]="femalePercentage()">
-                   <span>Perempuan ({{ femalePercentage() }}%)</span>
-                </div>
+                <div class="bar male" [style.width.%]="malePercentage()"></div>
+                <div class="bar female" [style.width.%]="femalePercentage()"></div>
               </div>
               <div class="chart-labels mt-4">
-                <div class="label"><span class="dot male"></span> Laki-laki: {{ maleCount() }}</div>
-                <div class="label"><span class="dot female"></span> Perempuan: {{ femaleCount() }}</div>
+                <div class="label"><span class="dot male"></span> {{ malePercentage() }}% Laki-laki</div>
+                <div class="label"><span class="dot female"></span> {{ femalePercentage() }}% Perempuan</div>
               </div>
             </div>
           </div>
 
-          <div class="card-luxury analytics-card">
+          <!-- Service Status -->
+          <div class="card-luxury analytics-card bento-item">
             <h3>📋 Status Pelayanan</h3>
             <div class="status-funnel">
-              <div class="funnel-item" *ngFor="let s of statusBreakdown()">
+              <div class="funnel-item" *ngFor="let s of statusBreakdown().slice(0,3)">
                 <label>{{ s.label }}</label>
                 <div class="funnel-bar-bg">
                   <div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div>
@@ -110,10 +106,11 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
             </div>
           </div>
 
-          <div class="card-luxury analytics-card">
+          <!-- Hamlet Distribution -->
+          <div class="card-luxury analytics-card bento-item span-2">
             <h3>🏘️ Distribusi Wilayah (Dusun)</h3>
-            <div class="hamlet-list">
-               <div class="hamlet-item" *ngFor="let h of hamletBreakdown()">
+            <div class="hamlet-grid">
+               <div class="hamlet-item" *ngFor="let h of hamletBreakdown().slice(0,4)">
                   <div class="flex-between mb-1">
                      <span class="name">{{ h.label }}</span>
                      <span class="pct">{{ h.count }} KK</span>
@@ -122,65 +119,58 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                      <div class="bar" [style.width.%]="h.percent"></div>
                   </div>
                </div>
-               <p *ngIf="hamletBreakdown().length === 0" class="text-muted text-xs italic">Data wilayah belum terpetakan.</p>
             </div>
           </div>
         </div>
 
-        <div class="content-main mt-8 fade-in" style="animation-delay: 0.1s">
-          <div class="grid-2">
-            <div class="card-luxury">
-              <div class="flex-between mb-4">
-                <h3>Antrian Layanan Terbaru</h3>
-                <button class="btn-text" routerLink="/services">Lihat Semua</button>
-              </div>
-              <div class="request-list">
-                <div *ngFor="let req of latestRequests()" class="request-item">
-                  <div class="req-info">
-                     <span class="req-type">{{ req.service_type }}</span>
-                     <span class="req-nik">{{ req.nik }}</span>
-                  </div>
-                  <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+        <div class="content-row mt-6 fade-in">
+          <div class="card-luxury bento-item">
+            <div class="flex-between mb-4">
+              <h3>📥 Antrian Layanan</h3>
+              <button class="btn-text-sm" routerLink="/services">Lihat Semua</button>
+            </div>
+            <div class="request-list">
+              <div *ngFor="let req of latestRequests()" class="request-item">
+                <div class="req-info">
+                   <span class="req-type">{{ req.service_type }}</span>
+                   <span class="req-nik">{{ req.nik }}</span>
                 </div>
-                <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-8">Tidak ada antrian aktif.</p>
+                <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+              </div>
+              <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-8">Tidak ada antrian.</p>
+            </div>
+          </div>
+
+          <div class="side-widgets">
+            <!-- Budget Widget -->
+            <div class="card-luxury budget-widget bento-item mb-4" *ngIf="budgetSummary()">
+              <div class="flex-between mb-4">
+                <h3>💰 APBDes {{ budgetSummary()?.year }}</h3>
+                <button class="btn-text-sm" routerLink="/apbdes">Detail</button>
+              </div>
+              <div class="budget-row flex gap-4">
+                <div class="budget-stat flex-1">
+                  <label>Pendapatan</label>
+                  <p class="val">Rp {{ budgetSummary()?.income | number }}</p>
+                </div>
+                <div class="budget-stat flex-1">
+                  <label>Realisasi</label>
+                  <p class="val text-primary">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</p>
+                </div>
               </div>
             </div>
 
-            <!-- Budget Mini Widget -->
-            <div class="card-luxury budget-widget" *ngIf="budgetSummary()">
-              <div class="flex-between mb-4">
-                <h3>💰 Realisasi APBDes {{ budgetSummary()?.year }}</h3>
-                <button class="btn-text" routerLink="/apbdes">Detail</button>
-              </div>
-              <div class="budget-stat mb-4">
-                <label>Pendapatan</label>
-                <div class="flex-between">
-                  <span class="val">Rp {{ budgetSummary()?.income | number }}</span>
-                  <span class="pct text-xs text-primary">100%</span>
-                </div>
-                <div class="progress"><div class="bar income" style="width: 100%"></div></div>
-              </div>
-              <div class="budget-stat">
-                <label>Belanja / Pengeluaran</label>
-                <div class="flex-between">
-                  <span class="val">Rp {{ budgetSummary()?.expense | number }}</span>
-                  <span class="pct text-xs text-muted">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</span>
-                </div>
-                <div class="progress"><div class="bar expense" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
-              </div>
-            </div>
-
-            <!-- Inventory Mini Widget -->
-            <div class="card-luxury inventory-mini" *ngIf="inventoryCount() > 0">
+            <!-- Inventory Widget -->
+            <div class="card-luxury inventory-mini bento-item" *ngIf="inventoryCount() > 0">
                <div class="flex-between mb-4">
-                 <h3>📦 Inventaris Aset</h3>
-                 <button class="btn-text" routerLink="/inventory">Kelola</button>
+                 <h3>📦 Aset Desa</h3>
+                 <button class="btn-text-sm" routerLink="/inventory">Kelola</button>
                </div>
                <div class="stat-main">
                   <span class="count">{{ inventoryCount() }}</span>
-                  <span class="unit">Barang Terdaftar</span>
+                  <span class="unit">Barang</span>
                </div>
-               <p class="text-xs text-muted mt-2">Total Nilai: Rp {{ totalInventoryValue() | number }}</p>
+               <p class="text-[10px] text-muted mt-2">Nilai Aset: Rp {{ totalInventoryValue() | number }}</p>
             </div>
           </div>
         </div>
@@ -389,51 +379,71 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .btn-outline { background: none; border: 1px solid var(--border-color); color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; cursor: pointer; &:hover { background: rgba(255,255,255,0.05); } }
     .btn-secondary-sm { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.4rem 0.8rem; border-radius: 0.4rem; font-size: 0.7rem; cursor: pointer; &:hover { color: white; background: rgba(255,255,255,0.1); } }
     
-    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .analytics-card { h3 { font-size: 1rem; margin-bottom: 1.5rem; opacity: 0.8; } }
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+    .bento-item { height: 100%; }
+    .span-2 { grid-column: span 2; }
     
-    .chart-bar { display: flex; height: 35px; border-radius: 20px; overflow: hidden; background: rgba(255,255,255,0.05); }
-    .bar { height: 100%; }
+    .analytics-card { 
+      h3 { font-size: 0.9rem; margin-bottom: 1.25rem; opacity: 0.7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; } 
+    }
     
+    .content-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    
+    .welcome-banner {
+      padding: 2rem 2.5rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%);
+      h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    }
+    .idm-badge {
+       font-size: 0.65rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.15rem 0.5rem; border-radius: 1rem;
+    }
+    .hamlet-grid {
+       display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .inventory-mini {
+       .stat-main {
+          display: flex; align-items: baseline; gap: 0.5rem;
+          .count { font-size: 2rem; font-weight: 800; color: var(--primary); }
+          .unit { font-size: 0.8rem; color: var(--text-muted); }
+       }
+    }
+    .budget-row {
+       .val { font-size: 1.1rem; font-weight: 700; }
+    }
+    
+    .chart-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .bar.male { background: #3b82f6; }
+    .bar.female { background: #ec4899; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; &.male { background: #3b82f6; } &.female { background: #ec4899; } }
+    .label { font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
 
-    .bar.male { background: linear-gradient(90deg, #3b82f6, #2563eb); }
-    .bar.female { background: linear-gradient(90deg, #ec4899, #db2777); }
-    
-    .chart-labels { display: flex; justify-content: center; gap: 2rem; .label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; } }
-    .dot { width: 10px; height: 10px; border-radius: 50%; &.male { background: #3b82f6; } &.female { background: #ec4899; } }
-
-    .status-funnel { display: flex; flex-direction: column; gap: 1rem; }
+    .status-funnel { display: flex; flex-direction: column; gap: 0.75rem; }
     .funnel-item { 
-      display: grid; grid-template-columns: 100px 1fr 40px; align-items: center; gap: 1rem;
-      label { font-size: 0.8rem; color: var(--text-muted); }
-      .funnel-bar-bg { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+      display: grid; grid-template-columns: 80px 1fr 30px; align-items: center; gap: 0.75rem;
+      label { font-size: 0.75rem; color: var(--text-muted); }
+      .funnel-bar-bg { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; }
       .funnel-bar { 
-        height: 100%; transition: width 1s ease-out; 
+        height: 100%; 
         &[data-status='Selesai'] { background: #10b981; }
         &[data-status='Diproses'] { background: #3b82f6; }
         &[data-status='Pending'] { background: #f59e0b; }
-        &[data-status='Ditolak'] { background: #ef4444; }
       }
-      .count { font-weight: 700; font-size: 0.9rem; text-align: right; }
+      .count { font-weight: 700; font-size: 0.8rem; text-align: right; }
     }
 
-    .budget-widget {
-      .budget-stat {
-        label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem; }
-        .val { font-size: 1.1rem; font-weight: 700; }
-        .progress { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
-        .bar { height: 100%; &.income { background: #34d399; } &.expense { background: #fb7185; } }
-      }
-    }
-
-    .inventory-mini {
-       .stat-main {
-          display: flex;
-          align-items: baseline;
-          gap: 0.5rem;
-          .count { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
-          .unit { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
-       }
+    @media (max-width: 1080px) {
+       .bento-grid { grid-template-columns: 1fr 1fr; }
+       .content-row { grid-template-columns: 1fr; }
+       .span-2 { grid-column: span 1; }
     }
 
     .articles-grid-mini {
