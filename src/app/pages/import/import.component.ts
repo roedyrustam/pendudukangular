@@ -267,7 +267,7 @@ export class ImportComponent {
         const values = this.splitSqlValues(row);
         const obj: any = {};
         columns.forEach((col, idx) => {
-          let val = values[idx];
+          let val: any = values[idx];
           // Basic sanitization
           if (val === 'NULL' || val === 'null' || val === undefined) {
             val = null;
@@ -354,11 +354,21 @@ export class ImportComponent {
   }
 
   private sanitizeDate(dateStr: any): string | null {
-    if (!dateStr || dateStr === '0000-00-00' || dateStr === 'NULL' || dateStr === 'null' || dateStr === '0000-00-00 00:00:00') {
+    if (!dateStr) return null;
+    const str = String(dateStr).trim();
+    
+    // Catch MySQL 'zero' dates and years starting with 0000
+    if (str.startsWith('0000') || str === 'NULL' || str === 'null') {
       return null;
     }
-    const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? null : dateStr;
+    
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return null;
+    
+    // PostgreSQL safe range (roughly 1800+ for practical resident data)
+    if (d.getFullYear() < 1800) return null;
+    
+    return str;
   }
 
   async startMigration() {
@@ -467,7 +477,7 @@ export class ImportComponent {
         nik: nik,
         full_name: r.nama || 'Warga Tanpa Nama',
         birth_place: r.tempatlahir || r.birth_place || '-',
-        birth_date: r.tanggallahir || r.birth_date || null,
+        birth_date: this.sanitizeDate(r.tanggallahir || r.birth_date),
         gender: (r.sex === '1' || r.sex === 1) ? 'Laki-laki' : 'Perempuan',
         religion: agamaMap.get(r.agama_id) || 'Islam',
         education: pendidikanMap.get(r.pendidikan_kk_id) || 'SMA/Sederajat',
