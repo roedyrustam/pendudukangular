@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
-import { Resident, Inventory } from '../../models/data.models';
+import { Resident, InventoryItem } from '../../models/data.models';
 import * as L from 'leaflet';
 
 @Component({
@@ -95,7 +95,7 @@ export class GisComponent implements OnInit, OnDestroy {
   private map!: L.Map;
   
   mappedResidents = signal<Resident[]>([]);
-  mappedInventory = signal<Inventory[]>([]);
+  mappedInventory = signal<InventoryItem[]>([]);
   
   residentMarkers: L.Marker[] = [];
   inventoryMarkers: L.Marker[] = [];

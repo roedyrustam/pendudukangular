@@ -383,4 +383,14 @@ export class DataService {
   async bulkUpsert(table: string, data: any[]) {
     return this.supabase.from(table).upsert(data);
   }
+
+  async incrementArticleHit(articleId: number) {
+    const { data, error } = await this.supabase.rpc('increment_article_hit', { article_id: articleId });
+    if (error) {
+      // Fallback if RPC not defined: simple update
+      const { data: art } = await this.supabase.from('articles').select('hit_count').eq('id', articleId).single();
+      return this.supabase.from('articles').update({ hit_count: (art?.hit_count || 0) + 1 }).eq('id', articleId);
+    }
+    return data;
+  }
 }
