@@ -4,18 +4,16 @@ import { AuthService } from '../services/auth.service';
 import { map, switchMap, take } from 'rxjs';
 import { of } from 'rxjs';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = async (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.user$.pipe(
-    take(1),
-    map(user => {
-      if (!user) {
-        router.navigate(['/login']);
-        return false;
-      }
-      return true;
-    })
-  );
+  // Tunggu konfirmasi sesi aktual dari Supabase
+  const user = await authService.getCurrentUser();
+  
+  if (!user) {
+    router.navigate(['/login']);
+    return false;
+  }
+  return true;
 };

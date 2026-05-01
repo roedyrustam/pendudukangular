@@ -220,17 +220,16 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  ngOnInit() {
-    this.authService.user$.pipe(take(1)).subscribe(async user => {
-      if (user) {
-        const profile = await this.authService.getProfile(user.id);
-        if (!profile) {
-          this.isCompletingProfile.set(true);
-        } else {
-          this.router.navigate(['/dashboard']);
-        }
+  async ngOnInit() {
+    const user = await this.authService.getCurrentUser();
+    if (user) {
+      const profile = await this.authService.getProfile(user.id);
+      if (!profile) {
+        this.isCompletingProfile.set(true);
+      } else {
+        this.router.navigate(['/dashboard']);
       }
-    });
+    }
   }
 
   email = '';

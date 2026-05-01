@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { Observable, from, map, of, BehaviorSubject, switchMap } from 'rxjs';
@@ -35,6 +35,7 @@ export class AuthService {
     })
   );
 
+
   async login(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -44,6 +45,8 @@ export class AuthService {
   async loginWithGoogle() {
     return this.supabase.auth.signInWithOAuth({ provider: 'google' });
   }
+
+  public lastProfileError = signal<string | null>(null);
 
   async getProfile(uid: string): Promise<AppUser | null> {
     try {
@@ -55,12 +58,15 @@ export class AuthService {
         
       if (error) {
         console.error('Supabase getProfile Error:', error);
+        this.lastProfileError.set(JSON.stringify(error));
         return null;
       }
       
+      this.lastProfileError.set(null);
       return data as AppUser;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Exception in getProfile:', e);
+      this.lastProfileError.set(e.message);
       return null;
     }
   }

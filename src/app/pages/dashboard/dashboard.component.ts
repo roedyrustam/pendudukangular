@@ -278,6 +278,15 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       <div class="loading-overlay flex flex-col items-center justify-center h-screen">
         <div class="loader-hex mb-4"></div>
         <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Menyiapkan Dashboard...</p>
+        <div class="mt-8 p-4 bg-white border border-red-200 rounded-lg shadow-sm text-xs text-slate-800 max-w-md w-full overflow-hidden">
+           <h4 class="font-bold text-red-500 mb-2">Diagnostic Data (Auto-Refresh):</h4>
+           <p><strong>Auth User:</strong> {{ (authService.user$ | async)?.email || 'Belum Login' }}</p>
+           <p><strong>Profile Data:</strong> {{ (userProfile$ | async) | json }}</p>
+           <p class="text-red-600 font-bold mt-2"><strong>Supabase Error:</strong> {{ authService.lastProfileError() || 'Tidak ada error / Sedang memuat...' }}</p>
+           <p class="text-[9px] text-slate-500 mt-2">* Jika Profile Data berisi "null", berarti Supabase masih menolak akses tabel.</p>
+           
+           <button class="mt-4 px-4 py-2 bg-slate-800 text-white rounded-md text-[10px] uppercase font-bold" (click)="authService.logout()">Force Logout</button>
+        </div>
       </div>
     </ng-template>
   `,
@@ -354,7 +363,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 })
 export class DashboardComponent implements OnDestroy, AfterViewInit {
   private dataService = inject(DataService);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private regionService = inject(RegionService);
   private kemendesaService = inject(KemendesaService);
   private platformId = inject(PLATFORM_ID);
