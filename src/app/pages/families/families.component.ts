@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { RegionService } from '../../services/region.service';

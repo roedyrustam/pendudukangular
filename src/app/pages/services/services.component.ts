@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -350,7 +350,7 @@ export class ServicesComponent implements OnDestroy {
     let start = Math.max(1, current - 2);
     let end = Math.min(pages, start + 4);
     if (end - start < 4) start = Math.max(1, end - 4);
-    return Array.from({length: end - start + 1}, (_, i) => start + i);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   });
 
   startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
@@ -384,8 +384,8 @@ export class ServicesComponent implements OnDestroy {
 
   loadRequests() {
     if (!this.userProfile) return;
-    
-    const obs = this.userProfile.role === 'warga' 
+
+    const obs = this.userProfile.role === 'warga'
       ? this.dataService.getResidentRequests(this.userProfile.nik || '')
       : this.dataService.getRequests();
 
@@ -408,17 +408,17 @@ export class ServicesComponent implements OnDestroy {
 
   openRequest(service: any) {
     this.activeService.set(service);
-    this.requestForm = { 
-      nik: this.userProfile?.nik || '', 
+    this.requestForm = {
+      nik: this.userProfile?.nik || '',
       reason: '',
-      phone_active: this.userProfile?.phone || '' 
+      phone_active: this.userProfile?.phone || ''
     };
     this.selectedFiles = [];
   }
 
   async submitRequest() {
     if (!this.requestForm.nik || !this.requestForm.reason) return;
-    
+
     this.isSubmitting.set(true);
     try {
       let attachmentUrls: string[] = [];
@@ -464,8 +464,8 @@ export class ServicesComponent implements OnDestroy {
     this.isSubmittingManagement.set(true);
     try {
       await this.dataService.updateRequestStatus(
-        original.id, 
-        this.managementForm.status, 
+        original.id,
+        this.managementForm.status,
         this.managementForm.admin_note
       );
       this.selectedRequest.set(null);
@@ -490,7 +490,7 @@ export class ServicesComponent implements OnDestroy {
       if (!resident) throw new Error('Data penduduk dengan NIK tersebut tidak ditemukan di sistem kependudukan.');
 
       const letterUrl = await this.letterService.generateAndUpload(req, resident);
-      
+
       await this.dataService.updateRequestFull(req.id, {
         status: 'Selesai',
         admin_note: this.managementForm.admin_note || 'Surat telah diterbitkan secara digital.',
@@ -512,7 +512,7 @@ export class ServicesComponent implements OnDestroy {
           window.open(waUrl, '_blank');
         }
       } else {
-         alert('Surat berhasil dicetak. (Warga ini belum mendaftarkan nomor telepon untuk notifikasi WA)');
+        alert('Surat berhasil dicetak. (Warga ini belum mendaftarkan nomor telepon untuk notifikasi WA)');
       }
 
     } catch (e: any) {
