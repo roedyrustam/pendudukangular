@@ -180,39 +180,56 @@ import { APBDes } from '../../models/data.models';
   `,
   styles: [`
     .apbdes-container { padding-bottom: 5rem; }
+    .header-actions { border-bottom: 2px solid #f1f5f9; padding-bottom: 2.5rem; }
+    
     .filter-box {
-       display: flex; flex-direction: column; gap: 0.25rem;
-       .label { font-size: 0.55rem; font-weight: 900; color: var(--text-muted); letter-spacing: 0.1em; }
-       .year-select { background: #f8fafc; border: 1px solid var(--glass-border); padding: 0.5rem 1.5rem; border-radius: 0.75rem; font-weight: 800; outline: none; }
-    }
-
-    .finance-card {
-       padding: 2.5rem; border: 1px solid var(--glass-border); position: relative; overflow: hidden;
-       .f-label { font-size: 0.65rem; font-weight: 900; color: var(--text-muted); letter-spacing: 0.15em; }
-       .f-icon { font-size: 1.5rem; }
-       .progress-container { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-       .progress-bar { height: 100%; border-radius: 3px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    }
-
-    .luxury-table {
-       border-collapse: collapse;
-       th { background: #f8fafc; border-bottom: 1px solid var(--glass-border); }
-       .type-pill {
-          padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.6rem; font-weight: 900;
-          &[data-type='1'] { background: rgba(16, 185, 129, 0.1); color: #059669; }
-          &[data-type='2'] { background: rgba(244, 63, 94, 0.1); color: #be123c; }
-          &[data-type='3'] { background: rgba(37, 99, 235, 0.1); color: #1d4ed8; }
+       display: flex; flex-direction: column; gap: 0.5rem;
+       .label { font-size: 0.65rem; font-weight: 900; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; }
+       .year-select { 
+         background: #f1f5f9; border: 2px solid transparent; padding: 0.6rem 1.5rem; border-radius: 1rem; 
+         font-weight: 800; outline: none; transition: 0.3s;
+         &:focus { border-color: #2563eb; background: white; }
        }
-       .phase-badge { background: #f1f5f9; padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 800; color: #64748b; }
     }
-
-    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.85); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .form-card { width: 100%; max-width: 800px; padding: 4rem; }
-
+ 
+    .finance-card {
+       padding: 3rem; border: 1px solid #e2e8f0; position: relative; overflow: hidden; background: white;
+       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+       &:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.08); }
+       
+       .f-label { font-size: 0.75rem; font-weight: 900; color: #64748b; letter-spacing: 0.15em; text-transform: uppercase; }
+       .f-icon { font-size: 2rem; opacity: 0.8; }
+       .f-value { letter-spacing: -0.02em; }
+       .progress-container { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+       .progress-bar { height: 100%; border-radius: 4px; }
+    }
+ 
+    .luxury-table {
+       border-collapse: separate;
+       border-spacing: 0;
+       th { 
+         background: #f8fafc; border-bottom: 2px solid #f1f5f9; color: #000000; 
+         font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+       }
+       .type-pill {
+          padding: 0.4rem 0.85rem; border-radius: 2rem; font-size: 0.65rem; font-weight: 800;
+          &[data-type='1'] { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+          &[data-type='2'] { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+          &[data-type='3'] { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+       }
+       .phase-badge { background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 0.75rem; font-size: 0.7rem; font-weight: 800; color: #64748b; border: 1px solid #e2e8f0; }
+       .tabular-nums { font-family: 'JetBrains Mono', monospace; font-size: 1rem; }
+    }
+ 
+    .form-overlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { width: 100%; max-width: 900px; padding: 4.5rem; }
+    
+    .input-group label { display: block; font-size: 0.85rem; font-weight: 800; color: #000000; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+ 
     .custom-input, .custom-select {
-       background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1rem;
-       outline: none; font-weight: 600; font-size: 1rem; width: 100%; transition: 0.3s;
-       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+       background: #f1f5f9; border: 2px solid transparent; padding: 1.1rem 1.5rem; border-radius: 1.25rem;
+       outline: none; font-weight: 700; font-size: 1rem; width: 100%; transition: all 0.3s; color: #000000;
+       &:focus { border-color: #2563eb; background: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); }
     }
   `]
 })

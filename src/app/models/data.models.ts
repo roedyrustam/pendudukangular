@@ -38,6 +38,8 @@ export interface Resident {
   hamlet?: string;
   rt?: string;
   rw?: string;
+  latitude?: number;
+  longitude?: number;
   updated_at?: string;
   created_at: string;
 }
@@ -164,6 +166,8 @@ export interface InventoryItem {
   price?: number;
   source?: string;
   image_url?: string;
+  latitude?: number;
+  longitude?: number;
   created_at: string;
   updated_at: string;
 }

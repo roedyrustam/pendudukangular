@@ -63,6 +63,9 @@ import { InventoryItem } from '../../models/data.models';
             
             <p class="text-xs text-slate-500 font-bold mb-6 flex items-center gap-2">
                <span class="text-primary">📍</span> {{ item.location || 'Gudang Utama' }}
+               <span *ngIf="item.latitude" class="ml-auto font-mono text-[9px] text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                 {{ item.latitude }}, {{ item.longitude }}
+               </span>
             </p>
             
             <div class="metrics-grid grid grid-cols-2 gap-4 mb-6">
@@ -142,9 +145,20 @@ import { InventoryItem } from '../../models/data.models';
               </div>
             </div>
 
-            <div class="input-group col-span-2">
+            <div class="input-group">
               <label>Nilai Satuan Aset (Rp)</label>
               <input type="number" [(ngModel)]="itemForm.price" name="price" placeholder="0" class="custom-input">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+               <div class="input-group">
+                 <label>Latitude (Peta)</label>
+                 <input type="number" step="any" [(ngModel)]="itemForm.latitude" name="latitude" placeholder="-7.5..." class="custom-input">
+               </div>
+               <div class="input-group">
+                 <label>Longitude (Peta)</label>
+                 <input type="number" step="any" [(ngModel)]="itemForm.longitude" name="longitude" placeholder="110.1..." class="custom-input">
+               </div>
             </div>
 
             <footer class="form-actions mt-10 col-span-2 flex justify-end gap-3">
