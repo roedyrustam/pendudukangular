@@ -25,12 +25,12 @@ import { Router } from '@angular/router';
         </div>
       </div>
 
-      <div class="header-right">
-        <div class="search-filter glass-panel mb-4">
+      <div class="header-right flex flex-col items-end">
+        <div class="search-bar mb-4">
           <span class="icon">🔍</span>
           <input [(ngModel)]="searchTerm" (input)="filterResidents()" placeholder="Cari NIK atau Nama...">
         </div>
-        <div class="live-sync-indicator ml-auto">
+        <div class="live-sync-indicator">
           <div class="pulse-dot"></div>
           <span class="label">LIVE DATA SYNC</span>
         </div>
@@ -41,7 +41,7 @@ import { Router } from '@angular/router';
     <div class="filters-container card-luxury mb-8 p-6 fade-in">
        <div class="flex gap-6 flex-wrap items-center">
           <div class="filter-group">
-            <label class="text-xs font-bold text-primary mb-2 block">JENIS KELAMIN</label>
+            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">JENIS KELAMIN</label>
             <select [(ngModel)]="filterGender" (change)="filterResidents()" class="custom-select">
               <option value="">Semua Gender</option>
               <option value="Laki-laki">Laki-laki</option>
@@ -49,14 +49,14 @@ import { Router } from '@angular/router';
             </select>
           </div>
           <div class="filter-group">
-            <label class="text-xs font-bold text-primary mb-2 block">PEKERJAAN</label>
+            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">PEKERJAAN</label>
             <select [(ngModel)]="filterOccupation" (change)="filterResidents()" class="custom-select">
               <option value="">Semua Pekerjaan</option>
               <option *ngFor="let job of occupationList" [value]="job">{{ job }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label class="text-xs font-bold text-primary mb-2 block">WILAYAH (DUSUN)</label>
+            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">WILAYAH</label>
             <select [(ngModel)]="filterHamlet" (change)="filterResidents()" class="custom-select">
               <option value="">Semua Dusun</option>
               <option value="Dusun I">Dusun I</option>
@@ -64,40 +64,42 @@ import { Router } from '@angular/router';
               <option value="Dusun III">Dusun III</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label class="text-xs font-bold text-primary mb-2 block">STATUS</label>
-            <select [(ngModel)]="filterStatus" (change)="filterResidents()" class="custom-select">
-              <option value="">Semua Status</option>
-              <option value="HIDUP">HIDUP</option>
-              <option value="MATI">MATI</option>
-              <option value="PINDAH">PINDAH</option>
-            </select>
-          </div>
           <div class="filter-group ml-auto">
-             <label class="text-xs font-bold text-primary mb-2 block text-right">BARIS</label>
-             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 80px;">
-                <option [ngValue]="10">10</option>
-                <option [ngValue]="25">25</option>
-                <option [ngValue]="50">50</option>
-                <option [ngValue]="100">100</option>
+             <label class="text-[10px] font-extrabold text-primary mb-2 block text-right tracking-widest uppercase">TAMPILAN</label>
+             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 120px;">
+                <option [ngValue]="10">10 Baris</option>
+                <option [ngValue]="25">25 Baris</option>
+                <option [ngValue]="50">50 Baris</option>
              </select>
           </div>
        </div>
     </div>
 
     <!-- Summary Stats Bar -->
-    <div class="stats-bar mb-8 fade-in">
-       <div class="stat-item card-luxury">
-          <label>Total Terfilter</label>
-          <span class="value">{{ filteredResidents().length }} <small>Jiwa</small></span>
+    <div class="grid grid-cols-12 gap-6 mb-8 fade-in">
+       <div class="col-span-4 stat-card card-luxury">
+          <div class="flex justify-between items-start mb-4">
+            <span class="icon-box azure">📊</span>
+            <span class="badge secondary">FILTERED</span>
+          </div>
+          <div class="value">{{ filteredResidents().length }} <small class="text-sm">Jiwa</small></div>
+          <div class="label">Penduduk Terfilter</div>
        </div>
-       <div class="stat-item card-luxury">
-          <label>Laki-laki</label>
-          <span class="value">{{ countGender('Laki-laki') }}</span>
+       <div class="col-span-4 stat-card card-luxury">
+          <div class="flex justify-between items-start mb-4">
+            <span class="icon-box azure">👨</span>
+            <span class="badge secondary">LAKI-LAKI</span>
+          </div>
+          <div class="value">{{ countGender('Laki-laki') }}</div>
+          <div class="label">Total Laki-laki</div>
        </div>
-       <div class="stat-item card-luxury">
-          <label>Perempuan</label>
-          <span class="value">{{ countGender('Perempuan') }}</span>
+       <div class="col-span-4 stat-card card-luxury">
+          <div class="flex justify-between items-start mb-4">
+            <span class="icon-box azure">👩</span>
+            <span class="badge secondary">PEREMPUAN</span>
+          </div>
+          <div class="value">{{ countGender('Perempuan') }}</div>
+          <div class="label">Total Perempuan</div>
        </div>
     </div>
 
@@ -108,7 +110,7 @@ import { Router } from '@angular/router';
             <th>NIK</th>
             <th>Nama Lengkap</th>
             <th>Gender</th>
-            <th>Status</th>
+            <th>Status Dasar</th>
             <th>Hubungan</th>
             <th>No. KK</th>
             <th class="text-right">Aksi</th>
@@ -121,7 +123,7 @@ import { Router } from '@angular/router';
                <div class="font-bold text-slate-800">{{ r.full_name }}</div>
                <div class="text-[10px] text-muted">{{ r.occupation || 'TIDAK TERDEFINISI' }}</div>
             </td>
-            <td><span class="text-xs font-bold">{{ r.gender }}</span></td>
+            <td><span class="text-xs font-bold uppercase">{{ r.gender }}</span></td>
             <td>
               <span class="badge" [class]="r.status_dasar?.toLowerCase() || 'hidup'">
                 {{ r.status_dasar || 'HIDUP' }}
@@ -168,7 +170,7 @@ import { Router } from '@angular/router';
       </div>
     </div>
 
-    <!-- Add Modal -->
+    <!-- Modals -->
     <div *ngIf="isAddModalOpen()" class="form-overlay fade-in" (click)="isAddModalOpen.set(false)">
       <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
         <div class="modal-header mb-8">
@@ -197,12 +199,13 @@ import { Router } from '@angular/router';
   `,
   styles: [`
     .header-actions { display: flex; justify-content: space-between; align-items: flex-start; }
-    .header-right { display: flex; flex-direction: column; align-items: flex-end; }
-    .search-filter {
+    .search-bar {
       display: flex; align-items: center; gap: 1rem;
       background: white; border: 1px solid var(--glass-border);
-      padding: 0.8rem 1.5rem; border-radius: 1.5rem; width: 450px;
-      input { background: none; border: none; color: var(--text-main); width: 100%; outline: none; font-weight: 500; }
+      padding: 0.75rem 1.5rem; border-radius: 1.5rem; width: 450px;
+      transition: all 0.4s var(--apple-ease);
+      &:focus-within { border-color: var(--primary); box-shadow: 0 10px 25px -10px var(--primary-glow); }
+      input { background: none; border: none; color: var(--text-main); width: 100%; outline: none; font-weight: 600; }
       .icon { color: var(--primary); }
     }
     .live-sync-indicator {
@@ -212,34 +215,49 @@ import { Router } from '@angular/router';
     }
     @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     
-    .stats-bar {
-       display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
-       .stat-item {
-          padding: 1.5rem;
-          label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
-          .value { font-size: 1.8rem; font-weight: 900; color: var(--primary); small { font-size: 0.8rem; opacity: 0.5; } }
-       }
+    .stat-card {
+      .value { font-size: 2.25rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; color: var(--primary); }
+      .label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
     }
+    .icon-box {
+      width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+      &.azure { background: rgba(37, 99, 235, 0.1); }
+    }
+    .luxury-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      th {
+        text-align: left; padding: 1.25rem 1.5rem; color: var(--text-muted);
+        font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.01);
+      }
+      td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; }
+      .nik-cell { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-weight: 700; }
+      .kk-link { color: var(--primary); font-weight: 700; cursor: pointer; border-bottom: 1px dashed var(--primary); }
+      .actions-cell { display: flex; gap: 0.5rem; justify-content: flex-end; }
+      .btn-icon {
+        background: white; border: 1px solid var(--glass-border); width: 36px; height: 36px;
+        border-radius: 10px; cursor: pointer; transition: 0.3s var(--apple-ease);
+        &:hover { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); transform: translateY(-2px); }
+        &.delete:hover { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+      }
+    }
+    .pagination-bar { background: rgba(255,255,255,0.4); border-top: 1px solid var(--glass-border); }
     .btn-page-num {
-       width: 38px; height: 38px; border-radius: 0.8rem; border: 1px solid transparent;
+       width: 40px; height: 40px; border-radius: 10px; border: 1px solid transparent;
        background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;
        cursor: pointer; transition: 0.3s;
-       &:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+       &:hover { background: rgba(0,0,0,0.05); }
        &.active { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
     }
     .custom-select, .custom-input {
-       background: rgba(0,0,0,0.03); border: 1px solid var(--glass-border);
-       color: var(--text-main); padding: 0.75rem 1rem; border-radius: 0.75rem; outline: none;
+       background: #f8fafc; border: 1px solid var(--glass-border);
+       color: var(--text-main); padding: 0.75rem 1rem; border-radius: 0.85rem; outline: none;
        font-weight: 600; font-size: 0.85rem; transition: 0.3s;
-       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
     .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .form-card { width: 100%; max-width: 900px; padding: 3.5rem; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-    .input-group { display: flex; flex-direction: column; gap: 0.5rem; label { font-size: 0.7rem; font-weight: 800; color: var(--primary); text-transform: uppercase; } }
-    .empty-state { text-align: center; padding: 6rem; color: var(--text-muted); }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .col-span-2 { grid-column: span 2; }
   `]
 })
 export class ResidentsComponent implements OnDestroy {
