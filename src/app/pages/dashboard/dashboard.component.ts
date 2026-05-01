@@ -14,7 +14,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
-    <div class="dashboard-container" *ngIf="userProfile$ | async as profile">
+    <div class="dashboard-container" *ngIf="userProfile$ | async as profile; else loading">
       <header class="welcome-banner card-luxury mb-8 fade-in">
         <div class="flex-between items-center">
           <div class="welcome-text">
@@ -273,6 +273,13 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
         </main>
       </ng-container>
     </div>
+
+    <ng-template #loading>
+      <div class="loading-overlay flex flex-col items-center justify-center h-screen">
+        <div class="loader-hex mb-4"></div>
+        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Menyiapkan Dashboard...</p>
+      </div>
+    </ng-template>
   `,
   styles: [`
     .dashboard-container { padding: 1rem; }

@@ -46,12 +46,23 @@ export class AuthService {
   }
 
   async getProfile(uid: string): Promise<AppUser | null> {
-    const { data } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', uid)
-      .single();
-    return data as AppUser;
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', uid)
+        .single();
+        
+      if (error) {
+        console.error('Supabase getProfile Error:', error);
+        return null;
+      }
+      
+      return data as AppUser;
+    } catch (e) {
+      console.error('Exception in getProfile:', e);
+      return null;
+    }
   }
 
   async register(email: string, password: string, nik?: string) {
