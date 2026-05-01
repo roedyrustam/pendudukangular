@@ -1,8 +1,7 @@
-import { Component, OnInit, inject, signal, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { Resident, InventoryItem } from '../../models/data.models';
-import * as L from 'leaflet';
 
 @Component({
   selector: 'app-gis',
@@ -92,17 +91,20 @@ import * as L from 'leaflet';
 })
 export class GisComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
-  private map!: L.Map;
+  private platformId = inject(PLATFORM_ID);
+  private map!: any;
+  private L: any;
   
   mappedResidents = signal<Resident[]>([]);
   mappedInventory = signal<InventoryItem[]>([]);
   
-  residentMarkers: L.Marker[] = [];
-  inventoryMarkers: L.Marker[] = [];
+  residentMarkers: any[] = [];
+  inventoryMarkers: any[] = [];
 
   ngOnInit() {
-    this.initMap();
-    this.loadData();
+    if (isPlatformBrowser(this.platformId)) {
+      this.initMap();
+    }
   }
 
   ngOnDestroy() {
@@ -111,23 +113,28 @@ export class GisComponent implements OnInit, OnDestroy {
     }
   }
 
-  private initMap() {
+  private async initMap() {
+    this.L = await import('leaflet');
+    
     // Default to a central point (can be village center)
-    this.map = L.map('map', {
+    this.map = this.L.map('map', {
       center: [-7.5, 110.5], // Default Indonesia centralish
       zoom: 13,
       zoomControl: false
     });
 
-    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    this.L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
     // Modern Light Map Tiles (CartoDB Positron)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    this.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(this.map);
+
+    this.loadData();
   }
 
   private loadData() {
+    if (!this.L) return;
     // Load residents with coordinates
     this.dataService.getResidents().subscribe(res => {
       const withCoords = res.filter(r => (r as any).latitude && (r as any).longitude);
@@ -144,6 +151,7 @@ export class GisComponent implements OnInit, OnDestroy {
   }
 
   private renderMarkers(type: 'residents' | 'inventory', data: any[]) {
+    if (!this.L) return;
     // Clear existing
     if (type === 'residents') {
       this.residentMarkers.forEach(m => m.remove());
@@ -157,7 +165,7 @@ export class GisComponent implements OnInit, OnDestroy {
       const color = type === 'residents' ? '#2563eb' : '#f59e0b';
       const markerHtml = `<div style="background: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>`;
       
-      const icon = L.divIcon({
+      const icon = this.L.divIcon({
         className: 'custom-marker',
         html: markerHtml,
         iconSize: [14, 14],
@@ -174,7 +182,7 @@ export class GisComponent implements OnInit, OnDestroy {
         </div>
       `;
 
-      const marker = L.marker([item.latitude, item.longitude], { icon })
+      const marker = this.L.marker([item.latitude, item.longitude], { icon })
         .bindPopup(popupHtml)
         .addTo(this.map);
 
@@ -185,15 +193,16 @@ export class GisComponent implements OnInit, OnDestroy {
     // Auto-fit map if we have data
     const allMarkers = [...this.residentMarkers, ...this.inventoryMarkers];
     if (allMarkers.length > 0) {
-      const group = L.featureGroup(allMarkers);
+      const group = this.L.featureGroup(allMarkers);
       this.map.fitBounds(group.getBounds().pad(0.1));
     }
   }
 
   resetView() {
+    if (!this.L) return;
     const allMarkers = [...this.residentMarkers, ...this.inventoryMarkers];
     if (allMarkers.length > 0) {
-      const group = L.featureGroup(allMarkers);
+      const group = this.L.featureGroup(allMarkers);
       this.map.fitBounds(group.getBounds().pad(0.1));
     }
   }

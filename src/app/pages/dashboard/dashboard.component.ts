@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed, OnDestroy, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, OnDestroy, AfterViewInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -8,7 +8,6 @@ import { KemendesaService } from '../../services/kemendesa.service';
 import { ServiceRequest, AppUser, Resident, Family, VillageConfig, Article, APBDes } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
-import * as L from 'leaflet';
 
 @Component({
   selector: 'app-dashboard',
@@ -351,6 +350,7 @@ export class DashboardComponent implements OnDestroy, AfterViewInit {
   private authService = inject(AuthService);
   private regionService = inject(RegionService);
   private kemendesaService = inject(KemendesaService);
+  private platformId = inject(PLATFORM_ID);
 
   userProfile$ = this.authService.userData$;
   villageConfig = signal<VillageConfig | null>(null);
@@ -474,13 +474,16 @@ export class DashboardComponent implements OnDestroy, AfterViewInit {
     });
   }
 
-  private map?: L.Map;
+  private map?: any;
 
   ngAfterViewInit() {
-    this.initMap();
+    if (isPlatformBrowser(this.platformId)) {
+      this.initMap();
+    }
   }
 
-  private initMap() {
+  private async initMap() {
+    const L = await import('leaflet');
     setTimeout(() => {
       const mapContainer = document.getElementById('dashboardMap');
       if (!mapContainer) return;
@@ -494,11 +497,11 @@ export class DashboardComponent implements OnDestroy, AfterViewInit {
         maxZoom: 19
       }).addTo(this.map);
 
-      this.renderMarkers();
+      this.renderMarkers(L);
     }, 500);
   }
 
-  private renderMarkers() {
+  private renderMarkers(L: any) {
     if (!this.map) return;
     
     const residentsWithLocation = this.rawResidents.filter(r => r.latitude && r.longitude);
