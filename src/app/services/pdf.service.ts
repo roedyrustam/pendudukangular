@@ -209,4 +209,35 @@ export class PdfService {
 
     doc.save(`KK_${family.kk_number}.pdf`);
   }
+
+  async generateAnalysisReport(data: any[], category: string) {
+    await this.loadVillageConfig();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(18);
+    doc.text(`ANALISIS KELAYAKAN BANTUAN (${category})`, pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(this.villageName.toUpperCase(), pageWidth / 2, 28, { align: 'center' });
+
+    const tableData = data.map((item, i) => [
+      i + 1,
+      item.headName,
+      item.nik,
+      item.socialClass,
+      item.dependents,
+      item.score,
+      item.score >= 70 ? 'LAYAK' : 'TIDAK LAYAK'
+    ]);
+
+    (doc as any).autoTable({
+      startY: 40,
+      head: [['No', 'Nama Kepala KK', 'NIK', 'Kelas Sosial', 'Tanggungan', 'Skor', 'Rekomendasi']],
+      body: tableData,
+      headStyles: { fillColor: [231, 76, 60], textColor: 255 },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`Analisis_Bantuan_${category}_${Date.now()}.pdf`);
+  }
 }

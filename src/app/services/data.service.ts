@@ -274,6 +274,17 @@ export class DataService {
     return this.supabase.from('articles').insert([article]);
   }
 
+  async updateArticle(article: Partial<Article>) {
+    return this.supabase
+      .from('articles')
+      .update(article)
+      .eq('id', article.id);
+  }
+
+  async deleteArticle(id: string) {
+    return this.supabase.from('articles').delete().eq('id', id);
+  }
+
   // --- APBDes ---
   getAPBDes(year?: number): Observable<APBDes[]> {
     let query = this.supabase.from('apbdes').select('*');
@@ -285,6 +296,17 @@ export class DataService {
 
   async addAPBDes(data: Partial<APBDes>) {
     return this.supabase.from('apbdes').insert([data]);
+  }
+
+  async updateAPBDes(data: Partial<APBDes>) {
+    return this.supabase
+      .from('apbdes')
+      .update(data)
+      .eq('id', data.id);
+  }
+
+  async deleteAPBDes(id: string) {
+    return this.supabase.from('apbdes').delete().eq('id', id);
   }
 
   // --- INVENTORY ---

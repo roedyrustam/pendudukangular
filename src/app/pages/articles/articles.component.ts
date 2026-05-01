@@ -50,7 +50,10 @@ import { Article } from '../../models/data.models';
             <h4 class="mb-4">{{ art.title }}</h4>
             <div class="flex justify-between items-center mt-auto">
               <span class="text-xs text-muted">👁️ {{ art.hit_count }} kali dilihat</span>
-              <button class="btn-icon-sm" (click)="editArticle(art)">✏️</button>
+              <div class="flex gap-1">
+                <button class="btn-icon-sm" (click)="editArticle(art)">✏️</button>
+                <button class="btn-icon-sm text-red" (click)="deleteArticle(art.id!)">🗑️</button>
+              </div>
             </div>
           </div>
         </div>
@@ -236,7 +239,7 @@ export class ArticlesComponent implements OnInit {
     this.loading.set(true);
     try {
       if (this.isEditing()) {
-        // Logic for update would go here if added to service
+        await this.dataService.updateArticle(this.articleForm);
       } else {
         const slug = (this.articleForm.title || '').toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
         await this.dataService.addArticle({ ...this.articleForm, slug });
@@ -247,6 +250,17 @@ export class ArticlesComponent implements OnInit {
       alert('Gagal menyimpan artikel: ' + err.message);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async deleteArticle(id: string) {
+    if (confirm('Hapus artikel ini permanen?')) {
+      try {
+        await this.dataService.deleteArticle(id);
+        this.refreshData();
+      } catch (err: any) {
+        alert('Gagal menghapus artikel: ' + err.message);
+      }
     }
   }
 }

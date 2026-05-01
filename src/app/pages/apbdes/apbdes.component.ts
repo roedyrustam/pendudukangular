@@ -19,7 +19,7 @@ import { APBDes } from '../../models/data.models';
           <select [(ngModel)]="selectedYear" (change)="refreshData()" class="year-select">
             <option *ngFor="let y of years" [value]="y">{{ y }}</option>
           </select>
-          <button class="btn-primary" (click)="isAddModalOpen.set(true)">
+          <button class="btn-primary" (click)="openAddModal()">
             Tambah Anggaran 💰
           </button>
         </div>
@@ -71,7 +71,11 @@ import { APBDes } from '../../models/data.models';
               <td>{{ item.phase || '-' }}</td>
               <td>{{ item.coordinator || '-' }}</td>
               <td>
-                <button class="btn-icon-sm">✏️</button>
+                <div class="flex gap-2">
+                  <button class="btn-icon-sm" (click)="editBudget(item)">✏️</button>
+                  <button class="btn-icon-sm text-red" (click)="deleteBudget(item.id!)">🗑️</button>
+                </div>
+              </td>
               </td>
             </tr>
           </tbody>
@@ -82,7 +86,7 @@ import { APBDes } from '../../models/data.models';
       <div *ngIf="isAddModalOpen()" class="form-overlay" (click)="isAddModalOpen.set(false)">
         <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
           <div class="modal-header mb-6">
-            <h3 class="title-gradient">Input Data APBDes</h3>
+            <h3 class="title-gradient">{{ isEditing() ? 'Edit' : 'Input' }} Data APBDes</h3>
             <p class="text-muted">Masukkan rincian anggaran pendapatan atau belanja.</p>
           </div>
           
@@ -122,7 +126,7 @@ import { APBDes } from '../../models/data.models';
             <div class="form-actions mt-8">
               <button type="button" class="btn-text" (click)="isAddModalOpen.set(false)">Batal</button>
               <button type="submit" class="btn-primary" [disabled]="loading()">
-                {{ loading() ? 'Menyimpan...' : 'Simpan Data Anggaran' }}
+                {{ loading() ? 'Menyimpan...' : (isEditing() ? 'Simpan Perubahan' : 'Simpan Data Anggaran') }}
               </button>
             </div>
           </form>
@@ -194,11 +198,28 @@ export class ApbdesComponent implements OnInit {
 
   isAddModalOpen = signal(false);
   loading = signal(false);
-  budgetForm: Partial<APBDes> = {
-    type: 1,
-    year: new Date().getFullYear(),
-    bar_color: 'info'
-  };
+  isEditing = signal(false);
+  budgetForm: Partial<APBDes> = this.resetForm();
+
+  resetForm(): Partial<APBDes> {
+    return {
+      type: 1,
+      year: this.selectedYear,
+      bar_color: 'info'
+    };
+  }
+
+  openAddModal() {
+    this.isEditing.set(false);
+    this.budgetForm = this.resetForm();
+    this.isAddModalOpen.set(true);
+  }
+
+  editBudget(item: APBDes) {
+    this.isEditing.set(true);
+    this.budgetForm = { ...item };
+    this.isAddModalOpen.set(true);
+  }
 
   ngOnInit() {
     this.refreshData();
@@ -215,14 +236,28 @@ export class ApbdesComponent implements OnInit {
   async saveBudget() {
     this.loading.set(true);
     try {
-      await this.dataService.addAPBDes(this.budgetForm);
+      if (this.isEditing()) {
+        await this.dataService.updateAPBDes(this.budgetForm);
+      } else {
+        await this.dataService.addAPBDes(this.budgetForm);
+      }
       this.refreshData();
       this.isAddModalOpen.set(false);
-      this.budgetForm = { type: 1, year: this.selectedYear, bar_color: 'info' };
     } catch (err: any) {
       alert('Gagal menyimpan anggaran: ' + err.message);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  async deleteBudget(id: string) {
+    if (confirm('Hapus data anggaran ini?')) {
+      try {
+        await this.dataService.deleteAPBDes(id);
+        this.refreshData();
+      } catch (err: any) {
+        alert('Gagal menghapus anggaran: ' + err.message);
+      }
     }
   }
 }

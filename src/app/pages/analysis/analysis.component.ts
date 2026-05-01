@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
+import { PdfService } from '../../services/pdf.service';
 import { Family, Resident } from '../../models/data.models';
 import { FormsModule } from '@angular/forms';
 
@@ -178,7 +179,9 @@ export class ResidentAnalysisComponent {
     return '#3b82f6'; // Low
   }
 
+  private pdfService = inject(PdfService);
+
   exportAnalysis() {
-    alert('Fungsi export PDF sedang disiapkan.');
+    this.pdfService.generateAnalysisReport(this.analyzedData(), this.selectedCategory());
   }
 }
