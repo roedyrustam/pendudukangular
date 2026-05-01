@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="header-actions mb-6">
+    <div class="header-actions mb-6 fade-in">
       <div class="titles">
         <h2 class="title-gradient">Analisis Kelayakan Bantuan (Bansos)</h2>
         <p class="text-muted">Rekomendasi penerima bantuan berdasarkan klasifikasi sosial dan ekonomi.</p>
@@ -20,10 +20,10 @@ import { FormsModule } from '@angular/forms';
       </div>
     </div>
 
-    <div class="filter-bar card-luxury mb-6 p-4">
-       <div class="flex gap-4 items-center">
+    <div class="filter-bar card-luxury mb-6 p-6 fade-in">
+       <div class="flex gap-6 items-center flex-wrap">
           <div class="input-group">
-             <label class="text-xs text-muted">Kategori Bantuan</label>
+             <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Kategori Bantuan</label>
              <select [(ngModel)]="selectedCategory" class="custom-select">
                 <option value="PKH">PKH (Program Keluarga Harapan)</option>
                 <option value="BLT">BLT (Bantuan Langsung Tunai)</option>
@@ -31,31 +31,46 @@ import { FormsModule } from '@angular/forms';
              </select>
           </div>
           <div class="input-group">
-             <label class="text-xs text-muted">Batas Skor Layak</label>
-             <input type="number" [(ngModel)]="scoreThreshold" class="custom-input" style="width: 80px;">
+             <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Batas Skor Layak</label>
+             <input type="number" [(ngModel)]="scoreThreshold" class="custom-input" style="width: 100px;">
+          </div>
+          <div class="input-group ml-auto">
+             <label class="text-xs font-bold text-primary mb-2 block uppercase letter-spacing-1">Tampilkan</label>
+             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 80px;">
+                <option [ngValue]="10">10</option>
+                <option [ngValue]="25">25</option>
+                <option [ngValue]="50">50</option>
+             </select>
           </div>
        </div>
     </div>
 
-    <div class="analysis-grid">
+    <div class="analysis-grid fade-in">
        <div class="card-luxury p-0 overflow-hidden">
           <table class="luxury-table">
              <thead>
                 <tr>
-                   <th>Nama Kepala Keluarga</th>
+                   <th>Kepala Keluarga</th>
                    <th>NIK</th>
                    <th>Kelas Sosial</th>
                    <th>Tanggungan</th>
-                   <th>Skor Kelayakan</th>
+                   <th>Skor</th>
                    <th>Rekomendasi</th>
                 </tr>
              </thead>
              <tbody>
-                <tr *ngFor="let item of analyzedData()">
-                   <td>{{ item.headName }}</td>
+                <tr *ngFor="let item of paginatedData()">
+                   <td>
+                      <div class="font-bold text-sm">{{ item.headName }}</div>
+                      <div class="text-[10px] text-muted uppercase">{{ item.socialClass }}</div>
+                   </td>
                    <td class="nik-cell">{{ item.nik }}</td>
-                   <td><span class="badge" [class]="item.socialClass.toLowerCase().replace(' ', '-')">{{ item.socialClass }}</span></td>
-                   <td>{{ item.dependents }} Orang</td>
+                   <td>
+                      <span class="badge" [class]="item.socialClass.toLowerCase().replace(' ', '-')">
+                         {{ item.socialClass }}
+                      </span>
+                   </td>
+                   <td><span class="font-bold">{{ item.dependents }}</span> <span class="text-xs text-muted">Jiwa</span></td>
                    <td>
                       <div class="score-pill" [style.background]="getScoreColor(item.score)">
                          {{ item.score }}
@@ -69,8 +84,33 @@ import { FormsModule } from '@angular/forms';
                 </tr>
              </tbody>
           </table>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-bar glass-panel p-4 flex-between">
+             <div class="pagination-info">
+                Menampilkan <b>{{ startIndex() + 1 }}-{{ endIndex() }}</b> dari <b>{{ totalRecords() }}</b> Keluarga
+             </div>
+             <div class="pagination-controls flex gap-2">
+                <button class="btn-page" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">
+                   Sebelumnya
+                </button>
+                <div class="page-numbers flex gap-1">
+                   <button *ngFor="let p of getVisiblePages()" 
+                      class="btn-page-num" 
+                      [class.active]="p === currentPage()"
+                      (click)="currentPage.set(p)">
+                      {{ p }}
+                   </button>
+                </div>
+                <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">
+                   Selanjutnya
+                </button>
+             </div>
+          </div>
+
           <div *ngIf="analyzedData().length === 0" class="empty-state">
-             Data tidak tersedia atau belum dianalisis.
+             <div class="text-4xl mb-4">🔍</div>
+             <p>Data tidak tersedia atau belum dianalisis.</p>
           </div>
        </div>
     </div>
@@ -78,52 +118,66 @@ import { FormsModule } from '@angular/forms';
   styles: [`
     .luxury-table {
        width: 100%;
-       border-collapse: collapse;
-       th { text-align: left; padding: 1rem 1.5rem; color: var(--text-muted); font-size: 0.8rem; border-bottom: 1px solid var(--border-color); }
-       td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
-       .nik-cell { font-family: monospace; color: var(--primary); }
+       border-collapse: separate;
+       border-spacing: 0;
+       th { text-align: left; padding: 1.25rem 1.5rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.01); }
+       td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; }
+       .nik-cell { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-weight: 600; font-size: 0.8rem; }
     }
     .badge {
-       padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem;
-       &.sangat-miskin { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-       &.miskin { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
-       &.sedang { background: rgba(99, 102, 241, 0.1); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.2); }
+       padding: 0.35rem 0.75rem; border-radius: 2rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+       &.sangat-miskin { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.1); }
+       &.miskin { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.1); }
+       &.sedang { background: rgba(99, 102, 241, 0.1); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.1); }
     }
     .score-pill {
-       display: inline-block;
-       padding: 0.2rem 0.8rem;
-       border-radius: 2rem;
-       font-weight: 800;
-       color: white;
-       font-size: 0.8rem;
+       display: inline-flex; align-items: center; justify-content: center;
+       min-width: 40px; height: 24px; border-radius: 2rem;
+       font-weight: 800; color: white; font-size: 0.75rem;
     }
     .status-chip {
-       font-size: 0.75rem;
-       font-weight: 600;
-       opacity: 0.6;
-       &.eligible { opacity: 1; color: #10b981; }
+       font-size: 0.75rem; font-weight: 700; color: var(--text-muted); opacity: 0.6;
+       &.eligible { opacity: 1; color: #059669; }
     }
     .custom-select, .custom-input {
-       background: rgba(255,255,255,0.05);
-       border: 1px solid var(--border-color);
-       color: white;
-       padding: 0.5rem;
-       border-radius: 0.4rem;
-       outline: none;
-       &:focus { border-color: var(--primary); }
+       background: rgba(0,0,0,0.03); border: 1px solid var(--glass-border);
+       color: var(--text-main); padding: 0.75rem 1rem; border-radius: 0.75rem; outline: none;
+       font-weight: 600; font-size: 0.85rem; transition: all 0.3s var(--apple-ease);
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
     }
-    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
-    .flex { display: flex; }
-    .gap-2 { gap: 0.5rem; }
-    .gap-4 { gap: 1rem; }
-    .items-center { align-items: center; }
+    .pagination-bar {
+       background: rgba(255,255,255,0.4); border-top: 1px solid var(--glass-border);
+       .pagination-info { font-size: 0.8rem; color: var(--text-muted); b { color: var(--text-main); } }
+    }
+    .btn-page {
+       background: white; border: 1px solid var(--glass-border); padding: 0.5rem 1rem;
+       border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+       transition: all 0.2s var(--apple-ease);
+       &:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-1px); }
+       &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+    .btn-page-num {
+       width: 34px; height: 34px; border-radius: 0.75rem; border: 1px solid transparent;
+       background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 700;
+       cursor: pointer; transition: 0.2s;
+       &:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+       &.active { background: var(--primary); color: white; }
+    }
+    .empty-state { text-align: center; padding: 5rem; color: var(--text-muted); font-weight: 500; }
+    .ml-auto { margin-left: auto; }
+    .letter-spacing-1 { letter-spacing: 0.05em; }
   `]
 })
 export class ResidentAnalysisComponent {
   private dataService = inject(DataService);
+  private pdfService = inject(PdfService);
   
   selectedCategory = signal('PKH');
   scoreThreshold = signal(70);
+  
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(10);
   
   families = signal<Family[]>([]);
   residents = signal<Resident[]>([]);
@@ -146,26 +200,53 @@ export class ResidentAnalysisComponent {
     }).sort((a, b) => b.score - a.score);
   });
 
+  // Paginated View
+  paginatedData = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.analyzedData().slice(start, start + this.pageSize());
+  });
+
+  // Pagination Helpers
+  totalRecords = computed(() => this.analyzedData().length);
+  totalPages = computed(() => Math.ceil(this.totalRecords() / this.pageSize()));
+  startIndex = computed(() => (this.currentPage() - 1) * this.pageSize());
+  endIndex = computed(() => Math.min(this.startIndex() + this.pageSize(), this.totalRecords()));
+
   constructor() {
     this.dataService.getFamilies().subscribe(d => this.families.set(d));
     this.dataService.getResidents().subscribe(d => this.residents.set(d));
   }
 
+  getVisiblePages(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: number[] = [];
+    
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+      } else if (current >= total - 3) {
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        for (let i = current - 2; i <= current + 2; i++) pages.push(i);
+      }
+    }
+    return pages;
+  }
+
   private calculateScore(family: Family, members: Resident[]): number {
     let score = 0;
-    
-    // 1. Social Class (Max 50)
     if (family.social_class === 'Sangat Miskin') score += 50;
     else if (family.social_class === 'Miskin') score += 35;
     else if (family.social_class === 'Sedang') score += 15;
     
-    // 2. Dependents (Max 30)
     const count = members.length;
     if (count >= 5) score += 30;
     else if (count >= 3) score += 20;
     else score += 10;
     
-    // 3. Occupation Bonus (Max 20)
     const occupations = members.map(m => m.occupation?.toLowerCase());
     const hasUnemployed = occupations.some(o => o?.includes('tidak') || o?.includes('buruh') || o?.includes('tani'));
     if (hasUnemployed) score += 20;
@@ -174,12 +255,10 @@ export class ResidentAnalysisComponent {
   }
 
   getScoreColor(score: number): string {
-    if (score >= 80) return '#ef4444'; // High Priority
-    if (score >= 60) return '#f59e0b'; // Medium
-    return '#3b82f6'; // Low
+    if (score >= 80) return '#dc2626';
+    if (score >= 60) return '#d97706';
+    return '#2563eb';
   }
-
-  private pdfService = inject(PdfService);
 
   exportAnalysis() {
     this.pdfService.generateAnalysisReport(this.analyzedData(), this.selectedCategory());
