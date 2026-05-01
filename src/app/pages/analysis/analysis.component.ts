@@ -71,8 +71,47 @@ import { FormsModule } from '@angular/forms';
                       </span>
                    </td>
                    <td><span class="font-bold">{{ item.dependents }}</span> <span class="text-xs text-muted">Jiwa</span></td>
-                   <td>
+                    <td>
                       <div class="score-pill" [style.background]="getScoreColor(item.score)">
+                         {{ item.score }}
+                      </div>
+                   </td>
+                   <td>
+                      <span class="status-chip" [class.eligible]="item.score >= scoreThreshold()">
+                         {{ item.score >= scoreThreshold() ? '✅ Layak' : '❌ Tidak Layak' }}
+                      </span>
+                   </td>
+                </tr>
+             </tbody>
+          </table>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-bar glass-panel p-4 flex-between">
+             <div class="pagination-info">
+                Menampilkan <b>{{ startIndex() + 1 }}-{{ endIndex() }}</b> dari <b>{{ totalRecords() }}</b> Keluarga
+             </div>
+             <div class="pagination-controls flex gap-2">
+                <button class="btn-page" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">
+                   Sebelumnya
+                </button>
+                <div class="page-numbers flex gap-1">
+                   <button *ngFor="let p of getVisiblePages()" 
+                      class="btn-page-num" 
+                      [class.active]="p === currentPage()"
+                      (click)="currentPage.set(p)">
+                      {{ p }}
+                   </button>
+                </div>
+                <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">
+                   Selanjutnya
+                </button>
+             </div>
+          </div>
+
+          <div *ngIf="analyzedData().length === 0" class="empty-state">
+             <div class="text-4xl mb-4">🔍</div>
+             <p>Data tidak tersedia atau belum dianalisis.</p>
+          </div>
        </div>
     </div>
   `,

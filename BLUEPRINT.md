@@ -3,24 +3,21 @@
 **System Name:** DigiWarga (Sistem Informasi Kependudukan Digital)  
 **Architecture Style:** Modern Serverless Single Page Application (SPA)  
 **Backend:** Supabase (PostgreSQL + PostgREST + Auth + Storage)
-**Version:** 1.5.0 (Modernized Infrastructure)
+**Version:** 2.0.0 (Royal Azure Edition)
 
 ---
 
 ## 1. Technology Stack
-- **Framework**: Angular 21 (Signals-based reactivity)
+- **Framework**: Angular 21 (High-performance Signals reactivity)
 - **Language**: TypeScript 5.x
-- **Backend**: Supabase
-  - **Database**: PostgreSQL (Structured Relational Data)
-  - **Authentication**: Supabase Auth (JWT based, Google OAuth, Email/Password)
-  - **Storage**: Supabase Storage (S3-compatible bucket)
-  - **Realtime**: PostgreSQL CDC (Change Data Capture) via Realtime Channels
+- **Backend**: Supabase (PostgreSQL 16+)
+  - **Authentication**: JWT-based Secure Auth with RBAC.
+  - **Realtime**: PostgreSQL CDC via Broadcast Channels.
 - **API External Integrations**:
-  - **Regional API**: Kemendagri-compliant (wilayah.id) with secondary fallback (emsifa.com).
-  - **Village Info API**: Kemendesa (sid.kemendesa.go.id) for IDM & Financial data.
-- **Reporting**: jsPDF, autoTable (Client-side PDF generation)
-- **Styling**: Vanilla CSS with "Cyber-Luxe" design system (Glassmorphism & Neon accents)
-- **Build Tool**: Vite (Next-gen frontend tooling)
+  - **Regional API**: Kemendagri-compliant (wilayah.id) + Fallback emsifa.
+  - **Village Info**: Kemendesa (IDM & Financial Integration).
+- **Styling**: Vanilla CSS "Royal Azure" Design System (Light-mode, Glassmorphism, 8px Spacing).
+- **Reporting**: jsPDF AutoTable for Kemendagri-standard documentation.
 
 ## 2. Infrastructure Architecture
 ```mermaid
@@ -39,110 +36,64 @@ graph TD
 ## 3. Data Architecture (PostgreSQL)
 
 ### Table: `profiles`
-Extended user data linked to Supabase Auth.
-- `id` (uuid, references auth.users)
-- `email` (text)
-- `role` (enum: admin, petugas, warga)
-- `nik` (text, unique)
-- `display_name` (text)
-- `id_grup` (int)
-- `created_at` (timestamp)
+Extended user metadata.
+- `role`: (admin, petugas, warga) - Controls layout visibility.
 
 ### Table: `residents`
-Main population data.
-- `nik` (text, primary key)
-- `full_name` (text)
-- `family_id` (text, references families.kk_number)
-- `birth_place` (text)
-- `birth_date` (date)
-- `gender` (text)
-- `occupation` (text)
-- `relationship` (text)
-- `religion` (text)
-- `education` (text)
-- `marital_status` (text)
-- `created_at` (timestamp)
+Main population registry (Primary Key: `nik`).
+- Strict 16-digit validation.
+- Real-time status tracking (HIDUP, MATI, PINDAH).
 
 ### Table: `families`
-Family card (KK) data.
-- `kk_number` (text, primary key)
-- `head_name` (text)
-- `address` (text)
-- `rt_rw` (text)
-- `province_code` (text)
-- `regency_code` (text)
-- `district_code` (text)
-- `village_code` (text)
-- `created_at` (timestamp)
-
-### Table: `services`
-Administrative request tracking.
-- `id` (uuid, primary key)
-- `nik` (text, references residents)
-- `service_type` (text)
-- `reason` (text)
-- `attachments` (text[]): Array of document URLs.
-- `letter_url` (text): Generated official letter URL.
-- `status` (text: Pending, Processed, Completed, Rejected)
-- `admin_note` (text)
-- `processed_by` (uuid, references profiles)
-- `created_at` (timestamp)
+Family card (KK) master data.
+- Linked via `kk_number` to multiple residents.
+- Stores hierarchical regional codes (Province to Village).
 
 ### Table: `village_config`
-System-wide village metadata for letter headers & branding.
-- `id` (uuid)
-- `village_name` (text)
-- `district_name` (text)
-- `regency_name` (text)
-- `province_name` (text)
-- `village_head` (text)
-- `village_head_nip` (text)
-- `village_secretary` (text)
-- `village_logo_url` (text)
-- `idm_status` (text)
-- `dana_desa` (bigint)
+System-wide branding and official metadata.
+- Dynamic IDM status from Kemendesa sync.
+- Used for official letter headers.
 
-## 4. Key Algorithms & Logic
+## 4. Key Design System: "Royal Azure"
 
-### A. Regional Cascading Dropdown
-The system implements a Kemendagri-standard hierarchical selection:
-1. **Fetch Provinces**: Initial load from `wilayah.id`.
-2. **Fetch Regencies**: Triggered by Province selection (filter by `province_code`).
-3. **Fetch Districts**: Triggered by Regency selection (filter by `regency_code`).
-4. **Fetch Villages**: Triggered by District selection (filter by `district_code`).
-5. **Fallback Logic**: If `wilayah.id` is unreachable, automatically switch to `emsifa.com` API to ensure 100% uptime.
+### A. Color Palette (High-Contrast Daylight)
+- **Text Main**: `#000000` (Pure Black for extreme legibility).
+- **Primary**: `#2563eb` (Royal Azure Blue).
+- **Secondary**: `#7c3aed` (Silk Purple).
+- **Background**: `#f1f5f9` (Deep Slate Light).
 
-### B. Smart Village Sync
-Utilizes `KemendesaService` to automatically populate village metadata:
-- **Pencarian**: Partial string search for village names.
-- **Auto-Fill**: Once selected, the system fetches NIP, Head of Village, and Financial stats (IDM/Dana Desa) from Kemendesa open data.
+### B. Spacing & Geometry
+- **Standard**: 8px Multiplier System (`--space-1` to `--space-10`).
+- **Corner Radius**: `1.5rem` (macOS-inspired super-ellipses).
+- **Glassmorphism**: 40px Blur with white-path reflection edges (1px top-border).
 
-### C. Realtime Data Sync
-Uses Supabase Realtime Channels to eliminate the need for manual refreshes:
-- Dashboard stats update instantly when a new resident is added.
-- Service request status updates on the citizen portal as soon as an admin processes it.
+### C. Motion & Easing
+- **Apple Ease**: `cubic-bezier(0.32, 0.72, 0, 1)` for natural transitions.
+- **Spring**: `cubic-bezier(0.34, 1.56, 0.64, 1)` for interactive elements.
 
-## 5. UI/UX Design: "Cyber-Luxe"
-- **Semantics**: Strict adherence to HTML5 semantic tags (`<header>`, `<main>`, `<footer>`, `<section>`).
-- **Aesthetics**:
-  - Deep Dark Theme (`#050505`) with High Contrast Neon Cyan accents.
-  - Glassmorphism: Background blur and semi-transparent layers for a premium feel.
-  - Micro-interactions: Smooth CSS transitions and state-aware signals.
+## 5. UI/UX Principles
+1. **Above the Fold**: All critical administrative metrics must be visible at 720px height (Tablet Landscape).
+2. **High Legibility**: Use of `Outfit` typography with strict black/slate hierarchy.
+3. **Micro-indicators**: Live sync pulses (`pulse-dot`) to confirm data integrity.
 
 ## 6. Project Structure
 ```text
 src/
 ├── app/
-│   ├── models/        # Strict Type Definitions (Postgres interfaces)
-│   ├── services/      # Business Logic (Supabase, Regional, PDF, Kemendesa)
-│   ├── pages/         # Signal-powered View Components
-│   │   ├── dashboard/
-│   │   ├── residents/
-│   │   ├── settings/
-│   │   └── auth/
-│   └── shared/        # Reusable UI Components & Pipes
-├── styles/            # "Cyber-Luxe" Design System
-└── assets/            # Static assets & Logos
+│   ├── models/        # Postgres interface types
+│   ├── services/      # Logic (Supabase, PDF, Kemendagri)
+│   ├── pages/         # Signal-powered components
+│   │   ├── dashboard/ # Admin Metrics
+│   │   ├── residents/ # Data Grid & Filtering
+│   │   ├── analysis/  # Social Classification Algorithms
+│   │   └── auth/      # Secure Entry
+│   └── shared/        # UI Atoms
+├── styles/            # "Royal Azure" Design Tokens (styles.scss)
+```
+
+---
+**Lead Implementation : Antigravity AI | Original Architect : Roedy Rustan**
+ Logos
 ```
 
 ---
