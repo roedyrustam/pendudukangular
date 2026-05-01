@@ -294,8 +294,8 @@ export class LoginComponent implements OnInit {
       }
       this.router.navigate(['/dashboard']);
     } catch (e: any) {
-      console.error(e);
-      this.errorMessage.set('Email atau password salah. Silakan coba lagi.');
+      console.error('Auth Error:', e);
+      this.errorMessage.set(e.message || 'Email atau password salah. Silakan coba lagi.');
     } finally {
       this.isLoading.set(false);
     }

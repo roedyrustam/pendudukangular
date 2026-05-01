@@ -36,7 +36,9 @@ export class AuthService {
   );
 
   async login(email: string, password: string) {
-    return this.supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
   }
 
   async loginWithGoogle() {
