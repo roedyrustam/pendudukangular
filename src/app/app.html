@@ -71,6 +71,14 @@
           <span class="icon">⚖️</span>
           <span class="label">Analisis Bansos</span>
         </a>
+
+        <div class="system-status mt-auto p-4">
+           <div class="flex items-center gap-2 mb-1">
+              <span class="status-dot pulse"></span>
+              <span class="text-xs font-bold text-primary">SYSTEM ONLINE</span>
+           </div>
+           <p class="text-[10px] text-muted">Supabase Realtime Sync Active</p>
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -97,7 +105,10 @@
       <header class="top-nav glass-panel">
         <div class="search-bar">
           <span>🔍</span>
-          <input type="text" placeholder="Cari NIK atau Nomor KK...">
+          <input type="text" 
+            [value]="searchQuery()" 
+            (input)="handleSearch($event)"
+            placeholder="Cari NIK atau Nomor KK...">
         </div>
         <div class="quick-actions">
           <button class="btn-primary" routerLink="/families">Kelola Data (+)</button>

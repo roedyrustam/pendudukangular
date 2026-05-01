@@ -31,7 +31,10 @@ import { Article } from '../../models/data.models';
             <span class="text-xs text-primary mb-2 block">{{ headlineArticle()?.created_at | date:'medium' }}</span>
             <h3 class="mb-4">{{ headlineArticle()?.title }}</h3>
             <p class="text-muted mb-6">{{ headlineArticle()?.content | slice:0:200 }}...</p>
-            <button class="btn-outline-sm" (click)="editArticle(headlineArticle()!)">Edit Artikel</button>
+            <div class="flex gap-2">
+              <button class="btn-primary" (click)="readArticle(headlineArticle()!)">Baca Selengkapnya</button>
+              <button class="btn-outline-sm" (click)="editArticle(headlineArticle()!)">Edit Artikel</button>
+            </div>
           </div>
         </div>
       </div>
@@ -39,11 +42,11 @@ import { Article } from '../../models/data.models';
       <!-- News Feed -->
       <div class="news-grid">
         <div *ngFor="let art of otherArticles()" class="card-luxury glass-panel news-card">
-          <div class="news-image">
+          <div class="news-image" (click)="readArticle(art)">
             <img [src]="art.image_url || 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2048&auto=format&fit=crop'" alt="News">
           </div>
           <div class="news-content p-5">
-            <div class="flex justify-between items-start mb-2">
+            <div class="flex justify-between items-start mb-2" (click)="readArticle(art)">
               <span class="text-xs text-muted">{{ art.created_at | date:'dd MMM yyyy' }}</span>
               <span class="badge" [class.active]="art.is_enabled">{{ art.is_enabled ? 'Aktif' : 'Draft' }}</span>
             </div>
@@ -59,7 +62,25 @@ import { Article } from '../../models/data.models';
         </div>
       </div>
 
-      <!-- Add/Edit Modal -->
+      <!-- Read Modal -->
+      <div *ngIf="isReadModalOpen()" class="form-overlay" (click)="isReadModalOpen.set(false)">
+        <div class="read-card card-luxury glass-panel" (click)="$event.stopPropagation()">
+          <button class="close-btn" (click)="isReadModalOpen.set(false)">✕</button>
+          <div class="read-header">
+            <img [src]="readingArticle()?.image_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop'" alt="Banner">
+            <div class="overlay"></div>
+            <div class="title-box">
+              <span class="badge active mb-2">{{ readingArticle()?.created_at | date:'longDate' }}</span>
+              <h1>{{ readingArticle()?.title }}</h1>
+            </div>
+          </div>
+          <div class="read-content p-10">
+            <div class="article-body">
+               {{ readingArticle()?.content }}
+            </div>
+          </div>
+        </div>
+      </div>
       <div *ngIf="isAddModalOpen()" class="form-overlay" (click)="closeModal()">
         <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
           <div class="modal-header mb-6">
@@ -187,6 +208,29 @@ import { Article } from '../../models/data.models';
       font-family: inherit;
       &:focus { border-color: var(--primary); outline: none; }
     }
+    .read-card {
+      width: 90%;
+      max-width: 900px;
+      height: 90vh;
+      padding: 0;
+      overflow-y: auto;
+      position: relative;
+      .close-btn { position: absolute; top: 1rem; right: 1rem; z-index: 10; background: rgba(0,0,0,0.5); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+      .read-header {
+        height: 350px;
+        position: relative;
+        img { width: 100%; height: 100%; object-fit: cover; }
+        .overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9)); }
+        .title-box { position: absolute; bottom: 2rem; left: 3rem; right: 3rem; }
+        h1 { font-size: 2.5rem; color: white; }
+      }
+      .article-body {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--text-main);
+        white-space: pre-wrap;
+      }
+    }
     @media (max-width: 900px) {
       .featured-card { flex-direction: column; height: auto; 
         .featured-image, .featured-content { width: 100%; }
@@ -203,13 +247,12 @@ export class ArticlesComponent implements OnInit {
   otherArticles = signal<Article[]>([]);
 
   isAddModalOpen = signal(false);
+  isReadModalOpen = signal(false);
+  readingArticle = signal<Article | null>(null);
   isEditing = signal(false);
   loading = signal(false);
 
-  articleForm: Partial<Article> = {
-    is_enabled: true,
-    is_headline: false
-  };
+  articleForm: Partial<Article> = this.resetForm();
 
   ngOnInit() {
     this.refreshData();
@@ -223,6 +266,18 @@ export class ArticlesComponent implements OnInit {
     });
   }
 
+  resetForm(): Partial<Article> {
+    return {
+      is_enabled: true,
+      is_headline: false
+    };
+  }
+
+  readArticle(article: Article) {
+    this.readingArticle.set(article);
+    this.isReadModalOpen.set(true);
+  }
+
   editArticle(article: Article) {
     this.isEditing.set(true);
     this.articleForm = { ...article };
@@ -232,7 +287,7 @@ export class ArticlesComponent implements OnInit {
   closeModal() {
     this.isAddModalOpen.set(false);
     this.isEditing.set(false);
-    this.articleForm = { is_enabled: true, is_headline: false };
+    this.articleForm = this.resetForm();
   }
 
   async saveArticle() {

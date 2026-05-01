@@ -15,8 +15,21 @@ export class App {
   protected readonly title = signal('digiwarga');
   private router = inject(Router);
 
+  searchQuery = signal('');
+
   async logout() {
     await this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  handleSearch(event: any) {
+    const q = event.target.value;
+    this.searchQuery.set(q);
+    if (q.length >= 10) { // Likely NIK or KK
+       if (q.startsWith('3') || q.length === 16) {
+          // Navigate to resident or family
+          this.router.navigate(['/residents'], { queryParams: { q } });
+       }
+    }
   }
 }

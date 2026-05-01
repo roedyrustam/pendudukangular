@@ -38,21 +38,34 @@ import { DataService } from '../../services/data.service';
         <div class="mapping-section mt-8" *ngIf="sqlContent()">
            <h4>Pratinjau & Konfigurasi Impor</h4>
            <p class="text-xs text-muted mb-4">Sistem akan mengekstrak data dari pernyataan INSERT INTO.</p>
-           
-           <div class="table-selector flex gap-4 mb-6">
-              <div class="input-group">
-                 <label>Target Tabel</label>
-                 <select [(ngModel)]="targetTable" class="custom-select">
-                    <option value="residents">Penduduk (residents)</option>
-                    <option value="families">Keluarga (families)</option>
-                    <option value="articles">Artikel/Berita (articles)</option>
-                 </select>
-              </div>
-              <div class="input-group">
-                 <label>Nama Tabel di SQL</label>
-                 <input [(ngModel)]="sqlTableName" class="custom-input" placeholder="tweb_penduduk">
-              </div>
-           </div>
+                      <div class="table-selector flex gap-4 mb-6">
+               <div class="input-group">
+                  <label>Mode Impor</label>
+                  <select [(ngModel)]="importMode" class="custom-select">
+                     <option value="single">Tabel Tunggal</option>
+                     <option value="relational">Relasional (Keluarga + Penduduk)</option>
+                  </select>
+               </div>
+               <div class="input-group" *ngIf="importMode === 'single'">
+                  <label>Target Tabel</label>
+                  <select [(ngModel)]="targetTable" class="custom-select">
+                     <option value="residents">Penduduk (residents)</option>
+                     <option value="families">Keluarga (families)</option>
+                     <option value="articles">Artikel/Berita (articles)</option>
+                  </select>
+               </div>
+               <div class="input-group" *ngIf="importMode === 'single'">
+                  <label>Nama Tabel di SQL</label>
+                  <input [(ngModel)]="sqlTableName" class="custom-input" placeholder="tweb_penduduk">
+               </div>
+               <div class="input-group" *ngIf="importMode === 'relational'">
+                  <label>Status Deteksi</label>
+                  <div class="flex gap-2 mt-2">
+                     <span class="badge" [class.success]="detectedTables().includes('tweb_keluarga')">KK: {{ detectedTables().includes('tweb_keluarga') ? 'OK' : 'No' }}</span>
+                     <span class="badge" [class.success]="detectedTables().includes('tweb_penduduk')">Warga: {{ detectedTables().includes('tweb_penduduk') ? 'OK' : 'No' }}</span>
+                  </div>
+               </div>
+            </div>
 
            <div class="logs-area card-luxury bg-black p-4 mb-6">
               <div class="flex-between mb-2">
@@ -111,6 +124,10 @@ import { DataService } from '../../services/data.service';
     }
     .log-line { margin-bottom: 2px; &.error { color: #f87171; } }
     .sql-code { background: #000; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; color: #a5b4fc; }
+    .badge {
+       padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; background: rgba(255,255,255,0.1);
+       &.success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    }
     .border-warning { border: 1px solid rgba(245, 158, 11, 0.3); }
     .text-warning { color: #f59e0b; }
     .custom-select, .custom-input {
@@ -145,6 +162,8 @@ export class ImportComponent {
   showSuccess = signal(false);
   showRLSHelper = signal(false);
   successCount = signal(0);
+  detectedTables = signal<string[]>([]);
+  importMode: 'single' | 'relational' = 'relational';
 
   targetTable = 'residents';
   sqlTableName = 'tweb_penduduk';
@@ -178,20 +197,27 @@ export class ImportComponent {
       const content = ev.target?.result as string;
       this.sqlContent.set(content);
       this.addLog('File loaded successfully. Size: ' + file.size + ' bytes');
-      this.autoDetectTable(content);
+      this.autoDetectTables(content);
     };
     reader.readAsText(file);
   }
 
-  autoDetectTable(content: string) {
-    if (content.includes('INSERT INTO `tweb_penduduk`')) {
-      this.targetTable = 'residents';
-      this.sqlTableName = 'tweb_penduduk';
-      this.addLog('✨ Auto-detected: Penduduk (tweb_penduduk)');
-    } else if (content.includes('INSERT INTO `tweb_keluarga`')) {
-      this.targetTable = 'families';
-      this.sqlTableName = 'tweb_keluarga';
-      this.addLog('✨ Auto-detected: Keluarga (tweb_keluarga)');
+  autoDetectTables(content: string) {
+    const found: string[] = [];
+    if (content.includes('INSERT INTO `tweb_penduduk`')) found.push('tweb_penduduk');
+    if (content.includes('INSERT INTO `tweb_keluarga`')) found.push('tweb_keluarga');
+    if (content.includes('INSERT INTO `artikel`')) found.push('artikel');
+    
+    this.detectedTables.set(found);
+    
+    if (found.includes('tweb_keluarga') && found.includes('tweb_penduduk')) {
+      this.importMode = 'relational';
+      this.addLog('✨ Multi-table detected. Switching to Relational Mode.');
+    } else if (found.length > 0) {
+      this.importMode = 'single';
+      this.sqlTableName = found[0];
+      this.targetTable = found[0] === 'tweb_penduduk' ? 'residents' : (found[0] === 'tweb_keluarga' ? 'families' : 'articles');
+      this.addLog(`✨ Detected table: ${found[0]}`);
     }
   }
 
@@ -205,29 +231,23 @@ export class ImportComponent {
     this.logs.set([...this.logs(), `[${new Date().toLocaleTimeString()}] ${msg}`]);
   }
 
-  parseSQL(): any[] {
+  parseSQL(tableName?: string): any[] {
     const content = this.sqlContent();
+    const tableToParse = tableName || this.sqlTableName;
     if (!content) return [];
 
-    // Simple regex to find INSERT INTO statements
-    // Example: INSERT INTO `tweb_penduduk` (`nik`, `nama`) VALUES ('123', 'Budi'), ('456', 'Siti');
-    const tableRegex = new RegExp(`INSERT INTO \`?${this.sqlTableName}\`?\\s?\\((.*?)\\)\\s?VALUES\\s?(.*?);`, 'gis');
+    const tableRegex = new RegExp(`INSERT INTO \`?${tableToParse}\`?\\s?\\((.*?)\\)\\s?VALUES\\s?(.*?);`, 'gis');
     const matches = [...content.matchAll(tableRegex)];
     
     if (matches.length === 0) {
-      this.addLog('⚠️ Tidak ditemukan pernyataan INSERT INTO untuk tabel: ' + this.sqlTableName);
+      this.addLog('⚠️ Tidak ditemukan pernyataan INSERT INTO untuk tabel: ' + tableToParse);
       return [];
     }
 
     const allData: any[] = [];
-
     matches.forEach(match => {
       const columns = match[1].split(',').map(c => c.trim().replace(/[`"]/g, ''));
       const valuesStr = match[2].trim();
-      
-      // Split values groups (group1), (group2)
-      // This is complex because values might contain commas inside strings
-      // We use a simple strategy: split by '), ('
       const valueGroups = valuesStr.split(/\),\s?\(/);
       
       valueGroups.forEach(group => {
@@ -235,8 +255,6 @@ export class ImportComponent {
         if (cleanGroup.startsWith('(')) cleanGroup = cleanGroup.substring(1);
         if (cleanGroup.endsWith(')')) cleanGroup = cleanGroup.substring(0, cleanGroup.length - 1);
         
-        // Split individual values (handling quoted strings)
-        // Regex for CSV-like values: 'val1', 'val2', 3
         const values = cleanGroup.match(/('.*?'|null|\d+)/g)?.map(v => {
            if (v.toLowerCase() === 'null') return null;
            if (v.startsWith("'") && v.endsWith("'")) return v.substring(1, v.length - 1);
@@ -244,66 +262,93 @@ export class ImportComponent {
         }) || [];
 
         const obj: any = {};
-        columns.forEach((col, idx) => {
-           obj[col] = values[idx];
-        });
+        columns.forEach((col, idx) => { obj[col] = values[idx]; });
         allData.push(obj);
       });
     });
 
-    this.addLog(`✅ Berhasil mengekstrak ${allData.length} baris data.`);
+    this.addLog(`✅ [${tableToParse}] Berhasil mengekstrak ${allData.length} baris.`);
     return allData;
   }
 
   async startMigration() {
     this.isProcessing.set(true);
-    this.addLog('🚀 Memulai migrasi ke Supabase...');
+    this.addLog('🚀 Memulai migrasi...');
 
     try {
-      const data = this.parseSQL();
-      if (data.length === 0) throw new Error('Data kosong atau gagal di-parse.');
-
-      // Map MySQL columns to Supabase columns if needed
-      const mappedData = data.map(item => this.mapSchema(item));
-
-      // Bulk Insert (Chunking to avoid payload limit)
-      const chunkSize = 100;
-      let totalImported = 0;
-
-      for (let i = 0; i < mappedData.length; i += chunkSize) {
-        const chunk = mappedData.slice(i, i + chunkSize);
-        const { error } = await (this.dataService as any).supabase
-          .from(this.targetTable)
-          .upsert(chunk);
-        
-        if (error) throw error;
-        totalImported += chunk.length;
-        this.addLog(`Progress: ${totalImported}/${mappedData.length} terimpor...`);
+      if (this.importMode === 'relational') {
+        await this.runRelationalMigration();
+      } else {
+        await this.runSingleTableMigration();
       }
-
-      this.successCount.set(totalImported);
-      this.showSuccess.set(true);
-      this.addLog('✨ Migrasi selesai dengan sukses!');
-      setTimeout(() => this.showSuccess.set(false), 5000);
     } catch (err: any) {
       this.addLog('❌ ERROR: ' + err.message);
-      if (err.message.includes('row-level security')) {
-        this.showRLSHelper.set(true);
-      }
+      if (err.message.includes('row-level security')) this.showRLSHelper.set(true);
       alert('Migrasi gagal: ' + err.message);
     } finally {
       this.isProcessing.set(false);
     }
   }
 
-  copyRLSSql() {
-    const sql = `ALTER TABLE public.${this.targetTable} DISABLE ROW LEVEL SECURITY;`;
-    navigator.clipboard.writeText(sql);
-    this.addLog('📋 SQL disalin ke clipboard.');
+  async runSingleTableMigration() {
+    const data = this.parseSQL();
+    if (data.length === 0) throw new Error('Data kosong atau gagal di-parse.');
+    const mappedData = data.map(item => this.mapSchema(item, this.targetTable));
+    await this.bulkUpsert(this.targetTable, mappedData);
+    this.successCount.set(mappedData.length);
+    this.showSuccess.set(true);
+    setTimeout(() => this.showSuccess.set(false), 5000);
   }
 
-  private mapSchema(item: any): any {
-    if (this.targetTable === 'residents') {
+  async runRelationalMigration() {
+    this.addLog('🔄 Step 1: Mengimpor Data Keluarga...');
+    const rawFamilies = this.parseSQL('tweb_keluarga');
+    const mappedFamilies = rawFamilies.map(f => this.mapSchema(f, 'families'));
+    await this.bulkUpsert('families', mappedFamilies);
+    this.addLog(`✅ ${mappedFamilies.length} Keluarga terimpor.`);
+
+    this.addLog('🔄 Step 2: Menyiapkan Mapping ID -> No KK...');
+    // Create mapping of internal ID to No KK
+    const idToKkMap = new Map<string | number, string>();
+    rawFamilies.forEach(f => {
+      const internalId = f.id;
+      const kkNumber = f.no_kk || f.kk_number;
+      if (internalId && kkNumber) idToKkMap.set(internalId, kkNumber);
+    });
+
+    this.addLog('🔄 Step 3: Mengimpor Data Penduduk...');
+    const rawResidents = this.parseSQL('tweb_penduduk');
+    const mappedResidents = rawResidents.map(r => {
+      const resident = this.mapSchema(r, 'residents');
+      // Fix relation: map internal id_kk to actual no_kk
+      if (idToKkMap.has(r.id_kk)) {
+        resident.family_id = idToKkMap.get(r.id_kk);
+      }
+      return resident;
+    });
+
+    await this.bulkUpsert('residents', mappedResidents);
+    this.addLog(`✅ ${mappedResidents.length} Penduduk terimpor.`);
+    
+    this.successCount.set(mappedFamilies.length + mappedResidents.length);
+    this.showSuccess.set(true);
+    setTimeout(() => this.showSuccess.set(false), 5000);
+  }
+
+  async bulkUpsert(table: string, data: any[]) {
+    const chunkSize = 100;
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, i + chunkSize);
+      const { error } = await (this.dataService as any).supabase
+        .from(table)
+        .upsert(chunk);
+      if (error) throw error;
+      this.addLog(`Progress [${table}]: ${Math.min(i + chunkSize, data.length)}/${data.length}...`);
+    }
+  }
+
+  private mapSchema(item: any, target: string): any {
+    if (target === 'residents' || target === 'tweb_penduduk') {
       return {
         nik: item.nik || item.id_pend || item.nik_id,
         full_name: item.nama || item.full_name || item.nama_penduduk,
@@ -311,14 +356,13 @@ export class ImportComponent {
         birth_date: item.tanggallahir || item.birth_date || item.tgl_lahir,
         gender: (item.sex === '1' || item.sex === 1 || item.gender === 'Laki-laki') ? 'Laki-laki' : 'Perempuan',
         occupation: item.pekerjaan_id || item.occupation || item.pekerjaan,
-        family_id: item.id_kk || item.family_id || item.no_kk,
+        family_id: item.no_kk || item.family_id || item.id_kk, // id_kk will be fixed in relational mode
         address: item.alamat || item.address || item.alamat_sekarang,
         status_dasar: item.status_dasar === '1' || item.status_dasar === 1 ? 'HIDUP' : (item.status_dasar === '2' ? 'MATI' : 'HIDUP'),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
     }
-    if (this.targetTable === 'families') {
+    if (target === 'families' || target === 'tweb_keluarga') {
       return {
         kk_number: item.no_kk || item.kk_number || item.id_kk,
         head_of_family_name: item.nama_kepala || item.head_of_family_name || item.kepala_keluarga,
@@ -327,10 +371,15 @@ export class ImportComponent {
         rw: item.rw || '00',
         district: item.kecamatan || item.district || 'Kecamatan',
         social_class: item.kelas_sosial || 'Sedang',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
     }
     return { ...item, created_at: new Date().toISOString() };
+  }
+
+  copyRLSSql() {
+    const sql = `ALTER TABLE public.${this.targetTable} DISABLE ROW LEVEL SECURITY;`;
+    navigator.clipboard.writeText(sql);
+    this.addLog('📋 SQL disalin ke clipboard.');
   }
 }
