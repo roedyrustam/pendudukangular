@@ -118,6 +118,15 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
               <label>NIK Kepala Keluarga</label>
               <p class="nik-mono">{{ family.head_of_family_nik }}</p>
             </div>
+            <div class="info-item">
+              <label>Koordinat Lokasi</label>
+              <div class="flex items-center gap-3">
+                <p class="nik-mono">{{ res.latitude || '-' }}, {{ res.longitude || '-' }}</p>
+                <button (click)="updateLocation(res.nik)" class="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">
+                  EDIT LOKASI 📍
+                </button>
+              </div>
+            </div>
             <div class="info-item full-width">
               <label>Alamat Lengkap</label>
               <p>{{ family.address }}</p>
@@ -457,5 +466,24 @@ export class ResidentDetailComponent implements OnInit {
   async downloadBiodata(resident: Resident) {
     const family = await (this.family$ ? new Promise<Family | undefined>(resolve => this.family$.subscribe((f: Family | undefined) => resolve(f))) : Promise.resolve(undefined));
     await this.pdfService.generateResidentBiodata(resident, family as Family);
+  }
+
+  async updateLocation(nik: string) {
+    const lat = prompt('Masukkan Latitude:');
+    const lng = prompt('Masukkan Longitude:');
+    
+    if (lat && lng) {
+      try {
+        await this.dataService.updateResident(nik, { 
+          latitude: parseFloat(lat), 
+          longitude: parseFloat(lng) 
+        } as any);
+        alert('Lokasi berhasil diperbarui!');
+        this.loadResident();
+      } catch (e) {
+        console.error(e);
+        alert('Gagal memperbarui lokasi.');
+      }
+    }
   }
 }

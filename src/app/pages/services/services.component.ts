@@ -5,6 +5,7 @@ import { DataService } from '../../services/data.service';
 import { ServiceRequest, AppUser, Resident } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { LetterService } from '../../services/letter.service';
+import { NotificationService } from '../../services/notification.service';
 import { of, switchMap, take } from 'rxjs';
 
 @Component({
@@ -60,13 +61,12 @@ import { of, switchMap, take } from 'rxjs';
                 <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">ALASAN / KEPERLUAN</th>
                 <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">STATUS</th>
                 <th class="py-5 px-8 text-right text-[10px] font-black text-slate-400 tracking-widest uppercase">SURAT</th>
+                <th class="py-5 px-8 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">AKSI</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let req of paginatedRequests()" 
-                (click)="canManage() ? openManagementModal(req) : null" 
-                class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors"
-                [class.cursor-pointer]="canManage()">
+                class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
                 <td class="py-5 px-8 text-xs font-bold text-slate-500 uppercase">{{ req.created_at | date:'dd MMM yyyy HH:mm' }}</td>
                 <td class="py-5 px-6 font-black text-primary font-mono tracking-tighter">{{ req.nik }}</td>
                 <td class="py-5 px-6 font-black text-slate-900">{{ req.service_type }}</td>
@@ -82,9 +82,18 @@ import { of, switchMap, take } from 'rxjs';
                   </a>
                   <span *ngIf="!req.letter_url" class="text-[10px] font-black text-slate-300">N/A</span>
                 </td>
+                <td class="py-5 px-8 text-center" *ngIf="canManage()">
+                  <div class="flex gap-2 justify-center">
+                    <button class="btn-icon" (click)="openManagementModal(req)" title="Kelola Permohonan">⚙️</button>
+                    <button class="btn-icon bg-green-500/10 text-green-600 border-green-200" 
+                      (click)="sendManualNotification(req)" title="Kirim Notifikasi WA">
+                      📱
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr *ngIf="recentRequests().length === 0">
-                <td colspan="6" class="py-20 text-center">
+                <td colspan="7" class="py-20 text-center">
                    <div class="text-5xl mb-4">📮</div>
                    <p class="text-slate-400 font-black uppercase text-xs tracking-widest">Belum ada pengajuan layanan aktif</p>
                 </td>
@@ -200,32 +209,16 @@ import { of, switchMap, take } from 'rxjs';
                 <option value="Selesai">Selesai (Terbit Surat)</option>
                 <option value="Ditolak">Ditolak (Data Tidak Valid)</option>
               </select>
-              <p *ngIf="selectedRequest()?.status === 'Selesai'" class="text-[10px] text-rose-500 font-black mt-3 uppercase tracking-widest">
-                ⚠️ Pengajuan ini telah difinalisasi dan tidak dapat diubah kembali.
-              </p>
             </div>
             <div class="input-group">
               <label class="text-slate-900 font-black mb-3 block">CATATAN ADMINISTRASI (INTERNAL/EXTERNAL)</label>
               <textarea [(ngModel)]="managementForm.admin_note" name="mNote" placeholder="Tulis catatan verifikasi atau alasan penolakan..." class="custom-input font-bold min-h-[120px] py-4"></textarea>
             </div>
 
-            <div class="input-group" *ngIf="selectedRequest()?.attachments?.length">
-              <label class="text-slate-900 font-black mb-3 block uppercase text-[10px] tracking-widest">BERKAS PENDUKUNG DARI WARGA</label>
-              <div class="flex flex-wrap gap-3">
-                <a *ngFor="let url of selectedRequest()?.attachments; let i = index" [href]="url" target="_blank" class="px-6 py-3 rounded-xl bg-primary text-white font-black text-[10px] tracking-widest hover:shadow-xl transition-all uppercase">
-                  DOKUMEN {{ i + 1 }} 👁️
-                </a>
-              </div>
-            </div>
-
             <footer class="pt-10 border-t border-slate-100 flex justify-end gap-4">
               <button type="button" class="btn-outline px-8 rounded-xl font-black text-xs" (click)="selectedRequest.set(null)">TUTUP</button>
-              <button type="submit" class="btn-primary px-10 py-5 rounded-2xl shadow-xl font-black" [disabled]="selectedRequest()?.status === 'Selesai' || isSubmittingManagement()">
+              <button type="submit" class="btn-primary px-10 py-5 rounded-2xl shadow-xl font-black" [disabled]="isSubmittingManagement()">
                 {{ isSubmittingManagement() ? 'MENYIMPAN...' : 'UPDATE STATUS ✅' }}
-              </button>
-              <button *ngIf="managementForm.status === 'Selesai' && selectedRequest()?.status !== 'Selesai'" type="button" 
-                (click)="approveAndGenerateLetter()" class="btn-primary bg-emerald-600 px-12 py-5 rounded-2xl shadow-emerald-200 shadow-xl font-black" [disabled]="isSubmittingManagement()">
-                {{ isSubmittingManagement() ? 'GENERATING...' : 'TERBITKAN SURAT & WA 📱' }}
               </button>
             </footer>
         </form>
@@ -243,13 +236,10 @@ import { of, switchMap, take } from 'rxjs';
   `,
   styles: [`
     .services-page { padding-bottom: 5rem; }
-    
+    .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .btn-icon:hover { background: #f8fafc; border-color: var(--primary); }
     .pulse-dot { width: 10px; height: 10px; background: #3b82f6; border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-
-    .service-card {
-       &:hover .icon-wrapper { transform: rotate(5deg) scale(1.1); }
-    }
 
     .custom-select, .custom-input {
        width: 100%; background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1.25rem;
@@ -279,6 +269,7 @@ export class ServicesComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private letterService = inject(LetterService);
+  private notificationService = inject(NotificationService);
 
   userProfile: AppUser | null = null;
 
@@ -431,10 +422,19 @@ export class ServicesComponent implements OnDestroy {
         this.managementForm.status,
         this.managementForm.admin_note
       );
+      
       this.selectedRequest.set(null);
       this.showSuccess.set(true);
       setTimeout(() => this.showSuccess.set(false), 3000);
       this.loadRequests();
+
+      // Ask to send notification for any status change
+      const resident = await this.dataService.getResidentByNikSync(original.nik);
+      if (resident?.phone) {
+        if (confirm(`Status diperbarui ke "${this.managementForm.status}". Kirim notifikasi WhatsApp ke warga?`)) {
+          this.notificationService.sendWhatsAppNotification({ ...original, ...this.managementForm }, resident);
+        }
+      }
     } catch (e) {
       console.error(e);
       alert('Gagal memperbarui status.');
@@ -467,11 +467,8 @@ export class ServicesComponent implements OnDestroy {
       this.loadRequests();
 
       if (resident.phone) {
-        const confirmWa = confirm(`Surat berhasil dicetak! Ingin mengirim notifikasi WhatsApp otomatis ke ${resident.full_name} (${resident.phone})?`);
-        if (confirmWa) {
-          const text = encodeURIComponent(`Halo ${resident.full_name},\n\nPermohonan layanan *${req.service_type}* Anda telah selesai diproses oleh Pemerintah Desa Maju Jaya.\n\nAnda dapat mengunduh surat resmi digital dengan *E-Signature* di sini:\n${letterUrl}\n\nTerima kasih atas kepercayaan Anda kepada DigiWarga.`);
-          const waUrl = `https://wa.me/${resident.phone.replace(/^0/, '62')}?text=${text}`;
-          window.open(waUrl, '_blank');
+        if (confirm(`Surat berhasil dicetak! Ingin mengirim notifikasi WhatsApp otomatis ke ${resident.full_name}?`)) {
+          this.notificationService.sendWhatsAppNotification({ ...req, status: 'Selesai', letter_url: letterUrl }, resident);
         }
       } else {
         alert('Surat berhasil dicetak. (Warga ini belum mendaftarkan nomor telepon untuk notifikasi WA)');
@@ -482,6 +479,15 @@ export class ServicesComponent implements OnDestroy {
       alert(e.message || 'Gagal generate surat');
     } finally {
       this.isSubmittingManagement.set(false);
+    }
+  }
+
+  async sendManualNotification(req: ServiceRequest) {
+    const resident = await this.dataService.getResidentByNikSync(req.nik);
+    if (resident?.phone) {
+      this.notificationService.sendWhatsAppNotification(req, resident);
+    } else {
+      alert('Warga ini belum mendaftarkan nomor telepon.');
     }
   }
 }

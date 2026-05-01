@@ -13,6 +13,7 @@ import { ApbdesComponent } from './pages/apbdes/apbdes.component';
 import { InventoryComponent } from './pages/inventory/inventory.component';
 import { ResidentAnalysisComponent } from './pages/analysis/analysis.component';
 import { ImportComponent } from './pages/import/import.component';
+import { GisComponent } from './pages/gis/gis.component';
 import { Verify } from './pages/verify/verify';
 import { authGuard } from './guards/auth.guard';
 
@@ -36,6 +37,7 @@ export const routes: Routes = [
       { path: 'users', component: UsersComponent, title: 'Manajemen Pengguna - DigiWarga' },
       { path: 'analysis', component: ResidentAnalysisComponent, title: 'Analisis Bansos - DigiWarga' },
       { path: 'import', component: ImportComponent, title: 'Migrasi Data - DigiWarga' },
+      { path: 'gis', component: GisComponent, title: 'Peta Wilayah - DigiWarga' },
       { path: 'settings', component: SettingsComponent, title: 'Pengaturan - DigiWarga' },
     ]
   },
