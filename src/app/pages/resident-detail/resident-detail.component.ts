@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { PdfService } from '../../services/pdf.service';
 import { Resident, Family, ServiceRequest, ResidentDocument } from '../../models/data.models';
-import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
+import { Observable, switchMap, of, tap, BehaviorSubject, combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-resident-detail',
@@ -121,8 +121,8 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
             <div class="info-item">
               <label>Koordinat Lokasi</label>
               <div class="flex items-center gap-3">
-                <p class="nik-mono">{{ res.latitude || '-' }}, {{ res.longitude || '-' }}</p>
-                <button (click)="updateLocation(res.nik)" class="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">
+                <p class="nik-mono">{{ resident.latitude || '-' }}, {{ resident.longitude || '-' }}</p>
+                <button (click)="updateLocation(resident.nik)" class="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">
                   EDIT LOKASI 📍
                 </button>
               </div>
@@ -405,10 +405,11 @@ export class ResidentDetailComponent implements OnInit {
   requests$!: Observable<ServiceRequest[]>;
   documents$!: Observable<ResidentDocument[]>;
   isUploading = signal(false);
+  private refresh$ = new BehaviorSubject<void>(undefined);
 
   ngOnInit() {
-    this.resident$ = this.route.paramMap.pipe(
-      switchMap(params => {
+    this.resident$ = combineLatest([this.route.paramMap, this.refresh$]).pipe(
+      switchMap(([params]) => {
         const nik = params.get('nik');
         if (nik) {
           return this.dataService.getResident(nik);
@@ -474,12 +475,13 @@ export class ResidentDetailComponent implements OnInit {
     
     if (lat && lng) {
       try {
-        await this.dataService.updateResident(nik, { 
+        await this.dataService.updateResident({ 
+          nik: nik,
           latitude: parseFloat(lat), 
           longitude: parseFloat(lng) 
         } as any);
         alert('Lokasi berhasil diperbarui!');
-        this.loadResident();
+        this.refresh$.next();
       } catch (e) {
         console.error(e);
         alert('Gagal memperbarui lokasi.');
