@@ -21,6 +21,7 @@ export class DataService {
         .from('families')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(10000)
     ).pipe(map((res) => res.data as Family[]));
   }
 
@@ -41,16 +42,46 @@ export class DataService {
 
   // --- RESIDENTS ---
   getResidents(familyId?: string): Observable<Resident[]> {
-    let query = this.supabase
-      .from('residents')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (familyId) {
-      query = query.eq('family_id', familyId);
+    return from(this.fetchAll('residents', familyId ? { family_id: familyId } : undefined))
+      .pipe(map(data => data as Resident[]));
+  }
+
+  // Helper to fetch ALL rows bypassing the 1000 limit
+  private async fetchAll(table: string, filters?: any): Promise<any[]> {
+    let allData: any[] = [];
+    let from = 0;
+    let to = 999;
+    let finished = false;
+
+    while (!finished) {
+      let query = this.supabase
+        .from(table)
+        .select('*')
+        .range(from, to)
+        .order('created_at', { ascending: false });
+
+      if (filters) {
+        Object.keys(filters).forEach(key => {
+          query = query.eq(key, filters[key]);
+        });
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        if (data.length < 1000) {
+          finished = true;
+        } else {
+          from += 1000;
+          to += 1000;
+        }
+      } else {
+        finished = true;
+      }
     }
-    
-    return from(query).pipe(map((res) => res.data as Resident[]));
+    return allData;
   }
 
   async addResident(resident: Resident) {
@@ -148,6 +179,21 @@ export class DataService {
     };
     
     return this.supabase.from('residents_docs').insert([docData]);
+  }
+
+  // --- STATS & ANALYTICS ---
+  async getQuickStats() {
+    const { count: residents } = await this.supabase.from('residents').select('*', { count: 'exact', head: true });
+    const { count: families } = await this.supabase.from('families').select('*', { count: 'exact', head: true });
+    const { count: requests } = await this.supabase.from('services').select('*', { count: 'exact', head: true });
+    const { count: pending } = await this.supabase.from('services').select('*', { count: 'exact', head: true }).eq('status', 'Pending');
+    
+    return {
+      residents: residents || 0,
+      families: families || 0,
+      requests: requests || 0,
+      pending: pending || 0
+    };
   }
 
   async deleteResidentDocument(docId: string, path: string) {

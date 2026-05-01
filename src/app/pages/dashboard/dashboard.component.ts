@@ -275,6 +275,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     </div>
   `,
   styles: [`
+    .welcome-banner {
       padding: 3rem;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
       h1 { font-size: 2rem; margin-bottom: 0.5rem; }
@@ -439,6 +440,14 @@ export class DashboardComponent implements OnDestroy {
       this.availableRts.set(rts.sort());
       
       this.applyAnalytics();
+    });
+
+    // Update stats from server-side count for accuracy
+    this.dataService.getQuickStats().then(stats => {
+      this.totalResidents.set(stats.residents);
+      this.totalFamilies.set(stats.families);
+      this.activeRequestsCount.set(stats.requests);
+      this.pendingRequestsCount.set(stats.pending);
     });
 
     // Realtime Subscriptions
