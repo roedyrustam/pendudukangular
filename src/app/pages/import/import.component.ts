@@ -245,39 +245,120 @@ export class ImportComponent {
     const tableToParse = tableName || this.sqlTableName;
     if (!content) return [];
 
-    const tableRegex = new RegExp(`INSERT INTO \`?${tableToParse}\`?\\s?\\((.*?)\\)\\s?VALUES\\s?(.*?);`, 'gis');
-    const matches = [...content.matchAll(tableRegex)];
-    
-    if (matches.length === 0) {
-      this.addLog('⚠️ Tidak ditemukan pernyataan INSERT INTO untuk tabel: ' + tableToParse);
-      return [];
-    }
-
+    // Improved regex to handle various INSERT styles
+    const tableRegex = new RegExp(`INSERT INTO \`?${tableToParse}\`?\\s?\\((.*?)\\)\\s?VALUES\\s?`, 'gi');
     const allData: any[] = [];
-    matches.forEach(match => {
+    
+    let match;
+    while ((match = tableRegex.exec(content)) !== null) {
       const columns = match[1].split(',').map(c => c.trim().replace(/[`"]/g, ''));
-      const valuesStr = match[2].trim();
-      const valueGroups = valuesStr.split(/\),\s?\(/);
+      const startIdx = tableRegex.lastIndex;
       
-      valueGroups.forEach(group => {
-        let cleanGroup = group.trim();
-        if (cleanGroup.startsWith('(')) cleanGroup = cleanGroup.substring(1);
-        if (cleanGroup.endsWith(')')) cleanGroup = cleanGroup.substring(0, cleanGroup.length - 1);
-        
-        const values = cleanGroup.match(/('.*?'|null|\d+)/g)?.map(v => {
-           if (v.toLowerCase() === 'null') return null;
-           if (v.startsWith("'") && v.endsWith("'")) return v.substring(1, v.length - 1);
-           return isNaN(Number(v)) ? v : Number(v);
-        }) || [];
-
+      // Find the end of this INSERT statement (semicolon)
+      let endIdx = content.indexOf(';', startIdx);
+      if (endIdx === -1) endIdx = content.length;
+      
+      const valuesContent = content.substring(startIdx, endIdx).trim();
+      
+      // Advanced value parser handling commas inside quotes
+      const rows = this.splitSqlRows(valuesContent);
+      
+      rows.forEach(row => {
+        const values = this.splitSqlValues(row);
         const obj: any = {};
-        columns.forEach((col, idx) => { obj[col] = values[idx]; });
+        columns.forEach((col, idx) => {
+          let val = values[idx];
+          // Basic sanitization
+          if (val === 'NULL' || val === 'null' || val === undefined) {
+            val = null;
+          } else if (val.startsWith("'") && val.endsWith("'")) {
+            val = val.substring(1, val.length - 1).replace(/''/g, "'"); // Handle escaped quotes
+          } else if (!isNaN(Number(val)) && val.trim() !== '') {
+            val = Number(val);
+          }
+          obj[col] = val;
+        });
         allData.push(obj);
       });
-    });
+    }
 
-    this.addLog(`✅ [${tableToParse}] Berhasil mengekstrak ${allData.length} baris.`);
+    if (allData.length === 0) {
+      this.addLog('⚠️ Tidak ditemukan data untuk tabel: ' + tableToParse);
+    } else {
+      this.addLog(`✅ [${tableToParse}] Berhasil mengekstrak ${allData.length} baris.`);
+    }
     return allData;
+  }
+
+  // Split rows by ),( while ignoring commas inside quotes
+  private splitSqlRows(content: string): string[] {
+    const rows: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    let parenDepth = 0;
+
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i];
+      if (char === "'" && content[i-1] !== '\\') inQuotes = !inQuotes;
+      
+      if (!inQuotes) {
+        if (char === '(') parenDepth++;
+        if (char === ')') parenDepth--;
+      }
+
+      if (char === ',' && parenDepth === 0 && !inQuotes) {
+        rows.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) rows.push(current.trim());
+    
+    // Clean up wrapping parentheses
+    return rows.map(r => {
+      let res = r.trim();
+      if (res.startsWith('(')) res = res.substring(1);
+      if (res.endsWith(')')) res = res.substring(0, res.length - 1);
+      return res;
+    });
+  }
+
+  // Split values by comma while ignoring commas inside quotes
+  private splitSqlValues(row: string): string[] {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      if (char === "'" && (i === 0 || row[i-1] !== '\\')) {
+         // Check for escaped quotes like '' in SQL
+         if (inQuotes && row[i+1] === "'") {
+           current += "''";
+           i++;
+           continue;
+         }
+         inQuotes = !inQuotes;
+      }
+      
+      if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    return values;
+  }
+
+  private sanitizeDate(dateStr: any): string | null {
+    if (!dateStr || dateStr === '0000-00-00' || dateStr === 'NULL' || dateStr === 'null' || dateStr === '0000-00-00 00:00:00') {
+      return null;
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : dateStr;
   }
 
   async startMigration() {
