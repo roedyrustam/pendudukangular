@@ -107,46 +107,64 @@ import { DataService } from '../../services/data.service';
   `,
   styles: [`
     .upload-section {
-       border: 2px dashed var(--border-color);
-       padding: 3rem;
+       border: 2px dashed #e2e8f0;
+       padding: 4rem;
        text-align: center;
-       border-radius: 1rem;
-       transition: all 0.3s;
-       &.dragging { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
-       .icon { font-size: 3rem; margin-bottom: 1rem; }
+       border-radius: 2rem;
+       background: #f8fafc;
+       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+       cursor: pointer;
+       &:hover, &.dragging { border-color: #2563eb; background: #eff6ff; }
+       .icon { font-size: 4rem; margin-bottom: 1.5rem; }
+       h3 { color: #000000; font-weight: 800; margin-bottom: 0.5rem; }
+    }
+    .mapping-section {
+       h4 { color: #000000; font-weight: 800; margin-bottom: 1.5rem; }
     }
     .log-lines {
-       height: 150px;
+       height: 180px;
        overflow-y: auto;
-       font-family: monospace;
-       font-size: 0.7rem;
-       color: #10b981;
+       font-family: 'JetBrains Mono', 'Fira Code', monospace;
+       font-size: 0.75rem;
+       color: #059669;
+       padding: 1rem;
     }
-    .log-line { margin-bottom: 2px; &.error { color: #f87171; } }
-    .sql-code { background: #000; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; color: #a5b4fc; }
+    .log-line { margin-bottom: 4px; &.error { color: #dc2626; font-weight: 600; } }
+    .logs-area {
+       background: #000000 !important;
+       border-radius: 1.5rem;
+       box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .sql-code { background: #1e293b; padding: 0.75rem; border-radius: 0.75rem; font-size: 0.75rem; color: #cbd5e1; }
     .badge {
-       padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; background: rgba(255,255,255,0.1);
-       &.success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+       padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 700; background: #f1f5f9; color: #64748b;
+       &.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     }
-    .border-warning { border: 1px solid rgba(245, 158, 11, 0.3); }
-    .text-warning { color: #f59e0b; }
+    .border-warning { border: 2px solid #fef3c7 !important; background: #fffbeb; }
+    .text-warning { color: #b45309; }
     .custom-select, .custom-input {
-       background: rgba(255,255,255,0.05);
-       border: 1px solid var(--border-color);
-       color: white;
-       padding: 0.5rem 1rem;
-       border-radius: 0.5rem;
+       background: #f1f5f9;
+       border: 2px solid transparent;
+       color: #000000;
+       font-weight: 600;
+       padding: 0.75rem 1rem;
+       border-radius: 0.75rem;
        width: 100%;
        outline: none;
-       &:focus { border-color: var(--primary); }
+       transition: all 0.2s;
+       &:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .input-group { flex: 1; label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; } }
+    .input-group { flex: 1; label { display: block; font-size: 0.8rem; font-weight: 700; color: #000000; margin-bottom: 0.5rem; } }
     .flex { display: flex; }
     .gap-3 { gap: 0.75rem; }
     .gap-4 { gap: 1rem; }
     .items-center { align-items: center; }
     .toast-success {
-       position: fixed; bottom: 2rem; right: 2rem; display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.1); backdrop-filter: blur(10px); animation: slideUp 0.3s ease;
+       position: fixed; bottom: 2.5rem; right: 2.5rem; display: flex; align-items: center; gap: 1.25rem; 
+       padding: 1.25rem 2.5rem; border-radius: 1.5rem; border: 1px solid #bbf7d0; 
+       background: white; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); 
+       animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+       p { color: #000000; font-weight: 700; }
     }
   `]
 })

@@ -235,140 +235,154 @@ import { Observable, switchMap, of, tap, BehaviorSubject } from 'rxjs';
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: 2rem;
       .info-item {
-        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        p, a { font-size: 1rem; color: #fff; font-weight: 500; }
+        label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        p, a { font-size: 1.1rem; color: #000000; font-weight: 600; }
         &.full-width { grid-column: 1 / -1; }
       }
     }
-    .nik-mono { font-family: 'Courier New', monospace; color: var(--primary) !important; }
+    .nik-mono { font-family: 'JetBrains Mono', monospace; color: #2563eb !important; font-weight: 700 !important; }
 
     .kk-link {
-      color: var(--primary) !important;
+      color: #2563eb !important;
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
       &:hover { text-decoration: underline; }
     }
 
     .badge-status {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 1rem;
-      background: rgba(255,255,255,0.05);
-      &[data-status='Selesai'] { color: #10b981; background: rgba(16, 185, 129, 0.1); }
-      &[data-status='Diproses'] { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-      &[data-status='Pending'] { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-      &[data-status='Ditolak'] { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.35rem 0.85rem;
+      border-radius: 2rem;
+      background: #f1f5f9;
+      &[data-status='Selesai'] { color: #15803d; background: #dcfce7; }
+      &[data-status='Diproses'] { color: #1d4ed8; background: #dbeafe; }
+      &[data-status='Pending'] { color: #b45309; background: #fef3c7; }
+      &[data-status='Ditolak'] { color: #dc2626; background: #fef2f2; }
     }
 
     /* Document Section */
     .doc-grid {
       display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 2rem;
+      grid-template-columns: 320px 1fr;
+      gap: 3rem;
     }
     .upload-box {
       width: 100%;
-      height: 180px;
-      border: 2px dashed rgba(255,255,255,0.1);
-      border-radius: 1rem;
-      background: rgba(255,255,255,0.02);
+      height: 200px;
+      border: 2px dashed #e2e8f0;
+      border-radius: 1.5rem;
+      background: #f8fafc;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      &:hover { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.05); }
-      .icon { font-size: 2rem; margin-bottom: 0.5rem; }
-      p { font-weight: 600; font-size: 0.9rem; }
-      .hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; }
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      &:hover { border-color: #2563eb; background: #eff6ff; }
+      .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+      p { font-weight: 800; font-size: 1rem; color: #000000; }
+      .hint { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; font-weight: 500; }
     }
     .doc-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1rem;
     }
     .doc-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem;
-      background: rgba(255,255,255,0.03);
-      border-radius: 0.75rem;
-      border: 1px solid rgba(255,255,255,0.05);
+      padding: 1.25rem;
+      background: white;
+      border-radius: 1.25rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      transition: all 0.2s;
+      &:hover { border-color: #cbd5e1; transform: translateX(4px); }
       .doc-info {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.25rem;
         .doc-ext {
-          width: 40px;
-          height: 40px;
-          background: var(--primary);
-          color: #000;
+          width: 48px;
+          height: 48px;
+          background: #000000;
+          color: white;
           font-weight: 800;
-          font-size: 0.7rem;
+          font-size: 0.8rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 0.5rem;
+          border-radius: 0.75rem;
         }
         .doc-meta {
-          strong { display: block; font-size: 0.9rem; }
-          p { font-size: 0.75rem; color: var(--text-muted); }
+          strong { display: block; font-size: 1rem; color: #000000; }
+          p { font-size: 0.8rem; color: #64748b; font-weight: 500; }
         }
       }
-      .doc-actions {
-        display: flex;
-        gap: 0.5rem;
-      }
     }
-    .empty-docs { text-align: center; color: var(--text-muted); padding: 2rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 0.75rem; font-size: 0.9rem; }
+    .empty-docs { 
+      text-align: center; color: #94a3b8; padding: 3rem; 
+      border: 2px dashed #f1f5f9; border-radius: 1.5rem; font-weight: 500;
+    }
 
     /* Timeline Styling */
     .timeline {
       position: relative;
-      padding-left: 2rem;
+      padding-left: 2.5rem;
       &::before {
         content: '';
         position: absolute;
         left: 0.45rem;
         top: 0;
         bottom: 0;
-        width: 1px;
-        background: var(--border-color);
+        width: 3px;
+        background: #f1f5f9;
+        border-radius: 2px;
       }
       .timeline-item {
         position: relative;
-        padding-bottom: 2rem;
+        padding-bottom: 2.5rem;
         .tl-marker {
           position: absolute;
-          left: -1.85rem;
-          width: 0.75rem;
-          height: 0.75rem;
+          left: -2.35rem;
+          width: 1.25rem;
+          height: 1.25rem;
           border-radius: 50%;
-          background: var(--primary);
-          box-shadow: 0 0 10px var(--primary-glow);
-          top: 0.25rem;
+          background: #ffffff;
+          border: 3px solid #000000;
+          top: 0;
+          z-index: 1;
         }
         .tl-content {
-          padding-left: 1rem;
+          padding: 1.5rem;
+          background: #f8fafc;
+          border-radius: 1.25rem;
+          border: 1px solid #e2e8f0;
+          strong { color: #000000; font-size: 1.1rem; }
         }
       }
     }
 
     .loading-state {
-      height: 400px;
+      height: 60vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.5rem;
+      p { color: #64748b; font-weight: 600; }
     }
 
     @media (max-width: 1024px) {
       .detail-grid { grid-template-columns: 1fr; }
       .timeline-card { grid-column: span 1; }
+      .doc-grid { grid-template-columns: 1fr; }
     }
   `]
 })

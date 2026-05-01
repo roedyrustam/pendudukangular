@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -10,179 +10,210 @@ import { APBDes } from '../../models/data.models';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="apbdes-container fade-in">
-      <header class="mb-8 flex justify-between items-end">
-        <div>
+      <header class="header-actions mb-10 flex-between items-end">
+        <div class="titles">
           <h2 class="title-gradient">Transparansi Dana Desa (APBDes)</h2>
-          <p class="text-muted">Laporan realisasi anggaran pendapatan dan belanja desa tahun berjalan.</p>
+          <p class="text-muted">Laporan realisasi anggaran pendapatan dan belanja desa tahun berjalan untuk keterbukaan publik.</p>
         </div>
-        <div class="flex gap-4">
-          <select [(ngModel)]="selectedYear" (change)="refreshData()" class="year-select">
-            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
-          </select>
-          <button class="btn-primary" (click)="openAddModal()">
+        <div class="flex gap-4 items-center">
+          <div class="filter-box">
+             <span class="label">TAHUN</span>
+             <select [(ngModel)]="selectedYear" (change)="refreshData()" class="year-select">
+               <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+             </select>
+          </div>
+          <button class="btn-primary" (click)="openAddModal()" aria-label="Tambah Anggaran">
             Tambah Anggaran 💰
           </button>
         </div>
       </header>
 
-      <!-- Summary Stats -->
-      <div class="stats-row mb-10">
-        <div class="card-luxury glass-panel stat-card income">
-          <span class="label">Total Pendapatan</span>
-          <h3 class="value">Rp {{ totalIncome() | number:'1.0-0' }}</h3>
-          <div class="progress-track"><div class="progress-bar" style="width: 100%"></div></div>
-        </div>
-        <div class="card-luxury glass-panel stat-card expense">
-          <span class="label">Total Belanja</span>
-          <h3 class="value">Rp {{ totalExpense() | number:'1.0-0' }}</h3>
-          <div class="progress-track"><div class="progress-bar" [style.width.%]="(totalExpense() / totalIncome()) * 100"></div></div>
-        </div>
-        <div class="card-luxury glass-panel stat-card surplus">
-          <span class="label">Surplus / Defisit</span>
-          <h3 class="value" [class.negative]="totalIncome() - totalExpense() < 0">
-            Rp {{ (totalIncome() - totalExpense()) | number:'1.0-0' }}
-          </h3>
-          <span class="text-xs text-muted">Efisiensi: {{ 100 - ((totalExpense() / totalIncome()) * 100) | number:'1.0-1' }}%</span>
-        </div>
-      </div>
-
-      <!-- Budget Table -->
-      <div class="card-luxury p-0 overflow-hidden mb-10">
-        <table class="luxury-table">
-          <thead>
-            <tr>
-              <th>Nama Anggaran</th>
-              <th>Jenis</th>
-              <th>Jumlah (IDR)</th>
-              <th>Tahap</th>
-              <th>Koordinator</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of budgetItems()">
-              <td class="font-bold">{{ item.budget_name }}</td>
-              <td>
-                <span class="badge" [class.income]="item.type === 1" [class.expense]="item.type === 2">
-                  {{ item.type === 1 ? 'Pendapatan' : 'Belanja' }}
-                </span>
-              </td>
-              <td class="amount">Rp {{ item.amount | number:'1.0-0' }}</td>
-              <td>{{ item.phase || '-' }}</td>
-              <td>{{ item.coordinator || '-' }}</td>
-              <td>
-                <div class="flex gap-2">
-                  <button class="btn-icon-sm" (click)="editBudget(item)">✏️</button>
-                  <button class="btn-icon-sm text-red" (click)="deleteBudget(item.id!)">🗑️</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Add Modal -->
-      <div *ngIf="isAddModalOpen()" class="form-overlay" (click)="isAddModalOpen.set(false)">
-        <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-          <div class="modal-header mb-6">
-            <h3 class="title-gradient">{{ isEditing() ? 'Edit' : 'Input' }} Data APBDes</h3>
-            <p class="text-muted">Masukkan rincian anggaran pendapatan atau belanja.</p>
+      <!-- Financial Summary Dashboard -->
+      <section class="financial-dashboard grid grid-cols-3 gap-6 mb-12" aria-label="Ringkasan Keuangan">
+        <div class="card-luxury finance-card income">
+          <div class="card-header flex-between mb-4">
+             <span class="f-label">TOTAL PENDAPATAN</span>
+             <span class="f-icon">📈</span>
           </div>
+          <h3 class="f-value text-slate-900 font-black text-3xl">Rp {{ totalIncome() | number:'1.0-0' }}</h3>
+          <div class="progress-container mt-6">
+             <div class="progress-bar bg-emerald-500 shadow-emerald-200" style="width: 100%"></div>
+          </div>
+          <p class="text-[10px] font-extrabold text-emerald-600 mt-3 tracking-widest uppercase">Target Tercapai 100%</p>
+        </div>
+
+        <div class="card-luxury finance-card expense">
+          <div class="card-header flex-between mb-4">
+             <span class="f-label">TOTAL BELANJA</span>
+             <span class="f-icon">📉</span>
+          </div>
+          <h3 class="f-value text-slate-900 font-black text-3xl">Rp {{ totalExpense() | number:'1.0-0' }}</h3>
+          <div class="progress-container mt-6">
+             <div class="progress-bar bg-rose-500 shadow-rose-200" [style.width.%]="expenseRatio()"></div>
+          </div>
+          <p class="text-[10px] font-extrabold text-rose-600 mt-3 tracking-widest uppercase">Realisasi: {{ expenseRatio() | number:'1.0-1' }}%</p>
+        </div>
+
+        <div class="card-luxury finance-card balance">
+          <div class="card-header flex-between mb-4">
+             <span class="f-label">SISA LEBIH (SURPLUS)</span>
+             <span class="f-icon">🏛️</span>
+          </div>
+          <h3 class="f-value font-black text-3xl" [class.text-rose-600]="surplus() < 0" [class.text-slate-900]="surplus() >= 0">
+             Rp {{ surplus() | number:'1.0-0' }}
+          </h3>
+          <div class="efficiency-gauge mt-6 flex items-center gap-3">
+             <div class="gauge-track flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div class="gauge-fill h-full bg-primary" [style.width.%]="efficiency()"></div>
+             </div>
+             <span class="text-[10px] font-black text-primary">{{ efficiency() | number:'1.0-1' }}%</span>
+          </div>
+          <p class="text-[10px] font-extrabold text-slate-400 mt-3 tracking-widest uppercase">Indeks Efisiensi Anggaran</p>
+        </div>
+      </section>
+
+      <!-- Budget Data Table -->
+      <main class="budget-section" aria-label="Rincian Anggaran">
+        <div class="card-luxury p-0 overflow-hidden shadow-2xl border-slate-200">
+          <table class="luxury-table w-full">
+            <thead>
+              <tr class="bg-slate-50">
+                <th class="py-5 px-8 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">NAMA ANGGARAN</th>
+                <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">KATEGORI</th>
+                <th class="py-5 px-6 text-right text-[10px] font-black text-slate-400 tracking-widest uppercase">JUMLAH (IDR)</th>
+                <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">TAHAP</th>
+                <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">KOORDINATOR</th>
+                <th class="py-5 px-8 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of budgetItems()" class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                <td class="py-5 px-8">
+                   <div class="font-black text-slate-900">{{ item.budget_name }}</div>
+                   <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">ID: {{ item.id }}</div>
+                </td>
+                <td class="py-5 px-6">
+                  <span class="type-pill" [attr.data-type]="item.type">
+                    {{ item.type === 1 ? 'PENDAPATAN' : item.type === 2 ? 'BELANJA' : 'PEMBIAYAAN' }}
+                  </span>
+                </td>
+                <td class="py-5 px-6 text-right font-black text-slate-900 tabular-nums">
+                   Rp {{ item.amount | number:'1.0-0' }}
+                </td>
+                <td class="py-5 px-6 text-center">
+                   <span class="phase-badge">{{ item.phase || 'N/A' }}</span>
+                </td>
+                <td class="py-5 px-6">
+                   <div class="text-slate-700 font-bold text-sm">{{ item.coordinator || 'Bendahara Desa' }}</div>
+                </td>
+                <td class="py-5 px-8">
+                  <div class="flex justify-center gap-2">
+                    <button class="btn-icon-sm border border-slate-200" (click)="editBudget(item)" title="Edit">✏️</button>
+                    <button class="btn-icon-sm delete border border-slate-200" (click)="deleteBudget(item.id!)" title="Hapus">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Empty State -->
+              <tr *ngIf="budgetItems().length === 0">
+                 <td colspan="6" class="py-20 text-center">
+                    <div class="text-4xl mb-4">💰</div>
+                    <h4 class="text-slate-900 font-black">Belum ada data anggaran untuk tahun {{ selectedYear }}</h4>
+                    <p class="text-muted text-sm mt-2">Silakan klik "Tambah Anggaran" untuk mulai menginput data.</p>
+                 </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+
+      <!-- Budget Entry Modal -->
+      <div *ngIf="isAddModalOpen()" class="form-overlay fade-in" (click)="isAddModalOpen.set(false)">
+        <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
+          <header class="modal-header mb-10">
+            <h2 class="title-gradient text-3xl">{{ isEditing() ? 'Edit' : 'Input' }} Data APBDes</h2>
+            <p class="text-muted text-lg">Input data anggaran harus sesuai dengan dokumen fisik APBDes Desa.</p>
+          </header>
           
-          <form (submit)="saveBudget()">
-            <div class="grid-2 mb-4">
-              <div class="input-group">
-                <label>Tipe Anggaran</label>
-                <select [(ngModel)]="budgetForm.type" name="type" required>
-                  <option [ngValue]="1">Pendapatan</option>
-                  <option [ngValue]="2">Belanja</option>
-                  <option [ngValue]="3">Pembiayaan</option>
-                </select>
-              </div>
-              <div class="input-group">
-                <label>Tahun Anggaran</label>
-                <input type="number" [(ngModel)]="budgetForm.year" name="year" required>
-              </div>
+          <form (submit)="saveBudget()" class="grid grid-cols-2 gap-8">
+            <div class="input-group">
+              <label>Tipe / Jenis Anggaran</label>
+              <select [(ngModel)]="budgetForm.type" name="type" required class="custom-select">
+                <option [ngValue]="1">Pendapatan Desa</option>
+                <option [ngValue]="2">Belanja Desa</option>
+                <option [ngValue]="3">Pembiayaan Desa</option>
+              </select>
             </div>
-            <div class="input-group mb-4">
-              <label>Nama Anggaran</label>
-              <input [(ngModel)]="budgetForm.budget_name" name="name" placeholder="Contoh: Dana Desa Tahap I" required>
+            <div class="input-group">
+              <label>Tahun Anggaran</label>
+              <input type="number" [(ngModel)]="budgetForm.year" name="year" required class="custom-input font-bold">
             </div>
-            <div class="grid-2 mb-4">
-              <div class="input-group">
-                <label>Jumlah (Rupiah)</label>
-                <input type="number" [(ngModel)]="budgetForm.amount" name="amount" placeholder="0" required>
-              </div>
-              <div class="input-group">
-                <label>Tahap / Keterangan</label>
-                <input [(ngModel)]="budgetForm.phase" name="phase" placeholder="Contoh: Tahap 1 (40%)">
-              </div>
+            
+            <div class="input-group col-span-2">
+              <label>Nama Anggaran / Program Kegiatan</label>
+              <input [(ngModel)]="budgetForm.budget_name" name="name" placeholder="Contoh: Dana Desa Tahap I 2026" required class="custom-input font-black text-lg">
             </div>
-            <div class="input-group mb-6">
+            
+            <div class="input-group">
+              <label>Jumlah Dana (IDR)</label>
+              <input type="number" [(ngModel)]="budgetForm.amount" name="amount" placeholder="0" required class="custom-input text-primary font-black">
+            </div>
+            <div class="input-group">
+              <label>Tahap / Persentase</label>
+              <input [(ngModel)]="budgetForm.phase" name="phase" placeholder="Contoh: Tahap 1 (40%)" class="custom-input">
+            </div>
+            
+            <div class="input-group col-span-2">
               <label>Koordinator Pelaksana (PTPKD)</label>
-              <input [(ngModel)]="budgetForm.coordinator" name="coordinator" placeholder="Nama koordinator kegiatan">
+              <input [(ngModel)]="budgetForm.coordinator" name="coordinator" placeholder="Nama koordinator atau pelaksana kegiatan" class="custom-input">
             </div>
-            <div class="form-actions mt-8">
-              <button type="button" class="btn-text" (click)="isAddModalOpen.set(false)">Batal</button>
-              <button type="submit" class="btn-primary" [disabled]="loading()">
-                {{ loading() ? 'Menyimpan...' : (isEditing() ? 'Simpan Perubahan' : 'Simpan Data Anggaran') }}
+
+            <footer class="form-actions mt-10 col-span-2 flex justify-end gap-3 border-t border-slate-100 pt-8">
+              <button type="button" class="btn-outline px-10" (click)="isAddModalOpen.set(false)">Batal</button>
+              <button type="submit" class="btn-primary px-10" [disabled]="loading()">
+                {{ loading() ? 'Sedang Menyimpan...' : (isEditing() ? 'Simpan Perubahan' : 'Terbitkan Data Anggaran') }}
               </button>
-            </div>
+            </footer>
           </form>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .apbdes-container { padding-bottom: 4rem; }
-    .year-select {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-color);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
+    .apbdes-container { padding-bottom: 5rem; }
+    .filter-box {
+       display: flex; flex-direction: column; gap: 0.25rem;
+       .label { font-size: 0.55rem; font-weight: 900; color: var(--text-muted); letter-spacing: 0.1em; }
+       .year-select { background: #f8fafc; border: 1px solid var(--glass-border); padding: 0.5rem 1.5rem; border-radius: 0.75rem; font-weight: 800; outline: none; }
     }
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
+
+    .finance-card {
+       padding: 2.5rem; border: 1px solid var(--glass-border); position: relative; overflow: hidden;
+       .f-label { font-size: 0.65rem; font-weight: 900; color: var(--text-muted); letter-spacing: 0.15em; }
+       .f-icon { font-size: 1.5rem; }
+       .progress-container { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+       .progress-bar { height: 100%; border-radius: 3px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     }
-    .stat-card {
-      padding: 1.5rem;
-      .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-      .value { font-size: 1.75rem; margin: 0.5rem 0; font-weight: 800; }
-      &.income .value { color: #34d399; }
-      &.expense .value { color: #fb7185; }
-      .negative { color: #ef4444; }
-      .progress-track {
-        height: 4px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 2px;
-        margin-top: 1rem;
-        overflow: hidden;
-        .progress-bar { height: 100%; transition: width 1s ease; }
-      }
-      &.income .progress-bar { background: #34d399; box-shadow: 0 0 10px rgba(52, 211, 153, 0.5); }
-      &.expense .progress-bar { background: #fb7185; box-shadow: 0 0 10px rgba(251, 113, 133, 0.5); }
-    }
+
     .luxury-table {
-      width: 100%;
-      border-collapse: collapse;
-      th { text-align: left; padding: 1rem 1.5rem; background: rgba(255,255,255,0.02); color: var(--text-muted); font-weight: 500; font-size: 0.8rem; }
-      td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-      .amount { font-family: 'Courier New', Courier, monospace; font-weight: 700; color: #fff; }
+       border-collapse: collapse;
+       th { background: #f8fafc; border-bottom: 1px solid var(--glass-border); }
+       .type-pill {
+          padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.6rem; font-weight: 900;
+          &[data-type='1'] { background: rgba(16, 185, 129, 0.1); color: #059669; }
+          &[data-type='2'] { background: rgba(244, 63, 94, 0.1); color: #be123c; }
+          &[data-type='3'] { background: rgba(37, 99, 235, 0.1); color: #1d4ed8; }
+       }
+       .phase-badge { background: #f1f5f9; padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 800; color: #64748b; }
     }
-    .badge {
-      padding: 0.2rem 0.6rem;
-      border-radius: 0.5rem;
-      font-size: 0.75rem;
-      &.income { background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.2); }
-      &.expense { background: rgba(251, 113, 133, 0.1); color: #fb7185; border: 1px solid rgba(251, 113, 133, 0.2); }
+
+    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.85); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { width: 100%; max-width: 800px; padding: 4rem; }
+
+    .custom-input, .custom-select {
+       background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1rem;
+       outline: none; font-weight: 600; font-size: 1rem; width: 100%; transition: 0.3s;
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .p-0 { padding: 0 !important; }
-    .overflow-hidden { overflow: hidden; }
   `]
 })
 export class ApbdesComponent implements OnInit {
@@ -192,19 +223,52 @@ export class ApbdesComponent implements OnInit {
   selectedYear = new Date().getFullYear();
   years = [2026, 2025, 2024, 2023];
 
-  totalIncome = signal(0);
-  totalExpense = signal(0);
-
   isAddModalOpen = signal(false);
   loading = signal(false);
   isEditing = signal(false);
   budgetForm: Partial<APBDes> = this.resetForm();
 
+  // Computed signals for reativity
+  totalIncome = computed(() => {
+    return this.budgetItems()
+      .filter(i => i.type === 1)
+      .reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  });
+
+  totalExpense = computed(() => {
+    return this.budgetItems()
+      .filter(i => i.type === 2)
+      .reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  });
+
+  surplus = computed(() => this.totalIncome() - this.totalExpense());
+  
+  expenseRatio = computed(() => {
+    if (this.totalIncome() === 0) return 0;
+    return (this.totalExpense() / this.totalIncome()) * 100;
+  });
+
+  efficiency = computed(() => {
+     const ratio = this.expenseRatio();
+     return Math.max(0, 100 - ratio);
+  });
+
+  ngOnInit() {
+    this.refreshData();
+  }
+
+  refreshData() {
+    this.dataService.getAPBDes(this.selectedYear).subscribe(data => {
+      this.budgetItems.set(data);
+    });
+  }
+
   resetForm(): Partial<APBDes> {
     return {
       type: 1,
       year: this.selectedYear,
-      bar_color: 'info'
+      bar_color: 'info',
+      amount: 0
     };
   }
 
@@ -220,25 +284,13 @@ export class ApbdesComponent implements OnInit {
     this.isAddModalOpen.set(true);
   }
 
-  ngOnInit() {
-    this.refreshData();
-  }
-
-  refreshData() {
-    this.dataService.getAPBDes(this.selectedYear).subscribe(data => {
-      this.budgetItems.set(data);
-      this.totalIncome.set(data.filter(i => i.type === 1).reduce((acc, curr) => acc + curr.amount, 0));
-      this.totalExpense.set(data.filter(i => i.type === 2).reduce((acc, curr) => acc + curr.amount, 0));
-    });
-  }
-
   async saveBudget() {
     this.loading.set(true);
     try {
       if (this.isEditing()) {
-        await this.dataService.updateAPBDes(this.budgetForm);
+        await this.dataService.updateAPBDes(this.budgetForm as APBDes);
       } else {
-        await this.dataService.addAPBDes(this.budgetForm);
+        await this.dataService.addAPBDes(this.budgetForm as APBDes);
       }
       this.refreshData();
       this.isAddModalOpen.set(false);
@@ -250,7 +302,7 @@ export class ApbdesComponent implements OnInit {
   }
 
   async deleteBudget(id: number) {
-    if (confirm('Hapus data anggaran ini?')) {
+    if (confirm('Hapus data anggaran ini secara permanen?')) {
       try {
         await this.dataService.deleteAPBDes(id);
         this.refreshData();

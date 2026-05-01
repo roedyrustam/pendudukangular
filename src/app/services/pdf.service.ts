@@ -32,23 +32,26 @@ export class PdfService {
 
     // Header
     doc.setFontSize(18);
-    doc.setTextColor(40);
-    doc.text(`BIODATA PENDUDUK — ${this.villageName.toUpperCase()}`, pageWidth / 2, 20, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0); // Pure Black
+    doc.text(`BIODATA PENDUDUK — ${this.villageName.toUpperCase()}`, pageWidth / 2, 25, { align: 'center' });
     
-    doc.setDrawColor(200);
-    doc.line(20, 25, pageWidth - 20, 25);
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.line(20, 30, pageWidth - 20, 30);
 
     // Content
-    doc.setFontSize(12);
-    let y = 40;
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    let y = 45;
     const leftCol = 25;
     const valueCol = 80;
 
     const addField = (label: string, value: string) => {
       doc.setFont('helvetica', 'bold');
-      doc.text(`${label}:`, leftCol, y);
+      doc.text(`${label.toUpperCase()}`, leftCol, y);
       doc.setFont('helvetica', 'normal');
-      doc.text(value || '-', valueCol, y);
+      doc.text(`:  ${value || '-'}`, valueCol - 5, y);
       y += 10;
     };
 
@@ -70,14 +73,15 @@ export class PdfService {
 
     if (family) {
       y += 5;
-      doc.setDrawColor(240);
+      doc.setDrawColor(230);
       doc.line(20, y, pageWidth - 20, y);
       y += 15;
       
       doc.setFontSize(14);
-      doc.text('Informasi Keluarga', leftCol, y);
-      y += 10;
-      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('INFORMASI KARTU KELUARGA', leftCol, y);
+      y += 12;
+      doc.setFontSize(11);
       
       addField('No. Kartu Keluarga', family.kk_number);
       addField('Kepala Keluarga', family.head_of_family_name);
@@ -92,9 +96,8 @@ export class PdfService {
     // Footer
     const footerY = doc.internal.pageSize.getHeight() - 20;
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 20, footerY);
-    doc.text(`Sistem Kependudukan — ${this.villageName}`, pageWidth - 20, footerY, { align: 'right' });
+    doc.setTextColor(100);
+    doc.text(`Dokumen ini diterbitkan secara digital oleh Sistem DigiWarga pada ${new Date().toLocaleString()}`, pageWidth / 2, footerY, { align: 'center' });
 
     doc.save(`Biodata_${resident.nik}.pdf`);
   }
@@ -105,16 +108,19 @@ export class PdfService {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text(`LAPORAN DATA PENDUDUK — ${this.villageName.toUpperCase()}`, pageWidth / 2, 15, { align: 'center' });
     
-    doc.setFontSize(11);
-    doc.text(`Kriteria: ${filterTitle}`, pageWidth / 2, 22, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Filter Pencarian: ${filterTitle}`, pageWidth / 2, 22, { align: 'center' });
 
     const tableData = residents.map((r, i) => [
       i + 1,
       r.nik,
       r.full_name,
-      r.gender,
+      r.gender === 'Laki-laki' ? 'L' : 'P',
       r.birth_place + ', ' + r.birth_date,
       r.religion || '-',
       r.occupation,
@@ -124,11 +130,11 @@ export class PdfService {
 
     (doc as any).autoTable({
       startY: 30,
-      head: [['No', 'NIK', 'Nama Lengkap', 'L/P', 'Tempat, Tgl Lahir', 'Agama', 'Pekerjaan', 'Status', 'Hubungan']],
+      head: [['NO', 'NIK', 'NAMA LENGKAP', 'L/P', 'TEMPAT, TGL LAHIR', 'AGAMA', 'PEKERJAAN', 'STATUS', 'HUBUNGAN']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      styles: { fontSize: 8 }
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 8, textColor: [0, 0, 0] }
     });
 
     doc.save(`Laporan_Penduduk_${Date.now()}.pdf`);
@@ -141,32 +147,36 @@ export class PdfService {
 
     // Title
     doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text(`PROFIL KARTU KELUARGA — ${this.villageName.toUpperCase()}`, pageWidth / 2, 20, { align: 'center' });
     doc.setFontSize(14);
-    doc.text(`No. ${family.kk_number}`, pageWidth / 2, 28, { align: 'center' });
+    doc.text(`NO. ${family.kk_number}`, pageWidth / 2, 28, { align: 'center' });
 
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.8);
+    doc.setDrawColor(0);
     doc.line(20, 35, pageWidth - 20, 35);
 
     // Metadata
     doc.setFontSize(10);
+    doc.setTextColor(0);
     let y = 45;
     const addMeta = (label: string, value: string, x: number) => {
       doc.setFont('helvetica', 'bold');
-      doc.text(label, x, y);
+      doc.text(label.toUpperCase(), x, y);
       doc.setFont('helvetica', 'normal');
-      doc.text(`: ${value || '-'}`, x + 35, y);
+      doc.text(`:  ${value || '-'}`, x + 40, y);
     };
 
     addMeta('Nama Kepala KK', family.head_of_family_name, 20);
-    if (family.head_of_family_nik) { addMeta('NIK Kepala KK', family.head_of_family_nik, 20); y += 6; }
-    addMeta('Alamat', family.address, 20); y += 6;
-    addMeta('RT / RW', `${family.rt || '-'} / ${family.rw || '-'}`, 20);
-    if (family.hamlet) { addMeta('Dusun', family.hamlet, 20); }
-    addMeta('Kecamatan', family.district, 20); y += 6;
-    addMeta('Kabupaten/Kota', family.regency, 20);
-    addMeta('Provinsi', family.province, 20);
-    if (family.social_class) { y += 6; addMeta('Kelas Sosial', family.social_class, 20); }
+    if (family.head_of_family_nik) { y += 7; addMeta('NIK Kepala KK', family.head_of_family_nik, 20); }
+    y += 7; addMeta('Alamat', family.address, 20);
+    y += 7; addMeta('RT / RW', `${family.rt || '-'} / ${family.rw || '-'}`, 20);
+    if (family.hamlet) { y += 7; addMeta('Dusun', family.hamlet, 20); }
+    y += 7; addMeta('Kecamatan', family.district, 20);
+    y += 7; addMeta('Kabupaten/Kota', family.regency, 20);
+    y += 7; addMeta('Provinsi', family.province, 20);
+    if (family.social_class) { y += 7; addMeta('Kelas Sosial', family.social_class, 20); }
 
     // Members Table
     const tableData = members.map((m, i) => [
@@ -180,12 +190,12 @@ export class PdfService {
     ]);
 
     (doc as any).autoTable({
-      startY: 75,
-      head: [['No', 'Nama Lengkap', 'NIK', 'JK', 'Tempat/Tgl Lahir', 'Pekerjaan', 'Hubungan']],
+      startY: y + 15,
+      head: [['NO', 'NAMA LENGKAP', 'NIK', 'JK', 'TEMPAT/TGL LAHIR', 'PEKERJAAN', 'HUBUNGAN']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [52, 73, 94], textColor: 255 },
-      styles: { fontSize: 8 },
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 8, textColor: [0, 0, 0] },
       columnStyles: {
         0: { cellWidth: 10 },
         1: { cellWidth: 40 },
@@ -196,16 +206,17 @@ export class PdfService {
     });
 
     // Footer
-    const footerY = doc.internal.pageSize.getHeight() - 25;
+    const footerY = doc.internal.pageSize.getHeight() - 30;
     doc.setFontSize(9);
-    doc.text('Dicetak Oleh:', pageWidth - 60, footerY);
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Sistem DigiWarga', pageWidth - 60, footerY + 10);
+    doc.text('Diterbitkan Oleh:', pageWidth - 70, footerY);
+    doc.setFontSize(11);
+    doc.text(`PEMERINTAH ${this.villageName.toUpperCase()}`, pageWidth - 70, footerY + 12);
     
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text(`ID Proyek: ${family.kk_number}`, 20, footerY + 10);
+    doc.setTextColor(100);
+    doc.text(`ID VALIDASI: ${family.kk_number}-${Date.now()}`, 20, footerY + 12);
 
     doc.save(`KK_${family.kk_number}.pdf`);
   }
@@ -215,10 +226,12 @@ export class PdfService {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFontSize(18);
-    doc.text(`ANALISIS KELAYAKAN BANTUAN (${category})`, pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text(`LAPORAN ANALISIS KELAYAKAN BANTUAN`, pageWidth / 2, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text(this.villageName.toUpperCase(), pageWidth / 2, 28, { align: 'center' });
+    doc.text(`KATEGORI: ${category.toUpperCase()}`, pageWidth / 2, 28, { align: 'center' });
 
     const tableData = data.map((item, i) => [
       i + 1,
@@ -232,10 +245,10 @@ export class PdfService {
 
     (doc as any).autoTable({
       startY: 40,
-      head: [['No', 'Nama Kepala KK', 'NIK', 'Kelas Sosial', 'Tanggungan', 'Skor', 'Rekomendasi']],
+      head: [['NO', 'NAMA KEPALA KK', 'NIK', 'KELAS SOSIAL', 'TANGGUNGAN', 'SKOR', 'REKOMENDASI']],
       body: tableData,
-      headStyles: { fillColor: [231, 76, 60], textColor: 255 },
-      styles: { fontSize: 9 }
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 9, textColor: [0, 0, 0] }
     });
 
     doc.save(`Analisis_Bantuan_${category}_${Date.now()}.pdf`);

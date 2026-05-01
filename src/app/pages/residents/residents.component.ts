@@ -11,275 +11,235 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <header class="header-actions mb-8 fade-in">
-      <div class="titles">
-        <h2 class="title-gradient">Data Penduduk Terpadu</h2>
-        <p class="text-muted">Manajemen data individu berbasis NIK seluruh wilayah</p>
-        <div class="flex gap-3 mt-6">
-          <button class="btn-primary" (click)="isAddModalOpen.set(true)" aria-label="Tambah Penduduk Baru">
-             Tambah Penduduk ➕
-          </button>
-          <button class="btn-outline" (click)="exportToPdf()" aria-label="Ekspor Laporan PDF">
-             Ekspor Laporan PDF 📄
-          </button>
-        </div>
-      </div>
-
-      <div class="header-right flex flex-col items-end">
-        <div class="search-bar mb-4">
-          <span class="icon">🔍</span>
-          <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Cari NIK atau Nama..." aria-label="Cari data penduduk">
-        </div>
-        <div class="live-sync-indicator">
-          <div class="pulse-dot"></div>
-          <span class="label">LIVE DATA SYNC</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Filter Bar -->
-    <section class="filters-container card-luxury mb-8 p-6 fade-in" aria-label="Panel Filter Data">
-       <div class="flex gap-6 flex-wrap items-center">
-          <div class="filter-group">
-            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">JENIS KELAMIN</label>
-            <select [ngModel]="filterGender()" (ngModelChange)="filterGender.set($event)" class="custom-select" aria-label="Filter Gender">
-              <option value="">Semua Gender</option>
-              <option value="Laki-laki">Laki-laki</option>
-              <option value="Perempuan">Perempuan</option>
-            </select>
+    <div class="residents-page fade-in">
+      <header class="header-actions mb-10 flex-between items-start">
+        <div class="titles">
+          <h2 class="title-gradient text-4xl">Data Penduduk Terpadu</h2>
+          <p class="text-muted text-lg mt-2">Manajemen data individu berbasis NIK seluruh wilayah desa.</p>
+          <div class="flex gap-4 mt-8">
+            <button class="btn-primary px-10 py-4 rounded-2xl shadow-xl" (click)="isAddModalOpen.set(true)" aria-label="Tambah Penduduk Baru">
+               Tambah Penduduk ➕
+            </button>
+            <button class="btn-outline px-10 py-4 rounded-2xl border-2" (click)="exportToPdf()" aria-label="Ekspor Laporan PDF">
+               Ekspor Laporan PDF 📄
+            </button>
           </div>
-          <div class="filter-group">
-            <label class="text-[10px] font-extrabold text-primary mb-2 block tracking-widest uppercase">PEKERJAAN</label>
-            <select [ngModel]="filterOccupation()" (ngModelChange)="filterOccupation.set($event)" class="custom-select" aria-label="Filter Pekerjaan">
-              <option value="">Semua Pekerjaan</option>
-              <option *ngFor="let job of occupationList()" [value]="job">{{ job }}</option>
-            </select>
+        </div>
+
+        <div class="header-right flex flex-col items-end gap-4">
+          <div class="search-box-premium">
+            <span class="icon">🔍</span>
+            <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Cari NIK, Nama, atau KK..." aria-label="Cari data penduduk">
           </div>
-          <div class="filter-group ml-auto">
-             <label class="text-[10px] font-extrabold text-primary mb-2 block text-right tracking-widest uppercase">TAMPILAN</label>
-             <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" style="width: 120px;" aria-label="Jumlah baris per halaman">
+          <div class="live-sync-indicator bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
+            <div class="pulse-dot"></div>
+            <span class="label">DATABASE CONNECTED</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Stats Summary Dashboard -->
+      <section class="grid grid-cols-3 gap-8 mb-12" aria-label="Ringkasan Statistik">
+        <article class="card-luxury p-8 flex-between items-center group hover:border-primary/30 transition-all">
+           <div>
+              <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase mb-2 block">TOTAL JIWA TERFILTER</span>
+              <div class="text-5xl font-black text-slate-900 tabular-nums">{{ filteredResidents().length }}</div>
+              <p class="text-xs text-slate-500 font-bold mt-2">Hasil pencarian & filter aktif</p>
+           </div>
+           <div class="icon-box-large bg-blue-50 text-primary text-3xl p-6 rounded-3xl group-hover:scale-110 transition-transform">📊</div>
+        </article>
+
+        <article class="card-luxury p-8 flex-between items-center group hover:border-emerald-200 transition-all">
+           <div>
+              <span class="text-[10px] font-black text-emerald-600 tracking-widest uppercase mb-2 block">LAKI-LAKI</span>
+              <div class="text-5xl font-black text-slate-900 tabular-nums">{{ countGender('Laki-laki') }}</div>
+              <p class="text-xs text-slate-500 font-bold mt-2">Distribusi gender maskulin</p>
+           </div>
+           <div class="icon-box-large bg-emerald-50 text-emerald-600 text-3xl p-6 rounded-3xl group-hover:scale-110 transition-transform">👨</div>
+        </article>
+
+        <article class="card-luxury p-8 flex-between items-center group hover:border-rose-200 transition-all">
+           <div>
+              <span class="text-[10px] font-black text-rose-600 tracking-widest uppercase mb-2 block">PEREMPUAN</span>
+              <div class="text-5xl font-black text-slate-900 tabular-nums">{{ countGender('Perempuan') }}</div>
+              <p class="text-xs text-slate-500 font-bold mt-2">Distribusi gender feminin</p>
+           </div>
+           <div class="icon-box-large bg-rose-50 text-rose-600 text-3xl p-6 rounded-3xl group-hover:scale-110 transition-transform">👩</div>
+        </article>
+      </section>
+
+      <!-- Advanced Filters -->
+      <section class="filters-container card-luxury mb-10 p-8 shadow-2xl border-slate-100" aria-label="Panel Filter">
+         <div class="grid grid-cols-4 gap-8 items-end">
+            <div class="filter-group">
+              <label class="text-[10px] font-black text-slate-400 mb-3 block tracking-widest uppercase">FILTER JENIS KELAMIN</label>
+              <select [ngModel]="filterGender()" (ngModelChange)="filterGender.set($event)" class="custom-select" aria-label="Filter Gender">
+                <option value="">-- Semua Gender --</option>
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="text-[10px] font-black text-slate-400 mb-3 block tracking-widest uppercase">FILTER PEKERJAAN</label>
+              <select [ngModel]="filterOccupation()" (ngModelChange)="filterOccupation.set($event)" class="custom-select" aria-label="Filter Pekerjaan">
+                <option value="">-- Semua Pekerjaan --</option>
+                <option *ngFor="let job of occupationList()" [value]="job">{{ job }}</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="text-[10px] font-black text-slate-400 mb-3 block tracking-widest uppercase">BARIS PER HALAMAN</label>
+              <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)" class="custom-select" aria-label="Jumlah baris per halaman">
                 <option [ngValue]="10">10 Baris</option>
                 <option [ngValue]="25">25 Baris</option>
                 <option [ngValue]="50">50 Baris</option>
-             </select>
-          </div>
-       </div>
-    </section>
-
-    <!-- Summary Stats Bar -->
-    <section class="grid grid-cols-12 gap-6 mb-8 fade-in" aria-label="Ringkasan Statistik">
-       <article class="col-span-4 stat-card card-luxury">
-          <div class="flex justify-between items-start mb-4">
-            <span class="icon-box azure">📊</span>
-            <span class="badge secondary">FILTERED</span>
-          </div>
-          <div class="value">{{ filteredResidents().length }} <small class="text-sm">Jiwa</small></div>
-          <div class="label">Penduduk Terfilter</div>
-       </article>
-       <article class="col-span-4 stat-card card-luxury">
-          <div class="flex justify-between items-start mb-4">
-            <span class="icon-box azure">👨</span>
-            <span class="badge secondary">LAKI-LAKI</span>
-          </div>
-          <div class="value">{{ countGender('Laki-laki') }}</div>
-          <div class="label">Total Laki-laki</div>
-       </article>
-       <article class="col-span-4 stat-card card-luxury">
-          <div class="flex justify-between items-start mb-4">
-            <span class="icon-box azure">👩</span>
-            <span class="badge secondary">PEREMPUAN</span>
-          </div>
-          <div class="value">{{ countGender('Perempuan') }}</div>
-          <div class="label">Total Perempuan</div>
-       </article>
-    </section>
-
-    <main class="card-luxury p-0 overflow-hidden fade-in">
-      <table class="luxury-table">
-        <thead>
-          <tr>
-            <th>NIK</th>
-            <th>Nama Lengkap</th>
-            <th>Gender</th>
-            <th>Status Dasar</th>
-            <th>Hubungan</th>
-            <th>No. KK</th>
-            <th class="text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of paginatedResidents()" class="table-row-hover">
-            <td class="nik-cell">{{ r.nik }}</td>
-            <td class="name-cell">
-               <div class="font-bold text-slate-800">{{ r.full_name }}</div>
-               <div class="text-[10px] text-muted">{{ r.occupation || 'TIDAK TERDEFINISI' }}</div>
-            </td>
-            <td><span class="text-xs font-bold uppercase">{{ r.gender }}</span></td>
-            <td>
-              <span class="badge" [class]="r.status_dasar?.toLowerCase() || 'hidup'">
-                {{ r.status_dasar || 'HIDUP' }}
-              </span>
-            </td>
-            <td><span class="badge secondary">{{ r.relationship }}</span></td>
-            <td><span class="kk-link" (click)="viewFamily(r.family_id)">{{ r.family_id }}</span></td>
-            <td class="actions-cell text-right">
-              <button class="btn-icon" (click)="viewProfile(r.nik)" title="Lihat Profil" aria-label="Lihat Profil">👁️</button>
-              <button class="btn-icon" (click)="editResident(r)" title="Edit" aria-label="Edit Data">✏️</button>
-              <button class="btn-icon delete" (click)="deleteResident(r.nik)" title="Hapus" aria-label="Hapus Data">🗑️</button>
-            </td>
-          </tr>
-          <tr *ngIf="filteredResidents().length === 0">
-            <td colspan="7" class="empty-state">
-               <div class="text-4xl mb-4">🔍</div>
-               <p>Data penduduk tidak ditemukan.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination Footer -->
-      <footer class="pagination-bar glass-panel p-6 flex-between" *ngIf="filteredResidents().length > 0">
-         <div class="pagination-info">
-            Menampilkan <b>{{ startIndex() + 1 }}-{{ endIndex() }}</b> dari <b>{{ totalRecords() }}</b> Penduduk
-         </div>
-         <nav class="pagination-controls flex gap-2" aria-label="Navigasi Halaman">
-            <button class="btn-page" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
-               Sebelumnya
-            </button>
-            <div class="page-numbers flex gap-1">
-               <button *ngFor="let p of getVisiblePages()" 
-                  class="btn-page-num" 
-                  [class.active]="p === currentPage()"
-                  (click)="goToPage(p)"
-                  [attr.aria-label]="'Halaman ' + p">
-                  {{ p }}
-               </button>
+              </select>
             </div>
-            <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
-               Selanjutnya
-            </button>
-         </nav>
-      </footer>
-    </main>
+            <div class="flex justify-end pb-1">
+               <button class="btn-text font-black text-rose-600 uppercase text-[10px] tracking-widest" (click)="resetFilters()">Reset Filter 🔄</button>
+            </div>
+         </div>
+      </section>
 
-    <!-- Modals -->
-    <!-- Add Modal -->
-    <div *ngIf="isAddModalOpen()" class="form-overlay fade-in" (click)="isAddModalOpen.set(false)">
-      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <header class="modal-header mb-8">
-          <h2 class="title-gradient">Tambah Data Penduduk</h2>
-          <p class="text-muted">Masukkan informasi kependudukan sesuai dokumen resmi.</p>
-        </header>
-        <form (submit)="addNewResident()" class="form-grid">
-           <div class="input-group">
-              <label>NIK (16 DIGIT)</label>
-              <input [(ngModel)]="addForm.nik" name="nik" placeholder="3201..." required minlength="16" maxlength="16" class="custom-input">
+      <!-- Data Table -->
+      <main class="card-luxury p-0 overflow-hidden shadow-2xl border-slate-200">
+        <table class="luxury-table w-full">
+          <thead>
+            <tr class="bg-slate-50">
+              <th class="py-5 px-8 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">NIK / IDENTITAS</th>
+              <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">NAMA LENGKAP</th>
+              <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">GENDER</th>
+              <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">STATUS</th>
+              <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">HUBUNGAN</th>
+              <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">NO. KK</th>
+              <th class="py-5 px-8 text-right text-[10px] font-black text-slate-400 tracking-widest uppercase">AKSI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of paginatedResidents()" class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+              <td class="py-5 px-8 font-black text-primary font-mono tracking-tighter">{{ r.nik }}</td>
+              <td class="py-5 px-6">
+                 <div class="font-black text-slate-900 text-base">{{ r.full_name }}</div>
+                 <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-1">{{ r.occupation || 'TIDAK BEKERJA' }}</div>
+              </td>
+              <td class="py-5 px-6 text-center">
+                 <span class="gender-pill" [attr.data-gender]="r.gender">{{ r.gender === 'Laki-laki' ? 'L' : 'P' }}</span>
+              </td>
+              <td class="py-5 px-6 text-center">
+                <span class="status-badge" [attr.data-status]="r.status_dasar?.toLowerCase() || 'hidup'">
+                  {{ r.status_dasar || 'HIDUP' }}
+                </span>
+              </td>
+              <td class="py-5 px-6 text-center">
+                 <span class="relation-badge">{{ r.relationship }}</span>
+              </td>
+              <td class="py-5 px-6">
+                 <span class="kk-tag" (click)="viewFamily(r.family_id)">{{ r.family_id }}</span>
+              </td>
+              <td class="py-5 px-8 text-right">
+                <div class="flex justify-end gap-2">
+                  <button class="btn-icon-sm border border-slate-200" (click)="viewProfile(r.nik)" title="Profil">👁️</button>
+                  <button class="btn-icon-sm border border-slate-200" (click)="editResident(r)" title="Edit">✏️</button>
+                  <button class="btn-icon-sm delete border border-slate-200" (click)="deleteResident(r.nik)" title="Hapus">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredResidents().length === 0" class="py-24 text-center">
+           <div class="text-6xl mb-6">📂</div>
+           <h4 class="text-slate-900 font-black text-xl">Data penduduk tidak ditemukan</h4>
+           <p class="text-muted mt-2">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
+        </div>
+
+        <!-- Pagination -->
+        <footer class="pagination-area bg-slate-50 p-6 flex-between border-t border-slate-100">
+           <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              MENAMPILKAN <b class="text-slate-900">{{ startIndex() + 1 }}-{{ endIndex() }}</b> DARI <b class="text-slate-900">{{ totalRecords() }}</b> DATA
            </div>
-           <div class="input-group">
-              <label>Nama Lengkap</label>
-              <input [(ngModel)]="addForm.full_name" name="name" placeholder="Sesuai KTP" required class="custom-input">
-           </div>
-           <footer class="form-footer mt-8 col-span-2 flex justify-end gap-3">
-              <button type="button" class="btn-outline" (click)="isAddModalOpen.set(false)">Batal</button>
-              <button type="submit" class="btn-primary" [disabled]="loadingAdd()">
-                 {{ loadingAdd() ? 'Sedang Menyimpan...' : 'Simpan Data Penduduk' }}
-              </button>
-           </footer>
-        </form>
-      </div>
+           <nav class="flex gap-2">
+              <button class="btn-page" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">⬅️ PREV</button>
+              <div class="flex gap-1">
+                 <button *ngFor="let p of getVisiblePages()" class="btn-page-num" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p }}</button>
+              </div>
+              <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">NEXT ➡️</button>
+           </nav>
+        </footer>
+      </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div *ngIf="residentToEdit()" class="form-overlay fade-in" (click)="residentToEdit.set(null)">
-      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <header class="modal-header mb-8">
-          <h2 class="title-gradient">Edit Data: {{ residentToEdit()?.full_name }}</h2>
-          <p class="text-muted">Perbarui data kependudukan dengan informasi terbaru.</p>
+    <!-- Modals -->
+    <div *ngIf="isAddModalOpen()" class="form-overlay fade-in" (click)="isAddModalOpen.set(false)">
+      <div class="form-card card-luxury p-10" (click)="$event.stopPropagation()">
+        <header class="modal-header mb-10">
+          <h2 class="title-gradient text-3xl">Registrasi Penduduk Baru</h2>
+          <p class="text-muted text-lg mt-2">Pastikan NIK yang diinput valid dan terdaftar di Kemendagri.</p>
         </header>
-        <form (submit)="updateResident()" class="form-grid">
+        <form (submit)="addNewResident()" class="grid grid-cols-2 gap-8">
            <div class="input-group">
-              <label>Pekerjaan</label>
-              <select [(ngModel)]="editForm.occupation" name="occ" class="custom-select">
-                <option *ngFor="let job of staticOccupations" [value]="job">{{ job }}</option>
-              </select>
+              <label class="text-slate-900 font-black">NOMOR INDUK KEPENDUDUKAN (NIK)</label>
+              <input [(ngModel)]="addForm.nik" name="nik" placeholder="3201..." required minlength="16" maxlength="16" class="custom-input font-black text-lg">
            </div>
            <div class="input-group">
-              <label>Status Dasar</label>
-              <select [(ngModel)]="editForm.status_dasar" name="status" class="custom-select">
-                <option value="HIDUP">HIDUP</option>
-                <option value="MATI">MATI</option>
-                <option value="PINDAH">PINDAH</option>
-              </select>
+              <label class="text-slate-900 font-black">NAMA LENGKAP</label>
+              <input [(ngModel)]="addForm.full_name" name="name" placeholder="Sesuai KTP/KIA" required class="custom-input font-black text-lg">
            </div>
-           <footer class="form-footer mt-8 col-span-2 flex justify-end gap-3">
-              <button type="button" class="btn-outline" (click)="residentToEdit.set(null)">Batal</button>
-              <button type="submit" class="btn-primary">Update Data</button>
+           <footer class="col-span-2 pt-10 border-t border-slate-100 flex justify-end gap-4">
+              <button type="button" class="btn-outline px-8 rounded-xl font-black text-xs" (click)="isAddModalOpen.set(false)">BATAL</button>
+              <button type="submit" class="btn-primary px-12 py-5 rounded-2xl shadow-2xl font-black" [disabled]="loadingAdd()">
+                 {{ loadingAdd() ? 'SEDANG MENYIMPAN...' : 'SIMPAN DATA PENDUDUK ✅' }}
+              </button>
            </footer>
         </form>
       </div>
     </div>
   `,
   styles: [`
-    .header-actions { display: flex; justify-content: space-between; align-items: flex-start; }
-    .search-bar {
-      display: flex; align-items: center; gap: 1rem;
-      background: white; border: 1px solid var(--glass-border);
-      padding: 0.75rem 1.5rem; border-radius: 1.5rem; width: 450px;
-      transition: all 0.4s var(--apple-ease);
-      &:focus-within { border-color: var(--primary); box-shadow: 0 10px 25px -10px var(--primary-glow); }
-      input { background: none; border: none; color: var(--text-main); width: 100%; outline: none; font-weight: 600; }
-      .icon { color: var(--primary); }
-    }
-    .live-sync-indicator {
-      display: flex; align-items: center; gap: 0.5rem;
-      .pulse-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
-      .label { font-size: 0.65rem; font-weight: 800; color: #059669; letter-spacing: 0.1em; }
-    }
-    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    .residents-page { padding-bottom: 5rem; }
     
-    .stat-card {
-      .value { font-size: 2.25rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; color: var(--primary); }
-      .label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .search-box-premium {
+       display: flex; align-items: center; gap: 1rem;
+       background: white; border: 1px solid var(--glass-border);
+       padding: 1rem 1.75rem; border-radius: 1.5rem; width: 500px;
+       transition: 0.4s var(--apple-ease); box-shadow: 0 15px 35px -12px rgba(0,0,0,0.05);
+       &:focus-within { border-color: var(--primary); box-shadow: 0 20px 40px -15px var(--primary-glow); }
+       input { background: none; border: none; color: #000000; width: 100%; outline: none; font-weight: 800; font-size: 1.1rem; }
+       .icon { font-size: 1.25rem; }
     }
-    .icon-box {
-      width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
-      &.azure { background: rgba(37, 99, 235, 0.1); }
-    }
-    .luxury-table {
-      width: 100%; border-collapse: separate; border-spacing: 0;
-      th {
-        text-align: left; padding: 1.25rem 1.5rem; color: var(--text-muted);
-        font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
-        border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.01);
-      }
-      td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; }
-      .nik-cell { font-family: 'JetBrains Mono', monospace; color: var(--primary); font-weight: 700; }
-      .kk-link { color: var(--primary); font-weight: 700; cursor: pointer; border-bottom: 1px dashed var(--primary); }
-      .actions-cell { display: flex; gap: 0.5rem; justify-content: flex-end; }
-      .btn-icon {
-        background: white; border: 1px solid var(--glass-border); width: 36px; height: 36px;
-        border-radius: 10px; cursor: pointer; transition: 0.3s var(--apple-ease);
-        &:hover { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); transform: translateY(-2px); }
-        &.delete:hover { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
-      }
-    }
-    .pagination-bar { background: rgba(255,255,255,0.4); border-top: 1px solid var(--glass-border); }
-    .btn-page-num {
-       width: 40px; height: 40px; border-radius: 10px; border: 1px solid transparent;
-       background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;
-       cursor: pointer; transition: 0.3s;
-       &:hover { background: rgba(0,0,0,0.05); }
-       &.active { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
-    }
+
+    .pulse-dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+    .label { font-size: 0.65rem; font-weight: 900; color: #059669; letter-spacing: 0.15em; }
+
     .custom-select, .custom-input {
-       background: #f8fafc; border: 1px solid var(--glass-border);
-       color: var(--text-main); padding: 0.75rem 1rem; border-radius: 0.85rem; outline: none;
-       font-weight: 600; font-size: 0.85rem; transition: 0.3s;
+       background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1rem;
+       outline: none; font-weight: 600; font-size: 1rem; width: 100%; transition: 0.3s;
        &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .form-card { width: 100%; max-width: 900px; padding: 3.5rem; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    .gender-pill {
+       padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-weight: 900; font-size: 0.7rem;
+       &[data-gender='Laki-laki'] { background: #eff6ff; color: #2563eb; }
+       &[data-gender='Perempuan'] { background: #fff1f2; color: #e11d48; }
+    }
+
+    .status-badge {
+       padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 900;
+       &[data-status='hidup'] { background: #ecfdf5; color: #059669; }
+       &[data-status='mati'] { background: #fef2f2; color: #dc2626; }
+       &[data-status='pindah'] { background: #fefce8; color: #ca8a04; }
+    }
+
+    .relation-badge { background: #f1f5f9; color: #475569; padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 800; }
+    .kk-tag { color: var(--primary); font-weight: 900; cursor: pointer; border-bottom: 2px solid var(--primary-glow); font-family: monospace; font-size: 0.9rem; }
+
+    .btn-page-num {
+       width: 44px; height: 44px; border-radius: 12px; font-weight: 900; color: #64748b; transition: 0.3s;
+       &.active { background: var(--primary); color: white; box-shadow: 0 10px 20px var(--primary-glow); }
+    }
+
+    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.9); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { width: 100%; max-width: 900px; }
   `]
 })
 export class ResidentsComponent implements OnDestroy {
@@ -288,7 +248,7 @@ export class ResidentsComponent implements OnDestroy {
   private pdfService = inject(PdfService);
 
   // Constants
-  staticOccupations = ['Petani', 'Nelayan', 'Wiraswasta', 'PNS', 'Buruh', 'Karyawan', 'Lainnya'];
+  staticOccupations = ['Petani', 'Nelayan', 'Wiraswasta', 'PNS', 'Buruh', 'Karyawan', 'Pelajar/Mahasiswa', 'IRT', 'Lainnya'];
 
   // Signals
   residents = signal<Resident[]>([]);
@@ -318,7 +278,7 @@ export class ResidentsComponent implements OnDestroy {
              (!gender || r.gender === gender) &&
              (!occ || r.occupation === occ) &&
              (!ham || r.hamlet === ham);
-    });
+    }).sort((a,b) => (a.full_name || '').localeCompare(b.full_name || ''));
   });
 
   paginatedResidents = computed(() => {
@@ -331,7 +291,7 @@ export class ResidentsComponent implements OnDestroy {
   );
 
   totalRecords = computed(() => this.filteredResidents().length);
-  totalPages = computed(() => Math.ceil(this.totalRecords() / this.pageSize()));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalRecords() / this.pageSize())));
   startIndex = computed(() => (this.currentPage() - 1) * this.pageSize());
   endIndex = computed(() => Math.min(this.startIndex() + this.pageSize(), this.totalRecords()));
 
@@ -351,6 +311,14 @@ export class ResidentsComponent implements OnDestroy {
   ngOnDestroy() { this.subscriptions.forEach(s => s.unsubscribe()); }
 
   goToPage(p: number) { if (p >= 1 && p <= this.totalPages()) this.currentPage.set(p); }
+
+  resetFilters() {
+    this.searchTerm.set('');
+    this.filterGender.set('');
+    this.filterOccupation.set('');
+    this.filterHamlet.set('');
+    this.currentPage.set(1);
+  }
 
   getVisiblePages(): number[] {
     const total = this.totalPages();
@@ -389,10 +357,10 @@ export class ResidentsComponent implements OnDestroy {
   }
 
   async deleteResident(n: string) {
-    if (confirm('Hapus data?')) await this.dataService.deleteResident(n);
+    if (confirm('Hapus data penduduk ini secara permanen?')) await this.dataService.deleteResident(n);
   }
 
   async exportToPdf() {
-    await this.pdfService.generateResidentsReport(this.filteredResidents(), 'Laporan Terfilter');
+    await this.pdfService.generateResidentsReport(this.filteredResidents(), 'Laporan Data Penduduk Terpadu');
   }
 }

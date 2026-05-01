@@ -11,233 +11,251 @@ import { PdfService } from '../../services/pdf.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <header class="header-actions mb-8 fade-in">
-      <div class="titles">
-        <h2 class="title-gradient">Manajemen Kartu Keluarga</h2>
-        <p class="text-muted">Administrasi data hubungan keluarga dan domisili terpusat.</p>
-      </div>
-      <div class="flex gap-3">
-        <button class="btn-primary" (click)="showAddFamily.set(true)" aria-label="Tambah Kartu Keluarga Baru">
-           Tambah KK Baru 🏠
-        </button>
-      </div>
-    </header>
+    <div class="families-page fade-in">
+      <header class="header-actions mb-10 flex-between items-start">
+        <div class="titles">
+          <h2 class="title-gradient text-4xl">Manajemen Kartu Keluarga</h2>
+          <p class="text-muted text-lg mt-2">Administrasi data hubungan keluarga dan domisili terpusat desa.</p>
+          <div class="flex gap-4 mt-8">
+            <button class="btn-primary px-10 py-4 rounded-2xl shadow-xl" (click)="showAddFamily.set(true)" aria-label="Tambah Kartu Keluarga Baru">
+               Tambah KK Baru 🏠
+            </button>
+          </div>
+        </div>
 
-    <!-- Modal Form KK Baru / Edit -->
-    <div *ngIf="showAddFamily() || familyToEdit()" class="form-overlay fade-in" (click)="closeFamilyForm()">
-      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <header class="modal-header mb-8">
-           <h3 class="title-gradient">{{ familyToEdit() ? 'Update Data' : 'Registrasi' }} Kartu Keluarga</h3>
-           <p class="text-muted">Pastikan nomor KK dan data kepala keluarga sesuai dengan dokumen fisik.</p>
-        </header>
-        <form (submit)="saveFamily()">
-          <div class="form-grid">
-            <div class="input-group">
-              <label>Nomor KK (16 Digit)</label>
-              <input [(ngModel)]="familyForm.kk_number" name="kk" placeholder="16 digit nomor KK" required [disabled]="!!familyToEdit()" class="custom-input">
+        <div class="header-right flex flex-col items-end gap-4">
+          <div class="search-box-premium">
+            <span class="icon">🔍</span>
+            <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Cari No. KK atau Nama Kepala..." aria-label="Cari data keluarga">
+          </div>
+          <div class="stats-mini flex gap-6">
+            <div class="text-right">
+              <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase block">TOTAL KELUARGA</span>
+              <span class="text-2xl font-black text-slate-900 tabular-nums">{{ families().length }}</span>
             </div>
-            <div class="input-group">
-              <label>NIK Kepala Keluarga</label>
-              <input [(ngModel)]="familyForm.head_of_family_nik" name="head_nik" placeholder="16 digit NIK" class="custom-input">
-            </div>
-            <div class="input-group">
-              <label>Kepala Keluarga</label>
-              <input [(ngModel)]="familyForm.head_of_family_name" name="head" placeholder="Nama lengkap sesuai KTP" required class="custom-input">
-            </div>
-            <div class="input-group" style="grid-column: 1 / -1;">
-              <label>Alamat Lengkap</label>
-              <input [(ngModel)]="familyForm.address" name="addr" placeholder="Jalan / No. Rumah / Perumahan" required class="custom-input">
-            </div>
-            <div class="input-group">
-              <label>RT / RW</label>
-              <div class="flex gap-2">
-                 <input [(ngModel)]="familyForm.rt" name="rt" placeholder="RT" class="custom-input" style="width: 80px;">
-                 <input [(ngModel)]="familyForm.rw" name="rw" placeholder="RW" class="custom-input" style="width: 80px;">
+          </div>
+        </div>
+      </header>
+
+      <!-- Modal Form KK Baru / Edit -->
+      <div *ngIf="showAddFamily() || familyToEdit()" class="form-overlay fade-in" (click)="closeFamilyForm()">
+        <div class="form-card card-luxury p-12" (click)="$event.stopPropagation()">
+          <header class="modal-header mb-12">
+             <h3 class="title-gradient text-3xl">{{ familyToEdit() ? 'Update Data' : 'Registrasi' }} Kartu Keluarga</h3>
+             <p class="text-muted text-lg mt-2">Masukkan informasi dasar kartu keluarga sesuai dokumen resmi.</p>
+          </header>
+          <form (submit)="saveFamily()">
+            <div class="grid grid-cols-2 gap-8">
+              <div class="input-group">
+                <label class="text-slate-900 font-black mb-3 block">NOMOR KARTU KELUARGA (KK)</label>
+                <input [(ngModel)]="familyForm.kk_number" name="kk" placeholder="16 digit nomor KK" required [disabled]="!!familyToEdit()" class="custom-input font-black text-lg">
+              </div>
+              <div class="input-group">
+                <label class="text-slate-900 font-black mb-3 block">NIK KEPALA KELUARGA</label>
+                <input [(ngModel)]="familyForm.head_of_family_nik" name="head_nik" placeholder="16 digit NIK" class="custom-input font-black text-lg">
+              </div>
+              <div class="input-group col-span-2">
+                <label class="text-slate-900 font-black mb-3 block">NAMA KEPALA KELUARGA</label>
+                <input [(ngModel)]="familyForm.head_of_family_name" name="head" placeholder="Sesuai KTP" required class="custom-input font-black text-lg">
+              </div>
+              <div class="input-group col-span-2">
+                <label class="text-slate-900 font-black mb-3 block">ALAMAT LENGKAP</label>
+                <input [(ngModel)]="familyForm.address" name="addr" placeholder="Jalan / No. Rumah / RT-RW" required class="custom-input font-bold">
+              </div>
+              <div class="input-group">
+                <label class="text-slate-900 font-black mb-3 block">WILAYAH / DUSUN</label>
+                <select [(ngModel)]="familyForm.hamlet" name="hamlet" class="custom-select font-bold">
+                   <option value="Dusun I">Dusun I</option>
+                   <option value="Dusun II">Dusun II</option>
+                   <option value="Dusun III">Dusun III</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="text-slate-900 font-black mb-3 block">KELAS SOSIAL</label>
+                <select [(ngModel)]="familyForm.social_class" name="social_class" class="custom-select font-bold">
+                  <option value="Sangat Miskin">Sangat Miskin</option>
+                  <option value="Miskin">Miskin</option>
+                  <option value="Sedang">Sedang</option>
+                  <option value="Kaya">Kaya</option>
+                </select>
               </div>
             </div>
-            <div class="input-group">
-              <label>Wilayah / Dusun</label>
-              <select [(ngModel)]="familyForm.hamlet" name="hamlet" class="custom-select">
-                 <option value="Dusun I">Dusun I</option>
-                 <option value="Dusun II">Dusun II</option>
-                 <option value="Dusun III">Dusun III</option>
-              </select>
+            <footer class="form-actions mt-12 pt-8 border-t border-slate-100 flex justify-end gap-4">
+              <button type="button" class="btn-outline px-10 rounded-xl font-black text-xs" (click)="closeFamilyForm()">BATAL</button>
+              <button type="submit" class="btn-primary px-14 py-5 rounded-2xl shadow-2xl font-black">
+                {{ familyToEdit() ? 'SIMPAN PERUBAHAN ✅' : 'SIMPAN DATA KK ✅' }}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal Form Detail & Anggota -->
+      <div *ngIf="selectedFamily()" class="form-overlay fade-in" (click)="selectedFamily.set(null)">
+        <div class="form-card card-luxury wide p-12" (click)="$event.stopPropagation()">
+          <header class="modal-header flex justify-between items-start border-b border-slate-100 pb-10">
+            <div class="titles">
+              <h3 class="title-gradient text-3xl">Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
+              <p class="text-slate-900 font-black text-lg tracking-tighter mt-1">NO. KK: {{ selectedFamily()?.kk_number }}</p>
             </div>
-            <div class="input-group">
-              <label>Kelas Sosial</label>
-              <select [(ngModel)]="familyForm.social_class" name="social_class" class="custom-select">
-                <option value="Sangat Miskin">Sangat Miskin</option>
-                <option value="Miskin">Miskin</option>
-                <option value="Sedang">Sedang</option>
-                <option value="Kaya">Kaya</option>
-              </select>
+            <button class="btn-outline px-6 py-3 rounded-xl border-2 font-black text-xs" (click)="downloadFamilyPDF()" aria-label="Cetak Kartu Keluarga">🖨️ CETAK PROFIL PDF</button>
+          </header>
+
+          <section class="resident-section mt-10">
+            <div class="section-header flex justify-between items-center mb-8">
+              <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">DAFTAR ANGGOTA KELUARGA</h4>
+              <button class="btn-primary btn-sm px-6 py-3 rounded-xl shadow-lg font-black text-[10px]" (click)="showAddResident.set(true)">+ TAMBAH ANGGOTA</button>
             </div>
-            <div class="input-group">
-              <label>Tanggal Cetak KK</label>
-              <input type="date" [(ngModel)]="familyForm.print_date" name="print_date" class="custom-input">
+
+            <div class="members-grid grid grid-cols-1 gap-4">
+               <article *ngFor="let r of members()" class="member-item p-6 rounded-2xl border border-slate-100 bg-slate-50/30 flex justify-between items-center group hover:bg-white hover:border-primary/20 transition-all shadow-sm">
+                 <div class="flex gap-6 items-center">
+                    <span class="gender-indicator" [attr.data-gender]="r.gender"></span>
+                    <div>
+                      <div class="name text-slate-900 font-black text-base">{{ r.full_name }}</div>
+                      <div class="nik text-[11px] font-black text-primary font-mono tracking-tighter">{{ r.nik }}</div>
+                    </div>
+                 </div>
+                 <div class="flex gap-4 items-center">
+                    <span class="badge secondary font-black text-[9px] uppercase tracking-widest px-4 py-1.5">{{ r.relationship }}</span>
+                    <button class="btn-icon-sm delete border-transparent hover:border-rose-200" (click)="deleteMember(r.nik)" title="Hapus Anggota">🗑️</button>
+                 </div>
+               </article>
+               
+               <div *ngIf="members().length === 0" class="py-12 text-center border-2 border-dashed border-slate-100 rounded-3xl">
+                  <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Belum ada anggota terdaftar</p>
+               </div>
             </div>
-          </div>
-          <footer class="form-actions mt-8 flex justify-end gap-3">
-            <button type="button" class="btn-outline" (click)="closeFamilyForm()">Batal</button>
-            <button type="submit" class="btn-primary">{{ familyToEdit() ? 'Simpan Perubahan' : 'Simpan Data' }}</button>
+          </section>
+
+          <!-- Nested Add Resident Form -->
+          <section *ngIf="showAddResident()" class="add-resident-box card-luxury bg-blue-50/30 mt-10 p-8 border-dashed border-2 border-primary/20">
+            <h5 class="font-black text-slate-900 text-sm mb-6 uppercase tracking-widest">Input Anggota Keluarga Baru</h5>
+            <div class="grid grid-cols-3 gap-6">
+              <div class="input-group">
+                <label class="text-[9px] font-black text-primary mb-2 block tracking-widest">NIK ANGGOTA</label>
+                <input [(ngModel)]="newResident.nik" placeholder="16 digit NIK" class="custom-input font-bold bg-white">
+              </div>
+              <div class="input-group">
+                <label class="text-[9px] font-black text-primary mb-2 block tracking-widest">NAMA LENGKAP</label>
+                <input [(ngModel)]="newResident.full_name" placeholder="Sesuai Akta" class="custom-input font-bold bg-white">
+              </div>
+              <div class="input-group">
+                <label class="text-[9px] font-black text-primary mb-2 block tracking-widest">JENIS KELAMIN</label>
+                <select [(ngModel)]="newResident.gender" class="custom-select font-bold bg-white">
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-8 flex gap-3 justify-end">
+               <button class="btn-text font-black text-[10px] tracking-widest uppercase px-6" (click)="showAddResident.set(false)">BATAL</button>
+               <button class="btn-primary btn-sm px-10 py-3 rounded-xl shadow-xl font-black text-[10px]" (click)="saveResident()">SIMPAN ANGGOTA ✅</button>
+            </div>
+          </section>
+
+          <footer class="form-actions mt-12 pt-8 border-t border-slate-100 flex justify-end">
+            <button class="btn-primary px-12 py-4 rounded-2xl font-black shadow-2xl" (click)="selectedFamily.set(null)">SELESAI & TUTUP</button>
           </footer>
-        </form>
-      </div>
-    </div>
-
-    <!-- Modal Form Detail & Anggota -->
-    <div *ngIf="selectedFamily()" class="form-overlay fade-in" (click)="selectedFamily.set(null)">
-      <div class="form-card card-luxury glass-panel wide" (click)="$event.stopPropagation()">
-        <header class="modal-header flex justify-between items-start">
-          <div class="titles">
-            <h3 class="title-gradient">Detail Keluarga: {{ selectedFamily()?.head_of_family_name }}</h3>
-            <p class="text-muted font-bold">NOMOR KK: {{ selectedFamily()?.kk_number }}</p>
-          </div>
-          <button class="btn-outline" (click)="downloadFamilyPDF()" aria-label="Cetak Kartu Keluarga">🖨️ Cetak Profil PDF</button>
-        </header>
-
-        <section class="resident-section mt-8">
-          <div class="section-header flex justify-between items-center mb-6">
-            <h4 class="text-slate-800 font-extrabold uppercase tracking-widest text-xs">Anggota Keluarga Terdaftar</h4>
-            <button class="btn-primary btn-sm" (click)="showAddResident.set(true)">+ Tambah Anggota</button>
-          </div>
-
-          <div class="members-list">
-             <article *ngFor="let r of members()" class="member-item card-luxury p-4 mb-3 flex justify-between items-center">
-               <div class="flex gap-4 items-center">
-                  <span class="nik-cell text-sm">{{ r.nik }}</span>
-                  <span class="name text-slate-800 font-bold">{{ r.full_name }}</span>
-               </div>
-               <div class="flex gap-3 items-center">
-                  <span class="badge secondary">{{ r.relationship }}</span>
-                  <button class="btn-icon delete" (click)="deleteMember(r.nik)" title="Hapus Anggota">🗑️</button>
-               </div>
-             </article>
-             <p *ngIf="members().length === 0" class="empty-state">Belum ada anggota terdaftar.</p>
-          </div>
-        </section>
-
-        <!-- Nested Add Resident Form -->
-        <section *ngIf="showAddResident()" class="add-resident-box card-luxury bg-slate-50 mt-6 p-6 border-dashed border-2 border-slate-200">
-          <h5 class="font-bold mb-4">Input Anggota Keluarga Baru</h5>
-          <div class="form-grid-3">
-            <input [(ngModel)]="newResident.nik" placeholder="NIK (16 digit)" class="custom-input">
-            <input [(ngModel)]="newResident.full_name" placeholder="Nama Lengkap" class="custom-input">
-            <select [(ngModel)]="newResident.gender" class="custom-select">
-              <option value="Laki-laki">Laki-laki</option>
-              <option value="Perempuan">Perempuan</option>
-            </select>
-          </div>
-          <div class="mt-4 flex gap-2 justify-end">
-             <button class="btn-outline btn-sm" (click)="showAddResident.set(false)">Batal</button>
-             <button class="btn-primary btn-sm" (click)="saveResident()">Simpan Anggota</button>
-          </div>
-        </section>
-
-        <footer class="form-actions mt-8 pt-6 border-t border-slate-100 flex justify-end">
-          <button class="btn-primary" (click)="selectedFamily.set(null)">Selesai & Tutup</button>
-        </footer>
-      </div>
-    </div>
-
-    <!-- List KK -->
-    <main class="families-grid fade-in">
-      <article *ngFor="let f of paginatedFamilies()" class="card-luxury family-card">
-        <header class="card-header">
-          <div class="icon-box azure">🏠</div>
-          <div class="head-info">
-            <h4 class="text-slate-800">{{ f.head_of_family_name }}</h4>
-            <p class="nik-cell text-xs">{{ f.kk_number }}</p>
-          </div>
-          <div class="card-actions flex gap-1">
-            <button class="btn-icon" (click)="editFamily(f)" title="Edit KK">✏️</button>
-            <button class="btn-icon delete" (click)="deleteFamily(f.kk_number)" title="Hapus KK">🗑️</button>
-          </div>
-        </header>
-        <div class="card-body py-4">
-          <p class="address text-slate-600 text-sm mb-3">{{ f.address }}</p>
-          <div class="card-meta flex justify-between items-center">
-            <span class="badge secondary">{{ f.hamlet }}</span>
-            <span class="member-count font-bold text-primary">{{ getMemberCount(f.kk_number) }} <small>Anggota</small></span>
-          </div>
         </div>
-        <footer class="card-footer mt-auto pt-4 border-t border-slate-50">
-          <button class="btn-outline w-full" (click)="openDetail(f)">Kelola Anggota Keluarga</button>
-        </footer>
-      </article>
-    </main>
-
-    <!-- Pagination Controls -->
-    <footer class="pagination-container mt-12 glass-panel p-6 flex justify-between items-center fade-in" *ngIf="families().length > pageSize()">
-      <div class="pagination-info text-muted">
-        Menampilkan <b>{{ startRange() }} - {{ endRange() }}</b> dari <b>{{ families().length }}</b> Kartu Keluarga
       </div>
-      <nav class="pagination-controls flex gap-2" aria-label="Navigasi Halaman KK">
-        <button class="btn-page" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Sebelumnya</button>
-        <div class="page-numbers flex gap-1">
-          <button *ngFor="let p of totalPagesArray()" 
-                  (click)="goToPage(p)" 
-                  class="btn-page-num"
-                  [class.active]="currentPage() === p">
-            {{ p }}
-          </button>
-        </div>
-        <button class="btn-page" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Selanjutnya</button>
-      </nav>
-    </footer>
+
+      <!-- List KK -->
+      <main class="families-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 fade-in">
+        <article *ngFor="let f of paginatedFamilies()" class="card-luxury p-8 flex flex-col group hover:shadow-2xl hover:border-primary/20 transition-all duration-500">
+          <header class="flex justify-between items-start mb-6">
+            <div class="icon-box-large bg-slate-50 text-slate-800 text-2xl p-5 rounded-2xl group-hover:bg-primary/5 group-hover:text-primary transition-colors">🏠</div>
+            <div class="flex gap-1">
+              <button class="btn-icon-sm border border-slate-100" (click)="editFamily(f)" title="Edit">✏️</button>
+              <button class="btn-icon-sm delete border border-slate-100" (click)="deleteFamily(f.kk_number)" title="Hapus">🗑️</button>
+            </div>
+          </header>
+          
+          <div class="mb-8">
+            <h4 class="text-slate-900 font-black text-xl leading-tight mb-2">{{ f.head_of_family_name }}</h4>
+            <p class="text-[11px] font-black text-primary font-mono tracking-tighter">{{ f.kk_number }}</p>
+          </div>
+
+          <div class="mb-8 flex-1">
+            <p class="text-slate-500 font-bold text-xs leading-relaxed line-clamp-2 mb-4">{{ f.address }}</p>
+            <div class="flex-between">
+              <span class="badge secondary font-black text-[9px] uppercase tracking-widest px-3 py-1">{{ f.hamlet }}</span>
+              <div class="text-right">
+                <div class="text-2xl font-black text-slate-900 tabular-nums">{{ getMemberCount(f.kk_number) }}</div>
+                <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">ANGGOTA</div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="pt-6 border-t border-slate-50 mt-auto">
+            <button class="btn-outline w-full py-4 rounded-2xl border-2 font-black text-xs hover:bg-slate-900 hover:text-white hover:border-slate-900" (click)="openDetail(f)">KELOLA KELUARGA 👥</button>
+          </footer>
+        </article>
+      </main>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredFamilies().length === 0" class="py-32 text-center fade-in">
+         <div class="text-7xl mb-8">🏠</div>
+         <h3 class="text-slate-900 font-black text-2xl">Keluarga tidak ditemukan</h3>
+         <p class="text-muted text-lg mt-2">Coba gunakan kata kunci pencarian yang lain.</p>
+      </div>
+
+      <!-- Pagination -->
+      <footer class="pagination-area mt-12 bg-white card-luxury p-8 flex-between shadow-xl" *ngIf="families().length > pageSize()">
+         <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            MENAMPILKAN <b class="text-slate-900">{{ startRange() }}-{{ endRange() }}</b> DARI <b class="text-slate-900">{{ families().length }}</b> DATA KELUARGA
+         </div>
+         <nav class="flex gap-2">
+            <button class="btn-page" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">⬅️ PREV</button>
+            <div class="flex gap-1">
+               <button *ngFor="let p of totalPagesArray()" class="btn-page-num" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p }}</button>
+            </div>
+            <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">NEXT ➡️</button>
+         </nav>
+      </footer>
+    </div>
   `,
   styles: [`
-    .families-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
+    .families-page { padding-bottom: 5rem; }
+    
+    .search-box-premium {
+       display: flex; align-items: center; gap: 1rem;
+       background: white; border: 1px solid var(--glass-border);
+       padding: 1rem 1.75rem; border-radius: 1.5rem; width: 450px;
+       transition: 0.4s var(--apple-ease); box-shadow: 0 15px 35px -12px rgba(0,0,0,0.05);
+       &:focus-within { border-color: var(--primary); box-shadow: 0 20px 40px -15px var(--primary-glow); }
+       input { background: none; border: none; color: #000000; width: 100%; outline: none; font-weight: 800; font-size: 1.1rem; }
+       .icon { font-size: 1.25rem; }
     }
-    .family-card {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      transition: all 0.4s var(--apple-ease);
-      &:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); }
-      .card-header {
-        display: flex; align-items: center; gap: 1rem;
-        .head-info { flex: 1; min-width: 0; h4 { margin: 0; font-weight: 800; } }
-      }
-    }
-    .icon-box {
-      width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
-      &.azure { background: rgba(37, 99, 235, 0.05); color: var(--primary); }
-    }
-    .form-overlay {
-      position: fixed; inset: 0; background: rgba(241, 245, 249, 0.8); backdrop-filter: blur(15px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .form-card { width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 4rem; &.wide { max-width: 1000px; } }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.9); backdrop-filter: blur(25px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; &.wide { max-width: 1000px; } }
     
     .custom-input, .custom-select {
-       width: 100%; background: #f8fafc; border: 1px solid var(--glass-border);
-       color: #000; padding: 1rem; border-radius: 1rem; outline: none; font-weight: 600;
+       width: 100%; background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1.25rem;
+       outline: none; font-weight: 600; font-size: 1rem; color: #000; transition: 0.3s;
        &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .btn-icon {
-      background: white; border: 1px solid var(--glass-border); width: 34px; height: 34px;
-      border-radius: 10px; cursor: pointer; transition: 0.3s;
-      &:hover { border-color: var(--primary); color: var(--primary); }
-      &.delete:hover { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+
+    .gender-indicator {
+       width: 12px; height: 12px; border-radius: 50%;
+       &[data-gender='Laki-laki'] { background: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+       &[data-gender='Perempuan'] { background: #f43f5e; box-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
     }
-    .pagination-container { background: rgba(255,255,255,0.5); border-top: 1px solid var(--glass-border); border-radius: 2rem; }
+
     .btn-page-num {
-       width: 36px; height: 36px; border-radius: 10px; border: none; background: transparent;
-       color: var(--text-muted); font-weight: 700; cursor: pointer;
-       &.active { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
+       width: 44px; height: 44px; border-radius: 12px; font-weight: 900; color: #64748b; transition: 0.3s;
+       &.active { background: var(--primary); color: white; box-shadow: 0 10px 20px var(--primary-glow); }
     }
+
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   `]
 })
 export class FamiliesComponent implements OnDestroy {
   private dataService = inject(DataService);
   private pdfService = inject(PdfService);
   private regionService = inject(RegionService);
+  
   families = signal<Family[]>([]);
   showAddFamily = signal(false);
   familyToEdit = signal<Family | null>(null);
@@ -245,31 +263,41 @@ export class FamiliesComponent implements OnDestroy {
   showAddResident = signal(false);
   members = signal<Resident[]>([]);
   allResidents = signal<Resident[]>([]);
+  searchTerm = signal('');
+  
   private subscriptions: any[] = [];
   private villageConfig: VillageConfig | null = null;
 
   // Pagination Signals
   currentPage = signal(1);
-  pageSize = signal(8); // Grid looks better with 8 (2 rows of 4)
+  pageSize = signal(8);
+
+  filteredFamilies = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    return this.families().filter(f => 
+      (f.head_of_family_name || '').toLowerCase().includes(term) ||
+      (f.kk_number || '').includes(term)
+    ).sort((a,b) => (a.head_of_family_name || '').localeCompare(b.head_of_family_name || ''));
+  });
 
   paginatedFamilies = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
     const end = start + this.pageSize();
-    return this.families().slice(start, end);
+    return this.filteredFamilies().slice(start, end);
   });
 
-  totalPages = computed(() => Math.ceil(this.families().length / this.pageSize()));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredFamilies().length / this.pageSize())));
   totalPagesArray = computed(() => {
     const pages = this.totalPages();
     const current = this.currentPage();
     let start = Math.max(1, current - 2);
     let end = Math.min(pages, start + 4);
     if (end - start < 4) start = Math.max(1, end - 4);
-    return Array.from({length: end - start + 1}, (_, i) => start + i);
+    return Array.from({length: end - start + 1}, (_, i) => Math.max(1, start + i));
   });
 
   startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
-  endRange = computed(() => Math.min(this.currentPage() * this.pageSize(), this.families().length));
+  endRange = computed(() => Math.min(this.currentPage() * this.pageSize(), this.filteredFamilies().length));
 
   goToPage(p: number) {
     if (p >= 1 && p <= this.totalPages()) {
@@ -283,16 +311,13 @@ export class FamiliesComponent implements OnDestroy {
   constructor() {
     this.refreshData();
 
-    // Load Village Config for auto-fill
     this.regionService.getVillageConfig().subscribe(config => {
       if (config) {
         this.villageConfig = config;
-        // Update default form values
         this.familyForm = this.resetFamilyForm();
       }
     });
 
-    // Realtime Subscriptions
     this.subscriptions.push(
       this.dataService.subscribeToFamilies(() => this.refreshData())
     );
@@ -305,7 +330,6 @@ export class FamiliesComponent implements OnDestroy {
     this.dataService.getFamilies().subscribe(data => this.families.set(data));
     this.dataService.getResidents().subscribe(data => {
       this.allResidents.set(data);
-      // Update members if detail modal is open
       const selected = this.selectedFamily();
       if (selected) {
         this.members.set(data.filter(r => r.family_id === selected.kk_number));
@@ -331,7 +355,7 @@ export class FamiliesComponent implements OnDestroy {
       rt_rw: '', 
       rt: '', 
       rw: '', 
-      hamlet: '', 
+      hamlet: 'Dusun I', 
       district: vc?.district_name || '', 
       regency: vc?.regency_name || '', 
       province: vc?.province_name || '', 
@@ -342,7 +366,7 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   resetResidentForm(): Resident {
-    return { nik: '', family_id: '', full_name: '', birth_place: '', birth_date: '', gender: 'Laki-laki', occupation: '', relationship: '', created_at: '' };
+    return { nik: '', family_id: '', full_name: '', birth_place: '', birth_date: '', gender: 'Laki-laki', occupation: '', relationship: 'LAINNYA', created_at: '' };
   }
 
   editFamily(family: Family) {
@@ -369,7 +393,7 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   async deleteFamily(kk_number: string) {
-    if (confirm('Menghapus KK akan tetap mempertahankan data penduduk namun hubungan keluarga akan terputus. Lanjutkan?')) {
+    if (confirm('Menghapus KK akan tetap mempertahankan data penduduk namun hubungan keluarga akan terputus secara administratif. Lanjutkan?')) {
       await this.dataService.deleteFamily(kk_number);
     }
   }
@@ -389,7 +413,7 @@ export class FamiliesComponent implements OnDestroy {
   }
 
   async deleteMember(nik: string) {
-     if (confirm('Hapus anggota dari keluarga ini?')) {
+     if (confirm('Hapus anggota ini dari daftar keluarga?')) {
        await this.dataService.deleteResident(nik);
      }
   }

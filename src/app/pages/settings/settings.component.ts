@@ -12,500 +12,284 @@ import { RegionItem, VillageConfig } from '../../models/data.models';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="settings-container fade-in">
-      <header class="mb-8">
-        <h2 class="title-gradient">Pengaturan Sistem</h2>
-        <p class="text-muted">Kelola informasi profil, keamanan, dan konfigurasi wilayah desa.</p>
+      <header class="header-actions mb-10">
+        <h2 class="title-gradient text-4xl">Pengaturan Sistem</h2>
+        <p class="text-muted text-lg mt-2">Kelola identitas desa, profil administratif, dan konfigurasi keamanan sistem DigiWarga.</p>
       </header>
 
-      <!-- Tab Navigation -->
-      <div class="tab-nav glass-panel mb-8">
-        <button [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')">
-          👤 Profil & Keamanan
+      <!-- Premium Tab Navigation -->
+      <nav class="tab-nav glass-panel mb-12 p-1.5 flex gap-1 rounded-2xl border border-slate-200 bg-slate-50/50">
+        <button [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')" class="tab-btn">
+          <span class="icon">👤</span> Profil & Keamanan
         </button>
-        <button [class.active]="activeTab() === 'village'" (click)="activeTab.set('village')">
-          🏘️ Konfigurasi Desa
+        <button [class.active]="activeTab() === 'village'" (click)="activeTab.set('village')" class="tab-btn">
+          <span class="icon">🏘️</span> Identitas & Wilayah Desa
         </button>
-      </div>
+      </nav>
 
-      <!-- PROFILE TAB -->
-      <div *ngIf="activeTab() === 'profile'" class="settings-grid">
-        <!-- Profile Card -->
-        <div class="card-luxury glass-panel p-6">
-          <div class="section-title mb-6">
-            <span class="icon">👤</span>
-            <div>
-              <h3>Informasi Profil</h3>
-              <p class="text-xs text-muted">Nama ini akan muncul di seluruh aplikasi.</p>
-            </div>
-          </div>
+      <main class="tab-content">
+        <!-- PROFILE & SECURITY TAB -->
+        <section *ngIf="activeTab() === 'profile'" class="grid grid-cols-2 gap-10">
+          <!-- Profile Card -->
+          <article class="card-luxury p-8">
+            <header class="flex items-center gap-4 mb-10">
+               <div class="icon-box bg-blue-50 text-primary p-3 rounded-2xl border border-blue-100">👤</div>
+               <div>
+                  <h3 class="text-slate-900 font-black text-xl">Informasi Profil</h3>
+                  <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Identitas Admin Terdaftar</p>
+               </div>
+            </header>
 
-          <form (submit)="updateProfile()">
-            <div class="input-group mb-4">
-              <label>Nama Lengkap / Display Name</label>
-              <input [(ngModel)]="displayName" name="displayName" placeholder="Contoh: Admin DigiWarga" required>
+            <form (submit)="updateProfile()" class="space-y-6">
+              <div class="input-group">
+                <label class="text-slate-900 font-black">NAMA LENGKAP / DISPLAY NAME</label>
+                <input [(ngModel)]="displayName" name="displayName" placeholder="Contoh: Admin DigiWarga" required class="custom-input">
+              </div>
+              <div class="input-group" *ngIf="user$ | async as user">
+                <label class="text-slate-900 font-black">EMAIL UTAMA (LOGIN)</label>
+                <input [value]="user.email" disabled class="custom-input opacity-40 cursor-not-allowed">
+                <small class="text-xs text-slate-400 font-bold mt-2">Email dikelola secara terpusat oleh sistem autentikasi.</small>
+              </div>
+              <button type="submit" class="btn-primary w-full py-4 rounded-2xl" [disabled]="loadingProfile()">
+                {{ loadingProfile() ? 'Menyimpan Perubahan...' : 'Simpan Perubahan Profil ✅' }}
+              </button>
+            </form>
+            
+            <div *ngIf="profileMessage()" class="status-msg mt-6" [class.success]="isProfileSuccess()">
+              {{ profileMessage() }}
             </div>
-            <div class="input-group mb-4" *ngIf="user$ | async as user">
-              <label>Email Address</label>
-              <input [value]="user.email" disabled class="opacity-50">
-              <small class="text-xs text-muted mt-1 italic">* Email tidak dapat diubah secara langsung.</small>
+          </article>
+
+          <!-- Security Card -->
+          <article class="card-luxury p-8">
+            <header class="flex items-center gap-4 mb-10">
+               <div class="icon-box bg-rose-50 text-rose-600 p-3 rounded-2xl border border-rose-100">🔒</div>
+               <div>
+                  <h3 class="text-slate-900 font-black text-xl">Keamanan Akun</h3>
+                  <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Proteksi Akses & Password</p>
+               </div>
+            </header>
+
+            <form (submit)="changePassword()" class="space-y-6">
+              <div class="input-group">
+                <label class="text-slate-900 font-black">PASSWORD BARU</label>
+                <input type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="Minimum 6 karakter" required class="custom-input">
+              </div>
+              <div class="input-group">
+                <label class="text-slate-900 font-black">KONFIRMASI PASSWORD</label>
+                <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Ketik ulang password baru" required class="custom-input">
+              </div>
+              <button type="submit" class="btn-outline w-full py-4 rounded-2xl border-2" [disabled]="loadingSecurity()">
+                {{ loadingSecurity() ? 'Sedang Memproses...' : 'Perbarui Kata Sandi 🔒' }}
+              </button>
+            </form>
+
+            <div *ngIf="securityMessage()" class="status-msg mt-6" [class.success]="isSecuritySuccess()">
+              {{ securityMessage() }}
             </div>
-            <button type="submit" class="btn-primary w-full" [disabled]="loadingProfile()">
-              {{ loadingProfile() ? 'Menyimpan...' : 'Simpan Perubahan Profil' }}
-            </button>
-          </form>
+          </article>
+        </section>
+
+        <!-- VILLAGE CONFIG TAB -->
+        <section *ngIf="activeTab() === 'village'" class="space-y-10">
           
-          <div *ngIf="profileMessage()" class="status-msg mt-4" [class.success]="isProfileSuccess()">
-            {{ profileMessage() }}
-          </div>
-        </div>
+          <!-- Current Active Identity -->
+          <article *ngIf="currentConfig()" class="card-luxury p-0 overflow-hidden border-primary/20 bg-slate-50/30">
+            <header class="bg-primary p-10 flex-between items-center text-white">
+               <div>
+                  <h3 class="text-white font-black text-2xl">Identitas Desa Aktif</h3>
+                  <p class="text-white/70 font-bold text-sm">Wilayah hukum administratif terdaftar saat ini.</p>
+               </div>
+               <div class="village-seal-small bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                  <img [src]="currentConfig()?.village_logo_url || 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?q=80&w=200&auto=format&fit=crop'" class="h-12 w-12 object-contain" alt="Logo Desa">
+               </div>
+            </header>
 
-        <!-- Security Card -->
-        <div class="card-luxury glass-panel p-6">
-          <div class="section-title mb-6">
-            <span class="icon">🔒</span>
-            <div>
-              <h3>Keamanan & Password</h3>
-              <p class="text-xs text-muted">Pastikan password Anda kuat dan rahasia.</p>
-            </div>
-          </div>
-
-          <form (submit)="changePassword()">
-            <div class="input-group mb-4">
-              <label>Password Baru</label>
-              <input type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="Minimum 6 karakter" required>
-            </div>
-            <div class="input-group mb-6">
-              <label>Konfirmasi Password</label>
-              <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Ketik ulang password baru" required>
-            </div>
-            <button type="submit" class="btn-outline w-full" [disabled]="loadingSecurity()">
-              {{ loadingSecurity() ? 'Sedang Memproses...' : 'Perbarui Password' }}
-            </button>
-          </form>
-
-          <div *ngIf="securityMessage()" class="status-msg mt-4" [class.success]="isSecuritySuccess()">
-            {{ securityMessage() }}
-          </div>
-        </div>
-      </div>
-
-      <!-- VILLAGE CONFIG TAB -->
-      <div *ngIf="activeTab() === 'village'" class="village-config-section">
-        
-        <!-- Current Village Info (if exists) -->
-        <div *ngIf="currentConfig()" class="card-luxury glass-panel p-6 mb-6 village-current">
-          <div class="section-title mb-4">
-            <span class="icon">📍</span>
-            <div>
-              <h3>Konfigurasi Aktif</h3>
-              <p class="text-xs text-muted">Wilayah desa yang saat ini terdaftar di sistem.</p>
-            </div>
-          </div>
-          <div class="current-info-grid">
-            <div class="info-chip">
-              <span class="chip-label">Provinsi</span>
-              <span class="chip-value">{{ currentConfig()?.province_name }}</span>
-              <span class="chip-code">{{ currentConfig()?.province_code }}</span>
-            </div>
-            <div class="info-chip">
-              <span class="chip-label">Kabupaten/Kota</span>
-              <span class="chip-value">{{ currentConfig()?.regency_name }}</span>
-              <span class="chip-code">{{ currentConfig()?.regency_code }}</span>
-            </div>
-            <div class="info-chip">
-              <span class="chip-label">Kecamatan</span>
-              <span class="chip-value">{{ currentConfig()?.district_name }}</span>
-              <span class="chip-code">{{ currentConfig()?.district_code }}</span>
-            </div>
-            <div class="info-chip highlight">
-              <span class="chip-label">Desa / Kelurahan</span>
-              <span class="chip-value">{{ currentConfig()?.village_name }}</span>
-              <span class="chip-code">{{ currentConfig()?.village_code }}</span>
-            </div>
-          </div>
-          <div class="current-meta mt-4" *ngIf="currentConfig()?.village_head || currentConfig()?.village_phone">
-            <span *ngIf="currentConfig()?.village_head">🧑‍💼 {{ currentConfig()?.village_head }}</span>
-            <span *ngIf="currentConfig()?.village_phone">📞 {{ currentConfig()?.village_phone }}</span>
-            <span *ngIf="currentConfig()?.village_email">✉️ {{ currentConfig()?.village_email }}</span>
-          </div>
-        </div>
-
-        <div class="card-luxury glass-panel p-6">
-          <div class="section-title mb-6">
-            <span class="icon">🏘️</span>
-            <div>
-              <h3>{{ currentConfig() ? 'Ubah' : 'Daftarkan' }} Konfigurasi Desa</h3>
-              <p class="text-xs text-muted">Pilih wilayah berdasarkan data Kemendagri (API wilayah.id)</p>
-            </div>
-          </div>
-
-          <!-- Loading Indicator -->
-          <div *ngIf="loadingRegion()" class="loading-region">
-            <div class="spinner-small"></div>
-            <p>Memuat data wilayah dari Kemendagri...</p>
-          </div>
-
-          <!-- SMART SEARCH (OTOMATIS) -->
-          <div class="smart-search-box mb-6">
-            <label>⚡ Cari & Sinkronkan Desa Secara Otomatis</label>
-            <div class="search-input-wrapper">
-              <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Ketik nama desa... (Contoh: Pangkajene)">
-              <div class="search-results-popover" *ngIf="searchResults().length > 0">
-                <div class="result-item" *ngFor="let res of searchResults()" (click)="selectSearchResult(res)">
-                  <div class="res-name">{{ res.village_name || res.name }}</div>
-                  <div class="res-path">{{ res.district_name }} > {{ res.regency_name }} > {{ res.province_name }}</div>
-                </div>
+            <div class="p-10 grid grid-cols-4 gap-6">
+              <div class="info-block border-l-4 border-blue-500 pl-6">
+                <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">PROVINSI</span>
+                <p class="text-slate-900 font-black text-lg">{{ currentConfig()?.province_name }}</p>
+                <code class="text-xs text-primary font-bold">{{ currentConfig()?.province_code }}</code>
               </div>
-            </div>
-            <p class="text-xs text-muted mt-2 italic">* Pilih desa dari hasil pencarian untuk sinkronisasi otomatis seluruh data wilayah.</p>
-          </div>
-
-          <div class="divider-text mb-6"><span>ATAU KONFIGURASI MANUAL</span></div>
-
-          <form (submit)="saveVillageConfig()">
-            <div class="region-grid">
-              <!-- Provinsi -->
-              <div class="input-group">
-                <label>
-                  Provinsi
-                  <span class="badge-count" *ngIf="provinces().length">{{ provinces().length }} data</span>
-                </label>
-                <select [(ngModel)]="selectedProvince" name="province" (change)="onProvinceChange()" required>
-                  <option value="">-- Pilih Provinsi --</option>
-                  <option *ngFor="let p of provinces()" [value]="p.code">{{ p.name }}</option>
-                </select>
+              <div class="info-block border-l-4 border-blue-500 pl-6">
+                <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">KABUPATEN/KOTA</span>
+                <p class="text-slate-900 font-black text-lg">{{ currentConfig()?.regency_name }}</p>
+                <code class="text-xs text-primary font-bold">{{ currentConfig()?.regency_code }}</code>
               </div>
-
-              <!-- Kabupaten/Kota -->
-              <div class="input-group">
-                <label>
-                  Kabupaten / Kota
-                  <span class="badge-count" *ngIf="regencies().length">{{ regencies().length }} data</span>
-                </label>
-                <select [(ngModel)]="selectedRegency" name="regency" (change)="onRegencyChange()" required [disabled]="!selectedProvince">
-                  <option value="">-- Pilih Kabupaten / Kota --</option>
-                  <option *ngFor="let r of regencies()" [value]="r.code">{{ r.name }}</option>
-                </select>
+              <div class="info-block border-l-4 border-blue-500 pl-6">
+                <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">KECAMATAN</span>
+                <p class="text-slate-900 font-black text-lg">{{ currentConfig()?.district_name }}</p>
+                <code class="text-xs text-primary font-bold">{{ currentConfig()?.district_code }}</code>
               </div>
-
-              <!-- Kecamatan -->
-              <div class="input-group">
-                <label>
-                  Kecamatan
-                  <span class="badge-count" *ngIf="districts().length">{{ districts().length }} data</span>
-                </label>
-                <select [(ngModel)]="selectedDistrict" name="district" (change)="onDistrictChange()" required [disabled]="!selectedRegency">
-                  <option value="">-- Pilih Kecamatan --</option>
-                  <option *ngFor="let d of districts()" [value]="d.code">{{ d.name }}</option>
-                </select>
-              </div>
-
-              <!-- Desa/Kelurahan -->
-              <div class="input-group">
-                <label>
-                  Desa / Kelurahan
-                  <span class="badge-count" *ngIf="villages().length">{{ villages().length }} data</span>
-                </label>
-                <select [(ngModel)]="selectedVillage" name="village" required [disabled]="!selectedDistrict">
-                  <option value="">-- Pilih Desa / Kelurahan --</option>
-                  <option *ngFor="let v of villages()" [value]="v.code">{{ v.name }}</option>
-                </select>
+              <div class="info-block border-l-4 border-emerald-500 pl-6 bg-emerald-50/30 p-3 rounded-r-2xl">
+                <span class="text-[10px] font-black text-emerald-600 tracking-widest uppercase">DESA / KELURAHAN</span>
+                <p class="text-slate-900 font-black text-lg">{{ currentConfig()?.village_name }}</p>
+                <code class="text-xs text-emerald-600 font-bold">{{ currentConfig()?.village_code }}</code>
               </div>
             </div>
 
-            <!-- Village Detail Fields -->
-            <div class="village-detail-section mt-6" *ngIf="selectedVillage">
-              <h4 class="mb-4 text-muted">Detail Informasi Desa</h4>
-              <div class="region-grid">
-                <div class="input-group">
-                  <label>Nama Kepala Desa</label>
-                  <input [(ngModel)]="villageForm.village_head" name="village_head" placeholder="Nama Kepala Desa">
-                </div>
-                <div class="input-group">
-                  <label>NIP Kepala Desa</label>
-                  <input [(ngModel)]="villageForm.village_head_nip" name="village_head_nip" placeholder="NIP (Jika ada)">
-                </div>
-                <div class="input-group">
-                  <label>Sekretaris Desa</label>
-                  <input [(ngModel)]="villageForm.village_secretary" name="village_secretary" placeholder="Nama Sekretaris Desa">
-                </div>
-                <div class="input-group">
-                  <label>Kode Pos</label>
-                  <input [(ngModel)]="villageForm.zip_code" name="zip_code" placeholder="Contoh: 40171">
-                </div>
-                <div class="input-group" style="grid-column: 1 / -1;">
-                  <label>Alamat Kantor Desa</label>
-                  <input [(ngModel)]="villageForm.village_address" name="village_address" placeholder="Jl. Raya Desa...">
-                </div>
-                <div class="input-group">
-                  <label>No. Telepon Kantor</label>
-                  <input [(ngModel)]="villageForm.village_phone" name="village_phone" placeholder="021-xxxxxxx">
-                </div>
-                <div class="input-group">
-                  <label>Email Desa</label>
-                  <input [(ngModel)]="villageForm.village_email" name="village_email" placeholder="desa@example.go.id">
-                </div>
-                <div class="input-group" style="grid-column: 1 / -1;">
-                  <label>Logo Resmi Desa (PNG/JPG)</label>
-                  <div class="logo-upload-wrapper">
-                    <div class="logo-preview" *ngIf="villageForm.village_logo_url || logoPreview()">
-                      <img [src]="logoPreview() || villageForm.village_logo_url" alt="Logo Preview">
+            <footer class="p-6 bg-white border-t border-slate-100 flex gap-8 justify-center">
+              <span class="text-xs text-slate-600 font-bold">🧑‍💼 Kepala Desa: <b class="text-slate-900">{{ currentConfig()?.village_head || 'Belum Diatur' }}</b></span>
+              <span class="text-xs text-slate-600 font-bold">📞 Telp: <b class="text-slate-900">{{ currentConfig()?.village_phone || 'Belum Diatur' }}</b></span>
+              <span class="text-xs text-slate-600 font-bold">✉️ Email: <b class="text-slate-900">{{ currentConfig()?.village_email || 'Belum Diatur' }}</b></span>
+            </footer>
+          </article>
+
+          <!-- Configuration Form -->
+          <article class="card-luxury p-10">
+            <header class="flex-between items-center mb-10">
+               <div>
+                  <h3 class="text-slate-900 font-black text-2xl">{{ currentConfig() ? 'Perbarui' : 'Daftarkan' }} Konfigurasi Desa</h3>
+                  <p class="text-muted text-sm mt-1">Pilih wilayah berdasarkan data nasional Kemendagri & wilayah.id.</p>
+               </div>
+               <div *ngIf="loadingRegion()" class="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-xl text-primary font-bold text-xs animate-pulse">
+                  <div class="spinner-small border-primary"></div> Mensinkronkan Data Wilayah...
+               </div>
+            </header>
+
+            <!-- SMART SEARCH -->
+            <section class="smart-search-area mb-10 bg-slate-50 p-8 rounded-3xl border border-slate-100">
+              <label class="text-slate-900 font-black text-sm mb-4 block">⚡ CARI & SINKRONKAN OTOMATIS</label>
+              <div class="relative search-container">
+                <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Ketik nama desa Anda... (Contoh: Pangkajene)" class="custom-input text-lg py-5 shadow-xl">
+                <div class="search-results-overlay" *ngIf="searchResults().length > 0">
+                  <div class="result-card p-4 hover:bg-primary/5 cursor-pointer border-b border-slate-50 flex-between" *ngFor="let res of searchResults()" (click)="selectSearchResult(res)">
+                    <div>
+                       <div class="res-name font-black text-slate-900">{{ res.village_name || res.name }}</div>
+                       <div class="res-path text-[10px] font-bold text-slate-500 uppercase">{{ res.district_name }} • {{ res.regency_name }} • {{ res.province_name }}</div>
                     </div>
-                    <div class="upload-controls">
-                      <input type="file" (change)="onLogoSelected($event)" accept="image/*" #logoInput hidden>
-                      <button type="button" class="btn-outline-sm" (click)="logoInput.click()" [disabled]="uploadingLogo()">
-                        {{ uploadingLogo() ? 'Mengunggah...' : 'Pilih Logo Desa' }}
-                      </button>
-                      <p class="text-xs text-muted mt-2">Disarankan background transparan (PNG).</p>
-                    </div>
+                    <span class="text-primary font-black text-xs">PILIH & SINKRON ➡️</span>
                   </div>
                 </div>
               </div>
+              <p class="text-xs text-slate-400 font-bold mt-4 italic">* Rekomendasi: Gunakan fitur pencarian otomatis untuk meminimalkan kesalahan input data wilayah.</p>
+            </section>
+
+            <form (submit)="saveVillageConfig()" class="space-y-10">
+              <div class="region-selectors grid grid-cols-2 gap-8">
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">PROVINSI <span class="badge" *ngIf="provinces().length">{{ provinces().length }}</span></label>
+                  <select [(ngModel)]="selectedProvince" name="province" (change)="onProvinceChange()" required class="custom-select">
+                    <option value="">-- Pilih Provinsi --</option>
+                    <option *ngFor="let p of provinces()" [value]="p.code">{{ p.name }}</option>
+                  </select>
+                </div>
+
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">KABUPATEN / KOTA <span class="badge" *ngIf="regencies().length">{{ regencies().length }}</span></label>
+                  <select [(ngModel)]="selectedRegency" name="regency" (change)="onRegencyChange()" required [disabled]="!selectedProvince" class="custom-select">
+                    <option value="">-- Pilih Kabupaten / Kota --</option>
+                    <option *ngFor="let r of regencies()" [value]="r.code">{{ r.name }}</option>
+                  </select>
+                </div>
+
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">KECAMATAN <span class="badge" *ngIf="districts().length">{{ districts().length }}</span></label>
+                  <select [(ngModel)]="selectedDistrict" name="district" (change)="onDistrictChange()" required [disabled]="!selectedRegency" class="custom-select">
+                    <option value="">-- Pilih Kecamatan --</option>
+                    <option *ngFor="let d of districts()" [value]="d.code">{{ d.name }}</option>
+                  </select>
+                </div>
+
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">DESA / KELURAHAN <span class="badge" *ngIf="villages().length">{{ villages().length }}</span></label>
+                  <select [(ngModel)]="selectedVillage" name="village" required [disabled]="!selectedDistrict" class="custom-select">
+                    <option value="">-- Pilih Desa / Kelurahan --</option>
+                    <option *ngFor="let v of villages()" [value]="v.code">{{ v.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Extra Village Meta -->
+              <div class="extra-meta grid grid-cols-2 gap-8 border-t border-slate-100 pt-10" *ngIf="selectedVillage">
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">NAMA KEPALA DESA</label>
+                  <input [(ngModel)]="villageForm.village_head" name="village_head" placeholder="Nama Lengkap & Gelar" class="custom-input">
+                </div>
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">NIP KEPALA DESA</label>
+                  <input [(ngModel)]="villageForm.village_head_nip" name="village_head_nip" placeholder="NIP (Khusus PNS)" class="custom-input">
+                </div>
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">SEKRETARIS DESA</label>
+                  <input [(ngModel)]="villageForm.village_secretary" name="village_secretary" placeholder="Nama Lengkap Sekretaris" class="custom-input">
+                </div>
+                <div class="input-group">
+                  <label class="text-slate-900 font-black">KODE POS WILAYAH</label>
+                  <input [(ngModel)]="villageForm.zip_code" name="zip_code" placeholder="Contoh: 40171" class="custom-input">
+                </div>
+                <div class="input-group col-span-2">
+                  <label class="text-slate-900 font-black">ALAMAT KANTOR DESA</label>
+                  <input [(ngModel)]="villageForm.village_address" name="village_address" placeholder="Jl. Raya Desa No. ..." class="custom-input">
+                </div>
+                
+                <div class="logo-area col-span-2 bg-slate-50 p-8 rounded-3xl border border-slate-100 flex items-center gap-10">
+                   <div class="preview-box h-32 w-32 bg-white rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden p-2">
+                      <img [src]="logoPreview() || villageForm.village_logo_url || 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?q=80&w=200'" alt="Logo Preview" class="max-h-full max-w-full object-contain">
+                   </div>
+                   <div class="flex-1">
+                      <h4 class="text-slate-900 font-black mb-2 uppercase text-xs tracking-wider">LOGO RESMI PEMERINTAH DESA</h4>
+                      <p class="text-slate-500 text-sm mb-6">Gunakan file PNG transparan untuk hasil terbaik pada dokumen PDF surat-menyurat.</p>
+                      <input type="file" (change)="onLogoSelected($event)" accept="image/*" #logoInput hidden>
+                      <button type="button" class="btn-outline px-8 rounded-xl font-black text-xs" (click)="logoInput.click()" [disabled]="uploadingLogo()">
+                        {{ uploadingLogo() ? 'MENGUNGGAH...' : 'PILIH FILE LOGO 📁' }}
+                      </button>
+                   </div>
+                </div>
+              </div>
+
+              <footer class="pt-10 border-t border-slate-100 flex justify-end gap-4">
+                <button type="submit" class="btn-primary px-12 py-5 rounded-2xl shadow-2xl text-lg" [disabled]="!selectedVillage || savingConfig()">
+                  {{ savingConfig() ? 'Sedang Menyimpan...' : '💾 Simpan Konfigurasi Desa' }}
+                </button>
+              </footer>
+            </form>
+
+            <div *ngIf="configMessage()" class="status-msg mt-8" [class.success]="isConfigSuccess()">
+              {{ configMessage() }}
             </div>
+          </article>
+        </section>
+      </main>
 
-            <button type="submit" class="btn-primary w-full mt-6" 
-              [disabled]="!selectedVillage || savingConfig()">
-              {{ savingConfig() ? 'Menyimpan Konfigurasi...' : '💾 Simpan Konfigurasi Desa' }}
-            </button>
-          </form>
-
-          <div *ngIf="configMessage()" class="status-msg mt-4" [class.success]="isConfigSuccess()">
-            {{ configMessage() }}
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-note mt-8 p-4 text-center glass-panel" *ngIf="user$ | async as user">
-        <p class="text-muted text-xs">Login aktif sejak: {{ user.last_sign_in_at | date:'medium' }}</p>
-      </div>
+      <footer class="footer-info mt-12 p-6 text-center card-luxury bg-slate-50/50" *ngIf="user$ | async as user">
+        <p class="text-slate-500 font-bold text-xs uppercase tracking-widest">Sesi Login Aktif: {{ user.last_sign_in_at | date:'medium' }}</p>
+      </footer>
     </div>
   `,
   styles: [`
-    .tab-nav {
-      display: flex;
-      gap: 0;
-      border-radius: 1rem;
-      overflow: hidden;
-      padding: 0.25rem;
-      button {
-        flex: 1;
-        padding: 0.85rem 1.5rem;
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        border-radius: 0.75rem;
-        transition: all 0.3s ease;
-        &:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        &.active {
-          background: var(--primary);
-          color: #fff;
-          box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-      }
+    .settings-container { padding-bottom: 6rem; }
+    
+    .tab-btn {
+       flex: 1; padding: 1.25rem; background: transparent; border: none;
+       color: #64748b; font-weight: 800; font-size: 0.95rem; border-radius: 1rem;
+       transition: 0.4s var(--apple-ease); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+       .icon { font-size: 1.2rem; }
+       &:hover { background: white; color: var(--primary); }
+       &.active { background: white; color: var(--primary); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
     }
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 2rem;
+
+    .custom-input, .custom-select {
+       background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1rem;
+       outline: none; font-weight: 600; font-size: 1rem; width: 100%; transition: 0.3s;
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      .icon {
-        font-size: 1.5rem;
-        background: rgba(255,255,255,0.05);
-        padding: 0.75rem;
-        border-radius: 1rem;
-        border: 1px solid var(--border-color);
-      }
-      h3 { margin: 0; font-size: 1.1rem; }
+
+    .badge { font-size: 0.65rem; background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 0.15rem 0.6rem; border-radius: 1rem; margin-left: 0.5rem; }
+
+    .search-results-overlay {
+       position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 1.5rem;
+       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); z-index: 100; margin-top: 0.5rem; overflow: hidden; border: 1px solid var(--glass-border);
     }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      label { 
-        font-size: 0.8rem; 
-        color: var(--text-muted); 
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      input, select {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid var(--border-color);
-        padding: 0.8rem 1rem;
-        border-radius: 0.75rem;
-        color: white;
-        font-size: 0.95rem;
-        transition: all 0.3s;
-        &:focus {
-          border-color: var(--primary);
-          background: rgba(255,255,255,0.08);
-          box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
-        }
-        &:disabled { opacity: 0.35; cursor: not-allowed; }
-      }
-      select { appearance: none; }
-    }
-    .btn-outline {
-      background: none;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      padding: 0.8rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      &:hover:not(:disabled) {
-        background: rgba(99, 102, 241, 0.1);
-        transform: translateY(-2px);
-      }
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
-    }
+
     .status-msg {
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      background: rgba(239, 68, 68, 0.1);
-      color: #f87171;
-      font-size: 0.85rem;
-      text-align: center;
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      &.success {
-        background: rgba(16, 185, 129, 0.1);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.2);
-      }
+       padding: 1.25rem; border-radius: 1rem; font-weight: 800; font-size: 0.85rem; text-align: center;
+       background: rgba(239, 68, 68, 0.05); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.1);
+       &.success { background: rgba(16, 185, 129, 0.05); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.1); }
     }
-    .footer-note {
-      border-radius: 1rem;
-      opacity: 0.6;
-    }
-    .w-full { width: 100%; }
-    .opacity-50 { opacity: 0.5; }
 
-    /* Village Config Styles */
-    .region-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-    .badge-count {
-      font-size: 0.65rem;
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--primary);
-      padding: 0.15rem 0.5rem;
-      border-radius: 1rem;
-      font-weight: 700;
-    }
-    .loading-region {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      background: rgba(99, 102, 241, 0.05);
-      border: 1px solid rgba(99, 102, 241, 0.15);
-      margin-bottom: 1.5rem;
-      p { font-size: 0.85rem; color: var(--text-muted); }
-    }
-    .spinner-small {
-      width: 20px; height: 20px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
+    .spinner-small { width: 16px; height: 16px; border: 2.5px solid rgba(0,0,0,0.1); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .village-current {
-      .current-info-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-      }
-      .info-chip {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        transition: all 0.3s;
-        .chip-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        .chip-value { font-size: 1rem; font-weight: 600; color: #fff; }
-        .chip-code { font-size: 0.7rem; color: var(--primary); font-family: monospace; }
-        &.highlight {
-          border-color: var(--primary);
-          background: rgba(99, 102, 241, 0.08);
-          box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
-        }
-      }
-      .current-meta {
-        display: flex;
-        gap: 2rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--border-color);
-        span { font-size: 0.8rem; color: var(--text-muted); }
-      }
-    }
-
-    .village-detail-section {
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border-color);
-      h4 { font-size: 0.9rem; font-weight: 600; }
-    }
-
-    .logo-upload-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      background: rgba(255,255,255,0.03);
-      padding: 1rem;
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-color);
-      .logo-preview {
-        width: 80px;
-        height: 80px;
-        background: rgba(0,0,0,0.2);
-        border-radius: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        img { max-width: 100%; max-height: 100%; object-fit: contain; }
-      }
-      .btn-outline-sm {
-        background: transparent;
-        border: 1px solid var(--primary);
-        color: var(--primary);
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-size: 0.8rem;
-        cursor: pointer;
-        &:disabled { opacity: 0.5; }
-      }
-    }
-
-    .national-data-sync {
-      background: rgba(99, 102, 241, 0.05);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      .stat-mini {
-        label { font-size: 0.65rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem; }
-        .val { font-size: 1rem; font-weight: 700; color: #fff; }
-      }
-    }
-
-    @media (max-width: 768px) {
-      .region-grid { grid-template-columns: 1fr; }
-      .village-current .current-info-grid { grid-template-columns: 1fr 1fr; }
-    }
   `]
 })
 export class SettingsComponent implements OnInit {

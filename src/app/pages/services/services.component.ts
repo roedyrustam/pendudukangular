@@ -12,303 +12,267 @@ import { of, switchMap, take } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="header-actions mb-6">
-      <div class="titles">
-        <h2 class="title-gradient">Pusat Layanan Administrasi</h2>
-        <p class="text-muted">Akses cepat layanan kependudukan digital untuk warga</p>
-      </div>
-    </div>
-
-    <div class="services-grid">
-      <div *ngFor="let s of services" class="service-card card-luxury" (click)="openRequest(s)">
-        <div class="icon-box">{{ s.icon }}</div>
-        <div class="info">
-          <h3>{{ s.name }}</h3>
-          <p>{{ s.desc }}</p>
+    <div class="services-page fade-in">
+      <header class="header-actions mb-10 flex-between items-start">
+        <div class="titles">
+          <h2 class="title-gradient text-4xl">Pusat Layanan Administrasi</h2>
+          <p class="text-muted text-lg mt-2">Akses cepat layanan kependudukan digital dengan validasi E-Signature.</p>
         </div>
-        <button class="btn-primary-sm">Ajukan</button>
-      </div>
-    </div>
-
-    <div class="mt-12">
-      <h3 class="mb-4">Daftar Pengajuan Terbaru</h3>
-      <div class="card-luxury p-0 overflow-hidden">
-        <table class="luxury-table">
-          <thead>
-            <tr>
-              <th>Tanggal</th>
-              <th>NIK Pemohon</th>
-              <th>Layanan</th>
-              <th>Alasan</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let req of paginatedRequests()" 
-              (click)="canManage() ? openManagementModal(req) : null" 
-              [class.clickable-row]="canManage()">
-              <td>{{ req.created_at | date:'dd MMM yyyy HH:mm' }}</td>
-              <td class="nik-cell">{{ req.nik }}</td>
-              <td>{{ req.service_type }}</td>
-              <td>{{ req.reason }}</td>
-              <td><span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span></td>
-              <td>
-                <a *ngIf="req.letter_url" [href]="req.letter_url" target="_blank" class="btn-download-mini" title="Download Surat">
-                  📄
-                </a>
-              </td>
-            </tr>
-            <tr *ngIf="recentRequests().length === 0">
-              <td colspan="6" class="empty-state">Belum ada pengajuan layanan.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Pagination Controls -->
-        <div class="pagination-container" *ngIf="recentRequests().length > pageSize()">
-          <div class="pagination-info">
-            Menampilkan {{ startRange() }} - {{ endRange() }} dari {{ recentRequests().length }} Pengajuan
-          </div>
-          <div class="pagination-controls">
-            <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">Prev</button>
-            <button *ngFor="let p of totalPagesArray()" 
-                    (click)="goToPage(p)" 
-                    [class.active]="currentPage() === p">
-              {{ p }}
-            </button>
-            <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">Next</button>
+        <div class="header-right flex flex-col items-end gap-4">
+          <div class="live-status bg-blue-50 px-5 py-2 rounded-full border border-blue-100 flex items-center gap-3">
+             <span class="text-[10px] font-black text-primary tracking-widest uppercase">SERVER STATUS:</span>
+             <div class="pulse-dot"></div>
+             <span class="label text-primary font-black uppercase text-[10px]">OPERATIONAL</span>
           </div>
         </div>
-      </div>
+      </header>
+
+      <!-- Bento Service Grid -->
+      <section class="services-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+        <article *ngFor="let s of services" class="service-card card-luxury p-8 group hover:border-primary/30 transition-all duration-500 cursor-pointer" (click)="openRequest(s)">
+          <div class="icon-wrapper mb-8 bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center text-4xl group-hover:bg-primary/5 group-hover:scale-110 transition-all">
+            {{ s.icon }}
+          </div>
+          <h3 class="text-slate-900 font-black text-xl mb-3 group-hover:text-primary transition-colors">{{ s.name }}</h3>
+          <p class="text-slate-500 font-bold text-xs leading-relaxed mb-8 line-clamp-2">{{ s.desc }}</p>
+          <button class="btn-outline w-full py-3 rounded-xl border-2 font-black text-[10px] tracking-widest uppercase group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 transition-all">
+            AJUKAN SEKARANG ⚡
+          </button>
+        </article>
+      </section>
+
+      <!-- Table Section -->
+      <section class="mt-12">
+        <div class="flex-between mb-8">
+           <h3 class="text-slate-900 font-black text-2xl uppercase tracking-tighter">Daftar Pengajuan Terbaru</h3>
+           <div class="flex gap-2">
+             <span class="badge secondary font-black text-[10px] uppercase px-4 py-2">LIVE MONITORING</span>
+           </div>
+        </div>
+
+        <main class="card-luxury p-0 overflow-hidden shadow-2xl border-slate-200">
+          <table class="luxury-table w-full">
+            <thead>
+              <tr class="bg-slate-50">
+                <th class="py-5 px-8 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">WAKTU PENGAJUAN</th>
+                <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">NIK PEMOHON</th>
+                <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">JENIS LAYANAN</th>
+                <th class="py-5 px-6 text-left text-[10px] font-black text-slate-400 tracking-widest uppercase">ALASAN / KEPERLUAN</th>
+                <th class="py-5 px-6 text-center text-[10px] font-black text-slate-400 tracking-widest uppercase">STATUS</th>
+                <th class="py-5 px-8 text-right text-[10px] font-black text-slate-400 tracking-widest uppercase">SURAT</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let req of paginatedRequests()" 
+                (click)="canManage() ? openManagementModal(req) : null" 
+                class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors"
+                [class.cursor-pointer]="canManage()">
+                <td class="py-5 px-8 text-xs font-bold text-slate-500 uppercase">{{ req.created_at | date:'dd MMM yyyy HH:mm' }}</td>
+                <td class="py-5 px-6 font-black text-primary font-mono tracking-tighter">{{ req.nik }}</td>
+                <td class="py-5 px-6 font-black text-slate-900">{{ req.service_type }}</td>
+                <td class="py-5 px-6">
+                  <div class="text-slate-500 font-bold text-xs truncate max-w-[200px]">{{ req.reason }}</div>
+                </td>
+                <td class="py-5 px-6 text-center">
+                  <span class="status-badge" [attr.data-status]="req.status.toLowerCase()">{{ req.status }}</span>
+                </td>
+                <td class="py-5 px-8 text-right">
+                  <a *ngIf="req.letter_url" [href]="req.letter_url" target="_blank" class="btn-icon-sm bg-emerald-50 text-emerald-600 border-emerald-100" (click)="$event.stopPropagation()" title="Download Surat">
+                    📄
+                  </a>
+                  <span *ngIf="!req.letter_url" class="text-[10px] font-black text-slate-300">N/A</span>
+                </td>
+              </tr>
+              <tr *ngIf="recentRequests().length === 0">
+                <td colspan="6" class="py-20 text-center">
+                   <div class="text-5xl mb-4">📮</div>
+                   <p class="text-slate-400 font-black uppercase text-xs tracking-widest">Belum ada pengajuan layanan aktif</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination Footer -->
+          <footer class="pagination-area bg-slate-50 p-6 flex-between border-t border-slate-100" *ngIf="recentRequests().length > pageSize()">
+             <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                MENAMPILKAN <b class="text-slate-900">{{ startRange() }}-{{ endRange() }}</b> DARI <b class="text-slate-900">{{ recentRequests().length }}</b> DATA
+             </div>
+             <nav class="flex gap-2">
+                <button class="btn-page" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">⬅️ PREV</button>
+                <div class="flex gap-1">
+                   <button *ngFor="let p of totalPagesArray()" class="btn-page-num" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p }}</button>
+                </div>
+                <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">NEXT ➡️</button>
+             </nav>
+          </footer>
+        </main>
+      </section>
     </div>
 
     <!-- Request Modal -->
-    <div *ngIf="activeService()" class="form-overlay" (click)="activeService.set(null)">
-      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <h3>Pengajuan: {{ activeService()?.name }}</h3>
-        <p class="text-muted mb-4">Lengkapi data berikut untuk memproses permohonan</p>
+    <div *ngIf="activeService()" class="form-overlay fade-in" (click)="activeService.set(null)">
+      <div class="form-card card-luxury p-10" (click)="$event.stopPropagation()">
+        <header class="modal-header mb-10">
+          <h2 class="title-gradient text-3xl">Pengajuan: {{ activeService()?.name }}</h2>
+          <p class="text-muted text-lg mt-2">Lengkapi data berikut untuk memproses permohonan surat resmi.</p>
+        </header>
         
-        <form (submit)="submitRequest()">
-          <div class="form-grid">
+        <form (submit)="submitRequest()" class="grid grid-cols-2 gap-8">
             <div class="input-group">
-              <label>NIK Pemohon</label>
+              <label class="text-slate-900 font-black mb-3 block">NIK PEMOHON</label>
               <input [(ngModel)]="requestForm.nik" name="nik" 
-                [placeholder]="isWarga() ? '' : 'Masukkan 16 digit NIK'" 
+                class="custom-input font-black text-lg"
+                [placeholder]="isWarga() ? '' : '16 Digit NIK'" 
                 [disabled]="isWarga()" required>
             </div>
             <div class="input-group">
-              <label>Alasan Permohonan</label>
-              <input [(ngModel)]="requestForm.reason" name="reason" placeholder="Contoh: Hilang/Rusak" required>
+              <label class="text-slate-900 font-black mb-3 block">NO. WHATSAPP AKTIF</label>
+              <input [(ngModel)]="requestForm.phone_active" name="phone_active" placeholder="08..." required class="custom-input font-black text-lg">
             </div>
-            <div class="input-group full-width" style="grid-column: 1 / -1;">
-              <label>No. HP / WhatsApp Aktif</label>
-              <input [(ngModel)]="requestForm.phone_active" name="phone_active" placeholder="08123456789" required>
+            <div class="input-group col-span-2">
+              <label class="text-slate-900 font-black mb-3 block">ALASAN / KEPERLUAN PERMOHONAN</label>
+              <textarea [(ngModel)]="requestForm.reason" name="reason" placeholder="Contoh: Persyaratan melamar pekerjaan, beasiswa, dsb." required class="custom-input font-bold min-h-[100px] py-4"></textarea>
             </div>
-            <div class="input-group full-width" style="grid-column: 1 / -1;">
-              <label>Dokumen Pendukung (Pilih beberapa jika perlu)</label>
-              <div class="upload-zone" (click)="fileInput.click()">
-                <span>📁 Klik untuk unggah KTP/KK/Surat Pengantar</span>
+            <div class="input-group col-span-2">
+              <label class="text-slate-900 font-black mb-3 block uppercase text-[10px] tracking-widest">DOKUMEN PENDUKUNG (UPLOAD)</label>
+              <div class="upload-zone p-8 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center gap-4 group hover:border-primary transition-all cursor-pointer" (click)="fileInput.click()">
+                <span class="text-4xl group-hover:scale-110 transition-transform">📂</span>
+                <div class="text-center">
+                  <p class="text-slate-900 font-black text-sm">Klik untuk pilih berkas pendukung</p>
+                  <p class="text-slate-400 font-bold text-[10px] mt-1 uppercase tracking-widest">KTP / KK / Surat Pengantar (Format PDF/JPG)</p>
+                </div>
                 <input #fileInput type="file" (change)="onFileSelected($event)" multiple hidden>
               </div>
-              <div class="file-list" *ngIf="selectedFiles.length > 0">
-                <div *ngFor="let f of selectedFiles; let i = index" class="file-chip">
-                  {{ f.name }} <button type="button" (click)="removeFile(i)">×</button>
+              <div class="file-list mt-4 flex flex-wrap gap-2" *ngIf="selectedFiles.length > 0">
+                <div *ngFor="let f of selectedFiles; let i = index" class="file-chip px-4 py-2 bg-primary/5 border border-primary/20 rounded-xl flex items-center gap-3">
+                  <span class="text-primary font-bold text-xs">{{ f.name }}</span>
+                  <button type="button" class="text-rose-500 font-black hover:scale-125 transition-transform" (click)="removeFile(i)">×</button>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="form-actions mt-6">
-            <button type="button" class="btn-text" (click)="activeService.set(null)">Batal</button>
-            <button type="submit" class="btn-primary" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'Mengirim...' : 'Kirim Permohonan' }}
-            </button>
-          </div>
+
+            <footer class="col-span-2 pt-10 border-t border-slate-100 flex justify-end gap-4">
+              <button type="button" class="btn-outline px-8 rounded-xl font-black text-xs" (click)="activeService.set(null)">BATAL</button>
+              <button type="submit" class="btn-primary px-12 py-5 rounded-2xl shadow-2xl font-black" [disabled]="isSubmitting()">
+                {{ isSubmitting() ? 'SEDANG MENGIRIM...' : 'KIRIM PERMOHONAN 🚀' }}
+              </button>
+            </footer>
         </form>
       </div>
     </div>
 
-    <!-- Success Toast -->
-    <div *ngIf="showSuccess()" class="toast-success glass-panel">
-      <span>✅</span>
-      <p>Operasi berhasil diperbarui!</p>
-    </div>
-
     <!-- Management Modal -->
-    <div *ngIf="selectedRequest()" class="form-overlay" (click)="selectedRequest.set(null)">
-      <div class="form-card card-luxury glass-panel" (click)="$event.stopPropagation()">
-        <header class="modal-header">
-          <h3>Kelola Pengajuan</h3>
-          <span class="status-indicator" [attr.data-status]="selectedRequest()?.status">
+    <div *ngIf="selectedRequest()" class="form-overlay fade-in" (click)="selectedRequest.set(null)">
+      <div class="form-card card-luxury p-10" (click)="$event.stopPropagation()">
+        <header class="modal-header flex justify-between items-start border-b border-slate-100 pb-8 mb-10">
+          <div>
+            <h2 class="title-gradient text-3xl">Kelola Pengajuan Layanan</h2>
+            <p class="text-slate-900 font-black text-sm mt-1 uppercase tracking-widest">MANAJEMEN ADMINISTRASI DESA</p>
+          </div>
+          <span class="status-badge large" [attr.data-status]="selectedRequest()?.status?.toLowerCase()">
             {{ selectedRequest()?.status }}
           </span>
         </header>
         
-        <div class="request-summary mb-6">
+        <div class="summary-grid grid grid-cols-3 gap-6 mb-10 p-6 bg-slate-50 rounded-3xl">
           <div class="sum-item">
-            <label>NIK Pemohon</label>
-            <p>{{ selectedRequest()?.nik }}</p>
+            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">NIK PEMOHON</label>
+            <p class="text-primary font-black font-mono tracking-tighter">{{ selectedRequest()?.nik }}</p>
           </div>
           <div class="sum-item">
-            <label>Layanan</label>
-            <p>{{ selectedRequest()?.service_type }}</p>
+            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">JENIS LAYANAN</label>
+            <p class="text-slate-900 font-black">{{ selectedRequest()?.service_type }}</p>
           </div>
           <div class="sum-item">
-            <label>Alasan</label>
-            <p>{{ selectedRequest()?.reason }}</p>
+            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">PHONE / WA</label>
+            <p class="text-slate-900 font-black">{{ selectedRequest()?.phone_active }}</p>
           </div>
         </div>
 
-        <form (submit)="saveStatusUpdate()">
-          <div class="form-grid">
+        <form (submit)="saveStatusUpdate()" class="grid grid-cols-1 gap-8">
             <div class="input-group">
-              <label>Pembaruan Status</label>
-              <select [(ngModel)]="managementForm.status" name="mStatus" [disabled]="selectedRequest()?.status === 'Selesai'">
-                <option value="Pending">Pending</option>
-                <option value="Diproses">Diproses</option>
-                <option value="Selesai">Selesai (Final)</option>
-                <option value="Ditolak">Ditolak</option>
+              <label class="text-slate-900 font-black mb-3 block">PEMBARUAN STATUS LAYANAN</label>
+              <select [(ngModel)]="managementForm.status" name="mStatus" 
+                class="custom-select font-black text-lg"
+                [disabled]="selectedRequest()?.status === 'Selesai'">
+                <option value="Pending">Pending (Menunggu)</option>
+                <option value="Diproses">Diproses (Verifikasi)</option>
+                <option value="Selesai">Selesai (Terbit Surat)</option>
+                <option value="Ditolak">Ditolak (Data Tidak Valid)</option>
               </select>
-              <p *ngIf="selectedRequest()?.status === 'Selesai'" class="text-xs text-muted mt-1 italic">
-                ⚠️ Pengajuan yang sudah selesai tidak dapat diubah lagi.
+              <p *ngIf="selectedRequest()?.status === 'Selesai'" class="text-[10px] text-rose-500 font-black mt-3 uppercase tracking-widest">
+                ⚠️ Pengajuan ini telah difinalisasi dan tidak dapat diubah kembali.
               </p>
             </div>
-            <div class="input-group full-width" style="grid-column: 1 / -1;">
-              <label>Catatan Admin (Notes)</label>
-              <textarea [(ngModel)]="managementForm.admin_note" name="mNote" placeholder="Tambahkan instruksi atau alasan di sini..." rows="3"></textarea>
+            <div class="input-group">
+              <label class="text-slate-900 font-black mb-3 block">CATATAN ADMINISTRASI (INTERNAL/EXTERNAL)</label>
+              <textarea [(ngModel)]="managementForm.admin_note" name="mNote" placeholder="Tulis catatan verifikasi atau alasan penolakan..." class="custom-input font-bold min-h-[120px] py-4"></textarea>
             </div>
 
-            <!-- Attachments Review -->
-            <div class="input-group full-width" style="grid-column: 1 / -1;" *ngIf="selectedRequest()?.attachments?.length">
-              <label>Dokumen Pendukung dari Warga</label>
-              <div class="attachment-gallery">
-                <a *ngFor="let url of selectedRequest()?.attachments; let i = index" [href]="url" target="_blank" class="attachment-preview">
-                  Berkas {{ i + 1 }}
+            <div class="input-group" *ngIf="selectedRequest()?.attachments?.length">
+              <label class="text-slate-900 font-black mb-3 block uppercase text-[10px] tracking-widest">BERKAS PENDUKUNG DARI WARGA</label>
+              <div class="flex flex-wrap gap-3">
+                <a *ngFor="let url of selectedRequest()?.attachments; let i = index" [href]="url" target="_blank" class="px-6 py-3 rounded-xl bg-primary text-white font-black text-[10px] tracking-widest hover:shadow-xl transition-all uppercase">
+                  DOKUMEN {{ i + 1 }} 👁️
                 </a>
               </div>
             </div>
-          </div>
-          <div class="form-actions mt-8">
-            <button type="button" class="btn-text" (click)="selectedRequest.set(null)">Tutup</button>
-            <button type="submit" class="btn-primary" [disabled]="selectedRequest()?.status === 'Selesai' || isSubmittingManagement()">
-              {{ isSubmittingManagement() ? 'Menyimpan...' : 'Simpan Perubahan' }}
-            </button>
-            <button *ngIf="managementForm.status === 'Selesai' && selectedRequest()?.status !== 'Selesai'" type="button" 
-              (click)="approveAndGenerateLetter()" class="btn-success" [disabled]="isSubmittingManagement()">
-              {{ isSubmittingManagement() ? 'Generating...' : 'Cetak & Selesaikan' }}
-            </button>
-          </div>
+
+            <footer class="pt-10 border-t border-slate-100 flex justify-end gap-4">
+              <button type="button" class="btn-outline px-8 rounded-xl font-black text-xs" (click)="selectedRequest.set(null)">TUTUP</button>
+              <button type="submit" class="btn-primary px-10 py-5 rounded-2xl shadow-xl font-black" [disabled]="selectedRequest()?.status === 'Selesai' || isSubmittingManagement()">
+                {{ isSubmittingManagement() ? 'MENYIMPAN...' : 'UPDATE STATUS ✅' }}
+              </button>
+              <button *ngIf="managementForm.status === 'Selesai' && selectedRequest()?.status !== 'Selesai'" type="button" 
+                (click)="approveAndGenerateLetter()" class="btn-primary bg-emerald-600 px-12 py-5 rounded-2xl shadow-emerald-200 shadow-xl font-black" [disabled]="isSubmittingManagement()">
+                {{ isSubmittingManagement() ? 'GENERATING...' : 'TERBITKAN SURAT & WA 📱' }}
+              </button>
+            </footer>
         </form>
       </div>
     </div>
 
     <!-- Success Notification -->
-    <div *ngIf="showSuccess()" class="toast-success fade-in">
-      <span>✅</span>
-      <p>Aksi Berhasil Dilakukan!</p>
+    <div *ngIf="showSuccess()" class="toast-success fade-in fixed bottom-10 right-10 z-[3000] bg-emerald-500 text-white p-6 rounded-3xl shadow-2xl flex items-center gap-4">
+      <span class="text-2xl">✅</span>
+      <div>
+        <p class="font-black text-sm uppercase tracking-widest">Berhasil!</p>
+        <p class="font-bold text-xs opacity-90">Data layanan telah berhasil diperbarui.</p>
+      </div>
     </div>
   `,
   styles: [`
-    .services-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;
-    }
-    .service-card {
-      display: flex; flex-direction: column; padding: 2rem; border-radius: 1.5rem;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;
-      &:hover { transform: translateY(-10px) scale(1.02); border-color: var(--primary); box-shadow: 0 20px 40px -10px var(--primary-glow); background: rgba(255,255,255,0.05); }
-      .icon-box { font-size: 3rem; margin-bottom: 1.5rem; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(99,102,241,0.1); border-radius: 1rem; }
-      .info { h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; } p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem; } }
-    }
-    .btn-primary-sm { 
-       background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px;
-       transition: 0.3s; &:hover { background: #4f46e5; box-shadow: 0 5px 15px var(--primary-glow); }
-    }
-    .luxury-table {
-      width: 100%; border-collapse: collapse;
-      th { text-align: left; padding: 1.25rem 1.5rem; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); }
-      td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-      .nik-cell { color: var(--primary); font-weight: 600; font-family: monospace; }
-      .badge {
-        padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
-        &.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
-        &.diproses { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
-        &.selesai { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-        &.ditolak { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-      }
-    }
-    .form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .form-card { 
-       width: 100%; max-width: 600px; padding: 3rem; max-height: 90vh; overflow-y: auto; 
-       &::-webkit-scrollbar { width: 6px; }
-       &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    }
-    .input-group { 
-       display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;
-       label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
-       input, select, textarea { 
-          background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.85rem 1rem; border-radius: 0.75rem; color: white; outline: none; transition: 0.2s;
-          &:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
-       }
-       select option { background: #111827; color: white; }
-    }
-    .form-actions { display: flex; justify-content: flex-end; gap: 1rem; }
-    .btn-text { background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 600; &:hover { color: #fff; } }
-    .toast-success { position: fixed; bottom: 2rem; right: 2rem; display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.1); backdrop-filter: blur(10px); animation: slideUp 0.3s ease; z-index: 2000; }
-    @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .p-0 { padding: 0 !important; }
-    .overflow-hidden { overflow: hidden; }
-    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
-    .clickable-row { cursor: pointer; &:hover td { background: rgba(var(--primary-rgb), 0.05) !important; color: #fff; } }
+    .services-page { padding-bottom: 5rem; }
+    
+    .pulse-dot { width: 10px; height: 10px; background: #3b82f6; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
 
-    /* Management Modal Extra */
-    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
-    .status-indicator { font-size: 0.7rem; padding: 0.3rem 0.75rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid rgba(255,255,255,0.1); 
-      &[data-status='Selesai'] { color: #10b981; border-color: #10b981; }
-      &[data-status='Diproses'] { color: #3b82f6; border-color: #3b82f6; }
-      &[data-status='Pending'] { color: #f59e0b; border-color: #f59e0b; }
-      &[data-status='Ditolak'] { color: #ef4444; border-color: #ef4444; }
+    .service-card {
+       &:hover .icon-wrapper { transform: rotate(5deg) scale(1.1); }
     }
-    .request-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; border-radius: 0.75rem; background: rgba(255,255,255,0.02); 
-      .sum-item { label { display: block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; } p { font-size: 0.9rem; font-weight: 500; } }
+
+    .custom-select, .custom-input {
+       width: 100%; background: #f8fafc; border: 1px solid var(--glass-border); padding: 1rem 1.25rem; border-radius: 1.25rem;
+       outline: none; font-weight: 600; font-size: 1rem; color: #000; transition: 0.3s;
+       &:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
     }
-    textarea { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 0.5rem; color: white; outline: none; width: 100%; font-family: inherit; &:focus { border-color: var(--primary); } }
-    select { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 0.5rem; color: white; outline: none; appearance: none;
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status-badge {
+       padding: 0.4rem 1rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block;
+       &.large { font-size: 0.85rem; padding: 0.6rem 1.5rem; border-radius: 1.25rem; }
+       &[data-status='pending'] { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+       &[data-status='diproses'] { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+       &[data-status='selesai'] { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+       &[data-status='ditolak'] { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     }
-    .btn-download-mini {
-      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
-      color: #10b981; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.9rem; cursor: pointer;
-      &:hover { background: rgba(16, 185, 129, 0.2); }
+
+    .btn-page-num {
+       width: 44px; height: 44px; border-radius: 12px; font-weight: 900; color: #64748b; transition: 0.3s;
+       &.active { background: var(--primary); color: white; box-shadow: 0 10px 20px var(--primary-glow); }
     }
-    .upload-zone {
-      background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color);
-      padding: 1.5rem; border-radius: 0.75rem; text-align: center; cursor: pointer;
-      color: var(--text-muted); font-size: 0.85rem; transition: all 0.2s;
-      &:hover { border-color: var(--primary); background: rgba(255,255,255,0.05); }
-    }
-    .file-list {
-      display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;
-    }
-    .file-chip {
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
-      padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
-      button { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0; }
-    }
-    .attachment-gallery {
-      display: flex; flex-wrap: wrap; gap: 0.5rem;
-    }
-    .attachment-preview {
-      background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2);
-      color: var(--primary); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; text-decoration: none;
-      &:hover { background: rgba(99, 102, 241, 0.2); }
-    }
-    .btn-success {
-      background: #10b981; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
-      font-weight: 600; cursor: pointer; transition: all 0.2s;
-      &:hover { background: #059669; transform: translateY(-1px); }
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-    }
+
+    .form-overlay { position: fixed; inset: 0; background: rgba(241, 245, 249, 0.9); backdrop-filter: blur(25px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .form-card { width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; }
   `]
 })
 export class ServicesComponent implements OnDestroy {
@@ -343,14 +307,14 @@ export class ServicesComponent implements OnDestroy {
     return this.recentRequests().slice(start, end);
   });
 
-  totalPages = computed(() => Math.ceil(this.recentRequests().length / this.pageSize()));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.recentRequests().length / this.pageSize())));
   totalPagesArray = computed(() => {
     const pages = this.totalPages();
     const current = this.currentPage();
     let start = Math.max(1, current - 2);
     let end = Math.min(pages, start + 4);
     if (end - start < 4) start = Math.max(1, end - 4);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    return Array.from({ length: end - start + 1 }, (_, i) => Math.max(1, start + i));
   });
 
   startRange = computed(() => (this.currentPage() - 1) * this.pageSize() + 1);
@@ -372,7 +336,6 @@ export class ServicesComponent implements OnDestroy {
       this.loadRequests();
     });
 
-    // Realtime Subscriptions
     this.subscriptions.push(
       this.dataService.subscribeToRequests(() => this.loadRequests())
     );
@@ -503,7 +466,6 @@ export class ServicesComponent implements OnDestroy {
       setTimeout(() => this.showSuccess.set(false), 3000);
       this.loadRequests();
 
-      // Implement WA Notification Prompt
       if (resident.phone) {
         const confirmWa = confirm(`Surat berhasil dicetak! Ingin mengirim notifikasi WhatsApp otomatis ke ${resident.full_name} (${resident.phone})?`);
         if (confirmWa) {

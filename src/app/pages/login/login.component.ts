@@ -98,7 +98,7 @@ import { take } from 'rxjs';
     .login-page {
       position: fixed;
       inset: 0;
-      background: #020617;
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -106,30 +106,36 @@ import { take } from 'rxjs';
     }
     .glow-sphere {
       position: absolute;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-      top: -200px;
-      left: -200px;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+      top: -300px;
+      left: -300px;
     }
     .glow-sphere.secondary {
       top: auto;
       left: auto;
-      bottom: -200px;
-      right: -200px;
-      background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+      bottom: -300px;
+      right: -300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
     }
     .login-card {
-      width: 400px;
-      padding: 3rem;
+      width: 420px;
+      padding: 3.5rem;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+      border-radius: 2rem;
       z-index: 10;
       text-align: center;
     }
     .brand {
       .logo-hex {
-        width: 60px;
-        height: 60px;
-        background: var(--primary);
+        width: 64px;
+        height: 64px;
+        background: #000000;
+        color: white;
         margin: 0 auto 1.5rem;
         clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
         display: flex;
@@ -137,53 +143,77 @@ import { take } from 'rxjs';
         justify-content: center;
         font-weight: 800;
         font-size: 1.5rem;
-        box-shadow: 0 0 20px var(--primary-glow);
       }
-      h2 { letter-spacing: -0.02em; }
+      h2 { 
+        color: #000000; 
+        font-weight: 800; 
+        font-size: 1.75rem;
+        letter-spacing: -0.02em; 
+      }
+      p { color: #64748b; font-size: 0.9rem; margin-top: 0.5rem; }
     }
     .input-group {
       text-align: left;
-      label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+      label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem; color: #000000; }
       .input-wrapper {
         position: relative;
         display: flex;
         align-items: center;
-        .icon { position: absolute; left: 1rem; color: var(--text-muted); }
+        .icon { position: absolute; left: 1.25rem; font-size: 1rem; }
         input {
           width: 100%;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid var(--border-color);
-          padding: 0.85rem 1rem 0.85rem 3rem;
-          border-radius: 0.75rem;
-          color: white;
+          background: #f1f5f9;
+          border: 2px solid transparent;
+          padding: 1rem 1rem 1rem 3.5rem;
+          border-radius: 1rem;
+          color: #000000;
+          font-weight: 500;
           outline: none;
-          transition: all 0.2s;
-          &:focus { border-color: var(--primary); background: rgba(255,255,255,0.06); }
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          &::placeholder { color: #94a3b8; }
+          &:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
         }
       }
     }
-    .w-full { width: 100%; }
-    .error-msg { color: #ef4444; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.2); }
-    .text-xs { font-size: 0.7rem; }
-    .mb-4 { margin-bottom: 1rem; }
-    .btn-link { 
-      background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0.25rem; font-size: 0.8rem;
-      &:hover { text-decoration: underline; }
-    }
-    .toggle-mode { line-height: 1.5; }
-    .divider {
-      display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.7rem;
-      &::before, &::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+    .btn-primary {
+      background: #000000;
+      color: white;
+      border: none;
+      padding: 1.15rem;
+      border-radius: 1rem;
+      font-weight: 700;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2); }
+      &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     }
     .btn-google {
-      display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-      background: white; color: #1f2937; border: none; padding: 0.75rem; border-radius: 0.75rem;
-      font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
-      img { width: 18px; }
-      &:hover { background: #f3f4f6; transform: translateY(-2px); }
-      &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+      display: flex; align-items: center; justify-content: center; gap: 1rem;
+      background: white; color: #000000; border: 2px solid #e2e8f0; padding: 1.15rem; border-radius: 1rem;
+      font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s;
+      width: 100%;
+      img { width: 22px; }
+      &:hover { border-color: #2563eb; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.1); }
     }
-    .mt-6 { margin-top: 1.5rem; }
+    .divider {
+      display: flex; align-items: center; gap: 1rem; color: #94a3b8; font-size: 0.75rem; font-weight: 700;
+      &::before, &::after { content: ''; flex: 1; height: 2px; background: #f1f5f9; }
+    }
+    .toggle-mode { 
+      margin-top: 2rem; 
+      p { color: #64748b; font-weight: 500; font-size: 0.85rem; }
+      .btn-link { 
+        background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; padding: 0.5rem; font-size: 0.9rem;
+        &:hover { text-decoration: underline; color: #1d4ed8; }
+      }
+    }
+    .error-msg { 
+      color: #dc2626; font-size: 0.85rem; font-weight: 600; background: #fef2f2; 
+      padding: 1rem; border-radius: 1rem; border: 1px solid #fee2e2; margin-bottom: 1.5rem;
+    }
+    .footer { p { color: #94a3b8; font-weight: 500; font-size: 0.75rem; } }
   `]
 })
 export class LoginComponent implements OnInit {
