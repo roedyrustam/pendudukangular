@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { KemendesaService } from '../../services/kemendesa.service';
 import { ServiceRequest, AppUser, Resident, Family, VillageConfig, Article, APBDes } from '../../models/data.models';
 import { AuthService } from '../../services/auth.service';
 import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'app-dashboard',
@@ -112,7 +113,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
             </article>
 
             <article class="card-luxury analytics-card bento-item span-2">
-              <h3 class="bento-title">🏘️ Distribusi Wilayah Teraktif</h3>
+              <h3 class="bento-title mb-4">🏘️ Distribusi Wilayah Teraktif</h3>
               <div class="hamlet-grid">
                  <div class="hamlet-item" *ngFor="let h of hamletBreakdown().slice(0,4)">
                     <div class="flex-between mb-2">
@@ -124,6 +125,18 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                     </div>
                  </div>
               </div>
+            </article>
+
+            <!-- GIS MAP PREVIEW -->
+            <article class="card-luxury analytics-card bento-item span-2 p-0 overflow-hidden relative" style="height: 400px;">
+               <div id="dashboardMap" class="h-full w-full z-0"></div>
+               <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-xl">
+                  <h3 class="text-[10px] font-black text-slate-900 tracking-widest uppercase">PETA SEBARAN PENDUDUK</h3>
+                  <p class="text-[9px] text-blue-600 font-bold mt-1">SINKRONISASI REAL-TIME AKTIF 🛰️</p>
+               </div>
+               <button class="absolute bottom-4 right-4 z-10 btn-primary py-2 px-4 text-xs rounded-lg shadow-2xl" routerLink="/gis">
+                  Buka Peta Penuh ➡️
+               </button>
             </article>
           </div>
 
@@ -143,9 +156,9 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                 <span class="icon">✍️</span>
                 <span class="label">Update Berita</span>
               </button>
-              <button class="action-btn" routerLink="/import">
-                <span class="icon">💾</span>
-                <span class="label">Backup</span>
+              <button class="action-btn" routerLink="/gis">
+                <span class="icon">🗺️</span>
+                <span class="label">Pemetaan</span>
               </button>
             </div>
           </section>
@@ -333,7 +346,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .year-badge { background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 900; }
   `]
 })
-export class DashboardComponent implements OnDestroy {
+export class DashboardComponent implements OnDestroy, AfterViewInit {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private regionService = inject(RegionService);
@@ -459,6 +472,54 @@ export class DashboardComponent implements OnDestroy {
       this.inventoryCount.set(items.length);
       this.totalInventoryValue.set(items.reduce((acc, curr) => acc + (curr.price || 0) * curr.quantity, 0));
     });
+  }
+
+  private map?: L.Map;
+
+  ngAfterViewInit() {
+    this.initMap();
+  }
+
+  private initMap() {
+    setTimeout(() => {
+      const mapContainer = document.getElementById('dashboardMap');
+      if (!mapContainer) return;
+
+      this.map = L.map('dashboardMap', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([-7.543, 110.123], 15);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(this.map);
+
+      this.renderMarkers();
+    }, 500);
+  }
+
+  private renderMarkers() {
+    if (!this.map) return;
+    
+    const residentsWithLocation = this.rawResidents.filter(r => r.latitude && r.longitude);
+    
+    residentsWithLocation.forEach(res => {
+      const marker = L.circleMarker([res.latitude!, res.longitude!], {
+        radius: 6,
+        fillColor: '#2563eb',
+        color: '#ffffff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+      }).addTo(this.map!);
+      
+      marker.bindPopup(`<b>${res.full_name}</b><br>${res.address || 'Alamat tidak tercatat'}`);
+    });
+
+    if (residentsWithLocation.length > 0) {
+      const group = new L.FeatureGroup(residentsWithLocation.map(r => L.marker([r.latitude!, r.longitude!])));
+      this.map.fitBounds(group.getBounds().pad(0.1));
+    }
   }
 
   refreshData() {

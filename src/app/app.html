@@ -31,6 +31,10 @@
             <span class="icon">🗺️</span>
             <span>Wawasan Wilayah</span>
           </a>
+          <a routerLink="/gis" routerLinkActive="active" class="nav-item">
+            <span class="icon">📍</span>
+            <span>GIS & Pemetaan</span>
+          </a>
           <a routerLink="/articles" routerLinkActive="active" class="nav-item">
             <span class="icon">📰</span>
             <span>Portal Desa</span>
@@ -43,9 +47,9 @@
             <span class="icon">📦</span>
             <span>Inventaris Aset</span>
           </a>
-          <a routerLink="/gis" routerLinkActive="active" class="nav-item">
-            <span class="icon">📍</span>
-            <span>GIS & Pemetaan</span>
+          <a routerLink="/analysis" routerLinkActive="active" class="nav-item">
+            <span class="icon">⚖️</span>
+            <span class="label">Analisis Bansos</span>
           </a>
         </ng-container>
 
@@ -57,23 +61,20 @@
           </a>
         </ng-container>
 
-        <!-- Admin Only -->
+        <!-- System Utility -->
+        <div class="nav-divider mt-6 mb-2 px-6 text-[10px] font-black text-slate-400 tracking-widest uppercase">PENGATURAN & UTILITAS</div>
+        
         <a *ngIf="userProfile.role === 'admin'" routerLink="/users" routerLinkActive="active" class="nav-item">
           <span class="icon">🛡️</span>
           <span>Manajemen User</span>
         </a>
-
-        <a routerLink="/import" routerLinkActive="active" class="nav-item">
-          <span class="icon">🚀</span>
-          <span class="label">Migrasi Data SQL</span>
-        </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙️</span>
-          <span>Pengaturan Akun</span>
+          <span>Konfigurasi Desa</span>
         </a>
-        <a routerLink="/analysis" routerLinkActive="active" class="nav-item">
-          <span class="icon">⚖️</span>
-          <span class="label">Analisis Bansos</span>
+        <a *ngIf="userProfile.role === 'admin'" routerLink="/import" routerLinkActive="active" class="nav-item">
+          <span class="icon">🚀</span>
+          <span class="label">Migrasi SQL</span>
         </a>
 
         <div class="system-status mt-auto p-4">
