@@ -63,43 +63,61 @@ import { Observable } from 'rxjs';
     </div>
   `,
   styles: [`
-    .users-page { padding: 2rem; }
+    .users-page { padding: 1.5rem 0; }
     .luxury-table {
       width: 100%;
-      border-collapse: collapse;
-      th { text-align: left; padding: 1.25rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; border-bottom: 1px solid var(--border-color); }
-      td { padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      border-collapse: separate;
+      border-spacing: 0;
+      th { 
+        text-align: left; padding: 1.5rem; 
+        color: #000000; font-size: 0.8rem; font-weight: 800; 
+        text-transform: uppercase; letter-spacing: 0.1em; 
+        border-bottom: 2px solid #f1f5f9; background: #f8fafc; 
+      }
+      td { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; color: #000000; }
     }
     .user-meta {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      .avatar { width: 32px; height: 32px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+      gap: 1rem;
+      font-weight: 700;
+      .avatar { 
+        width: 40px; height: 40px; background: #f1f5f9; 
+        display: flex; align-items: center; justify-content: center; 
+        border-radius: 1rem; font-size: 1.2rem;
+        border: 1px solid #e2e8f0;
+      }
     }
     .badge {
-      padding: 0.25rem 0.6rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 2rem;
       font-size: 0.7rem;
-      font-weight: 700;
-      &.admin { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
-      &.petugas { background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.2); }
-      &.warga { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+      font-weight: 800;
+      &.admin { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+      &.petugas { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+      &.warga { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     }
     .role-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
       .btn-icon {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid var(--border-color);
-        width: 32px;
-        height: 32px;
-        border-radius: 0.5rem;
+        background: #f1f5f9;
+        border: 2px solid transparent;
+        width: 38px;
+        height: 38px;
+        border-radius: 0.85rem;
         cursor: pointer;
-        transition: all 0.2s;
-        filter: grayscale(1);
-        opacity: 0.5;
-        &:hover { background: rgba(255,255,255,0.1); opacity: 1; }
-        &.active { filter: grayscale(0); opacity: 1; border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &:hover { background: #e2e8f0; transform: scale(1.1); }
+        &.active { 
+          background: white; 
+          border-color: #2563eb; 
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15); 
+        }
       }
     }
   `]

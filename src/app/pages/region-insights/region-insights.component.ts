@@ -100,34 +100,40 @@ import { Family, Resident } from '../../models/data.models';
     </div>
   `,
   styles: [`
-    .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
     .insight-card { 
-      height: 400px; display: flex; flex-direction: column; 
-      h3 { font-size: 1.1rem; margin-bottom: 1.5rem; }
+      height: 420px; display: flex; flex-direction: column; 
+      padding: 2.5rem;
+      h3 { font-size: 1.25rem; font-weight: 800; color: #000000; margin-bottom: 2rem; letter-spacing: -0.02em; }
     }
-    .scroll-area { flex: 1; overflow-y: auto; padding-right: 0.5rem; }
+    .scroll-area { flex: 1; overflow-y: auto; padding-right: 0.75rem; }
     
     .region-row { 
-      margin-bottom: 1.25rem;
-      .row-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; }
-      .region-label { font-weight: 500; }
-      .row-count { color: var(--primary); font-weight: 700; }
+      margin-bottom: 1.5rem;
+      .row-header { display: flex; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.9rem; }
+      .region-label { font-weight: 700; color: #1e293b; }
+      .row-count { color: #2563eb; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
     }
     
-    .progress-container { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+    .progress-container { height: 10px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
     .progress-bar { 
-      height: 100%; background: linear-gradient(90deg, var(--primary), #818cf8); border-radius: 4px; transition: width 1s ease;
-      &.alt { background: linear-gradient(90deg, #ec4899, #f472b6); }
+      height: 100%; background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 6px; transition: width 1s ease;
+      &.alt { background: linear-gradient(90deg, #1e293b, #475569); }
     }
     
-    .stats-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .stats-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
     .stat-mini-card { 
-      padding: 1.5rem;
-      label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-      p { font-size: 1.75rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem; }
+      padding: 2rem;
+      label { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; }
+      p { font-size: 2.5rem; font-weight: 900; color: #000000; margin-top: 0.5rem; letter-spacing: -0.04em; }
     }
     
-    .mt-8 { margin-top: 2rem; }
+    .mt-8 { margin-top: 2.5rem; }
+
+    @media (max-width: 1024px) {
+      .insights-grid { grid-template-columns: 1fr; }
+      .stats-overview { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class RegionInsightsComponent implements OnDestroy {

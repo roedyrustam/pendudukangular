@@ -1,51 +1,50 @@
-<div class="verify-container luxury-bg min-h-screen flex items-center justify-center p-4">
+<div class="verify-container min-h-screen flex items-center justify-center p-6">
   <div class="security-backdrop"></div>
   
-  <div class="verify-card card-luxury max-w-lg w-full p-10 text-center relative overflow-hidden">
+  <div class="verify-card card-luxury max-w-lg w-full p-12 text-center relative overflow-hidden">
     <!-- Security Glow Effect -->
     <div class="glow-orb" [class.success]="!loading() && !error() && request()?.status === 'Selesai'" [class.error]="error()"></div>
     
-    <div class="brand-header mb-8">
-      <div class="text-gradient font-black text-3xl tracking-tighter">DIGIWARGA</div>
-      <div class="text-xs text-primary tracking-[0.3em] font-bold mt-1">OFFICIAL VERIFIER</div>
+    <div class="brand-header mb-10">
+      <div class="text-black font-black text-4xl tracking-tighter">DIGIWARGA</div>
+      <div class="text-[10px] text-blue-600 tracking-[0.4em] font-black mt-2">OFFICIAL VERIFIER</div>
     </div>
 
     <!-- LOADING STATE -->
     <ng-container *ngIf="loading()">
-      <div class="loading-animation mb-6">
-        <div class="scan-line"></div>
+      <div class="loading-animation mb-8">
         <div class="spinner-premium"></div>
       </div>
-      <p class="text-muted animate-pulse">Menghubungkan ke Blockchain & Database Desa...</p>
+      <p class="text-slate-500 font-bold animate-pulse">Menghubungkan ke Database Pusat...</p>
     </ng-container>
 
     <!-- ERROR STATE -->
     <ng-container *ngIf="!loading() && error()">
-      <div class="status-icon-wrapper error mb-6">
-        <span class="icon">🚫</span>
+      <div class="status-icon-wrapper error mb-8">
+        <span class="icon">✕</span>
       </div>
-      <h2 class="text-2xl font-bold mb-3 text-red-400">Verifikasi Gagal</h2>
-      <div class="error-box p-4 rounded-xl border border-red-500/20 bg-red-500/5 mb-6">
-        <p class="text-sm text-red-300">{{ error() }}</p>
+      <h2 class="text-3xl font-black mb-4 text-slate-900">Verifikasi Gagal</h2>
+      <div class="error-box p-5 rounded-2xl border-2 border-red-100 bg-red-50 mb-8">
+        <p class="text-sm font-bold text-red-600">{{ error() }}</p>
       </div>
-      <p class="text-xs text-muted mb-6">Dokumen ini tidak terdaftar dalam sistem resmi kami atau telah kedaluwarsa.</p>
+      <p class="text-xs text-slate-400 font-bold mb-8 uppercase tracking-widest">Dokumen Tidak Sah / Tidak Ditemukan</p>
     </ng-container>
 
     <!-- SUCCESS STATE -->
     <ng-container *ngIf="!loading() && !error() && request()">
       <div class="status-icon-wrapper" [class.success]="request()?.status === 'Selesai'" [class.warning]="request()?.status !== 'Selesai'">
-        <span class="icon">{{ request()?.status === 'Selesai' ? '🛡️' : '⏳' }}</span>
+        <span class="icon">{{ request()?.status === 'Selesai' ? '✓' : '⏳' }}</span>
         <div class="verified-seal" *ngIf="request()?.status === 'Selesai'">VERIFIED</div>
       </div>
       
-      <h2 class="text-3xl font-black mb-2" [class.text-primary]="request()?.status === 'Selesai'">
-        {{ request()?.status === 'Selesai' ? 'DOKUMEN ASLI' : 'PROSES VALIDASI' }}
+      <h2 class="text-4xl font-black mb-3 text-slate-900">
+        {{ request()?.status === 'Selesai' ? 'DOKUMEN ASLI' : 'VALIDASI PENDING' }}
       </h2>
-      <p class="text-sm text-muted mb-8 leading-relaxed">
-        Dokumen ini telah terverifikasi secara digital melalui sistem administrasi desa terpadu DigiWarga.
+      <p class="text-sm text-slate-500 font-bold mb-10 leading-relaxed px-4">
+        Dokumen ini telah terdaftar secara sah dalam basis data pemerintah desa.
       </p>
 
-      <div class="verification-details card-luxury bg-white/5 p-6 rounded-2xl text-left border border-white/10 mb-8">
+      <div class="verification-details bg-slate-50 p-8 rounded-3xl text-left border-2 border-slate-100 mb-10">
         <div class="detail-row">
           <label>ID DOKUMEN</label>
           <div class="val monospace">{{ request()?.id }}</div>
@@ -55,25 +54,25 @@
           <div class="val">{{ request()?.service_type }}</div>
         </div>
         <div class="detail-row">
-          <label>PEMEGANG DOKUMEN</label>
+          <label>NAMA PENDUDUK</label>
           <div class="val">{{ resident()?.full_name || 'N/A' }}</div>
         </div>
         <div class="detail-row">
-          <label>NIK</label>
+          <label>NOMOR INDUK KEPENDUDUKAN</label>
           <div class="val monospace">{{ request()?.nik }}</div>
         </div>
         <div class="detail-row no-border">
           <label>TANGGAL PENGESAHAN</label>
-          <div class="val">{{ (request()?.processed_at || request()?.created_at) | date:'dd MMMM yyyy, HH:mm' }} WITA</div>
+          <div class="val">{{ (request()?.processed_at || request()?.created_at) | date:'dd MMMM yyyy, HH:mm' }}</div>
         </div>
       </div>
 
-      <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-primary-luxury w-full py-4 text-lg font-bold">
-        <span>📄</span> UNDUH SALINAN RESMI
+      <a *ngIf="request()?.letter_url" [href]="request()?.letter_url" target="_blank" class="btn-download w-full py-5 text-lg font-black">
+        UNDUH SALINAN RESMI 📥
       </a>
     </ng-container>
 
-    <div class="footer-note mt-10 text-[10px] text-muted uppercase tracking-widest opacity-50">
+    <div class="footer-note mt-12 text-[10px] text-slate-400 font-black uppercase tracking-widest opacity-80">
       &copy; 2026 Pemerintah Desa Maju Jaya • Sistem DigiWarga v3.0
     </div>
   </div>
@@ -82,67 +81,71 @@
 <style>
 .verify-container {
   position: relative;
-  overflow: hidden;
-  background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+  background: #f8fafc;
+  background: radial-gradient(circle at top right, #eff6ff 0%, #f8fafc 100%);
 }
 .security-backdrop {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  opacity: 0.4;
 }
 .verify-card {
   z-index: 10;
-  border: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(25px);
-  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  border: none;
+  background: white;
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.1);
+  border-radius: 3rem;
 }
 .glow-orb {
-  position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
-  width: 200px; height: 100px; background: var(--primary);
-  filter: blur(80px); opacity: 0.15; transition: all 1s ease;
+  position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+  width: 300px; height: 150px; background: #2563eb;
+  filter: blur(80px); opacity: 0.1; transition: all 1s ease;
 }
-.glow-orb.success { background: #10b981; opacity: 0.25; }
-.glow-orb.error { background: #ef4444; opacity: 0.25; }
+.glow-orb.success { background: #22c55e; opacity: 0.15; }
+.glow-orb.error { background: #ef4444; opacity: 0.15; }
 
 .status-icon-wrapper {
-  width: 100px; height: 100px; margin: 0 auto 2rem;
-  background: rgba(255,255,255,0.03); border-radius: 50%;
+  width: 120px; height: 120px; margin: 0 auto 2.5rem;
+  background: #f1f5f9; border-radius: 3rem;
   display: flex; align-items: center; justify-content: center;
-  position: relative; border: 1px solid rgba(255,255,255,0.1);
-  .icon { font-size: 3rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
-  &.success { border-color: #10b981; background: rgba(16,185,129,0.05); .icon { filter: drop-shadow(0 0 15px #10b981); } }
-  &.warning { border-color: #f59e0b; background: rgba(245,158,11,0.05); }
-  &.error { border-color: #ef4444; background: rgba(239,68,68,0.05); }
+  position: relative; transition: all 0.5s;
+  .icon { font-size: 4rem; font-weight: 900; }
+  &.success { background: #dcfce7; color: #15803d; transform: rotate(-5deg); }
+  &.warning { background: #fef3c7; color: #b45309; }
+  &.error { background: #fee2e2; color: #dc2626; }
 }
 
 .verified-seal {
-  position: absolute; bottom: -5px; background: #10b981; color: #000;
-  font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px;
-  box-shadow: 0 4px 10px rgba(16,185,129,0.4);
+  position: absolute; bottom: -10px; background: #000000; color: #ffffff;
+  font-size: 10px; font-weight: 900; padding: 4px 12px; border-radius: 2rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
 .verification-details {
   .detail-row {
-    padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-    label { display: block; font-size: 10px; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
-    .val { font-size: 0.95rem; font-weight: 600; color: #fff; }
-    .monospace { font-family: monospace; letter-spacing: 0.5px; color: var(--primary); }
+    padding: 1rem 0; border-bottom: 2px solid #f1f5f9;
+    label { display: block; font-size: 10px; color: #64748b; font-weight: 900; margin-bottom: 0.5rem; letter-spacing: 0.1em; }
+    .val { font-size: 1.1rem; font-weight: 800; color: #000000; }
+    .monospace { font-family: 'JetBrains Mono', monospace; color: #2563eb; }
     &.no-border { border-bottom: none; }
   }
 }
 
-.btn-primary-luxury {
-  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-  color: white; border: none; border-radius: 12px;
+.btn-download {
+  background: #000000;
+  color: white; border: none; border-radius: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-  &:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5); }
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+  text-decoration: none;
+  &:hover { transform: translateY(-4px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); background: #2563eb; }
 }
 
 .spinner-premium {
-  width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.05);
-  border-top-color: var(--primary); border-radius: 50%;
+  width: 60px; height: 60px; border: 4px solid #f1f5f9;
+  border-top-color: #2563eb; border-radius: 50%;
   animation: spin 1s infinite linear; margin: 0 auto;
 }
 
