@@ -42,45 +42,51 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
         </div>
       </div>
 
-      <!-- ADMIN & PETUGAS VIEW -->
-      <ng-container *ngIf="profile.role !== 'warga'">
-        <div class="dashboard-grid fade-in">
-          <div class="stat-card card-luxury">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-              <h3>Total Penduduk</h3>
-              <p class="stat-value">{{ totalResidents() }}</p>
-              <span class="stat-trend positive">+{{ recentResidentsCount() }} Baru</span>
-            </div>
-          </div>
-
-          <div class="stat-card card-luxury">
-            <div class="stat-icon">🏘️</div>
-            <div class="stat-info">
-              <h3>Total Keluarga (KK)</h3>
-              <p class="stat-value">{{ totalFamilies() }}</p>
-              <span class="stat-trend opacity-70">Sistem Terintegrasi</span>
-            </div>
-          </div>
-
-          <div class="stat-card card-luxury">
-            <div class="stat-icon">📥</div>
-            <div class="stat-info">
-              <h3>Permintaan Layanan</h3>
-              <p class="stat-value">{{ activeRequestsCount() }}</p>
-              <span class="stat-trend" [class.pending]="pendingRequestsCount() > 0">
-                {{ pendingRequestsCount() }} Perlu Diproses
-              </span>
+      <!-- 1. Executive Quick Stats (4-Column) -->
+      <div class="quick-stats-grid mb-6 fade-in">
+        <div class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini">👥</div>
+          <div class="stat-details">
+            <span class="label">Total Penduduk</span>
+            <div class="flex items-baseline gap-2">
+              <span class="value">{{ totalResidents() }}</span>
+              <span class="trend text-success">+{{ recentResidentsCount() }}</span>
             </div>
           </div>
         </div>
+        <div class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini">🏘️</div>
+          <div class="stat-details">
+            <span class="label">Total KK</span>
+            <span class="value">{{ totalFamilies() }}</span>
+          </div>
+        </div>
+        <div class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini">📥</div>
+          <div class="stat-details">
+            <span class="label">Antrian Layanan</span>
+            <div class="flex items-baseline gap-2">
+              <span class="value">{{ activeRequestsCount() }}</span>
+              <span class="trend" [class.pending]="pendingRequestsCount() > 0">{{ pendingRequestsCount() }} Baru</span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card card-luxury glass-panel">
+          <div class="stat-icon-mini">📦</div>
+          <div class="stat-details">
+            <span class="label">Aset Desa</span>
+            <span class="value">{{ inventoryCount() }}</span>
+          </div>
+        </div>
+      </div>
 
-        <!-- Optimized Bento Grid Analytics -->
-        <div class="bento-grid mt-6 fade-in">
-          <!-- Gender Analytics -->
-          <div class="card-luxury analytics-card bento-item">
-            <h3>📊 Demografi Gender</h3>
-            <div class="chart-simple">
+      <!-- 2. Main Work Area (Grid 2/3 & 1/3) -->
+      <div class="dashboard-main-grid fade-in">
+        <!-- Center Panel: Analytics & Maps -->
+        <div class="center-panel">
+          <div class="bento-grid">
+            <div class="card-luxury analytics-card bento-item">
+              <h3>📊 Demografi Gender</h3>
               <div class="chart-bar">
                 <div class="bar male" [style.width.%]="malePercentage()"></div>
                 <div class="bar female" [style.width.%]="femalePercentage()"></div>
@@ -90,90 +96,101 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
                 <div class="label"><span class="dot female"></span> {{ femalePercentage() }}% Perempuan</div>
               </div>
             </div>
-          </div>
 
-          <!-- Service Status -->
-          <div class="card-luxury analytics-card bento-item">
-            <h3>📋 Status Pelayanan</h3>
-            <div class="status-funnel">
-              <div class="funnel-item" *ngFor="let s of statusBreakdown().slice(0,3)">
-                <label>{{ s.label }}</label>
-                <div class="funnel-bar-bg">
-                  <div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div>
+            <div class="card-luxury analytics-card bento-item">
+              <h3>📋 Status Layanan</h3>
+              <div class="status-funnel">
+                <div class="funnel-item" *ngFor="let s of statusBreakdown().slice(0,3)">
+                  <div class="funnel-label-box flex items-center gap-2">
+                    <span class="dot" [attr.data-status]="s.label"></span>
+                    <label class="text-xs">{{ s.label }}</label>
+                  </div>
+                  <div class="funnel-bar-bg"><div class="funnel-bar" [style.width.%]="s.percent" [attr.data-status]="s.label"></div></div>
+                  <span class="count text-xs">{{ s.count }}</span>
                 </div>
-                <span class="count">{{ s.count }}</span>
+              </div>
+            </div>
+
+            <div class="card-luxury analytics-card bento-item span-2">
+              <h3>🏘️ Distribusi Wilayah</h3>
+              <div class="hamlet-grid">
+                 <div class="hamlet-item" *ngFor="let h of hamletBreakdown().slice(0,4)">
+                    <div class="flex-between mb-1">
+                       <span class="name text-xs">{{ h.label }}</span>
+                       <span class="pct text-xs">{{ h.count }} KK</span>
+                    </div>
+                    <div class="progress-lite">
+                       <div class="bar" [style.width.%]="h.percent"></div>
+                    </div>
+                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Hamlet Distribution -->
-          <div class="card-luxury analytics-card bento-item span-2">
-            <h3>🏘️ Distribusi Wilayah (Dusun)</h3>
-            <div class="hamlet-grid">
-               <div class="hamlet-item" *ngFor="let h of hamletBreakdown().slice(0,4)">
-                  <div class="flex-between mb-1">
-                     <span class="name">{{ h.label }}</span>
-                     <span class="pct">{{ h.count }} KK</span>
-                  </div>
-                  <div class="progress-lite">
-                     <div class="bar" [style.width.%]="h.percent"></div>
-                  </div>
-               </div>
+          <!-- Quick Actions Hub -->
+          <div class="quick-actions-hub card-luxury glass-panel mt-6">
+            <h3>⚡ Akses Cepat</h3>
+            <div class="actions-grid">
+              <button class="action-btn" routerLink="/families">
+                <span class="icon">➕</span>
+                <span>Tambah KK</span>
+              </button>
+              <button class="action-btn" routerLink="/services">
+                <span class="icon">📄</span>
+                <span>Buat Surat</span>
+              </button>
+              <button class="action-btn" routerLink="/articles">
+                <span class="icon">✍️</span>
+                <span>Tulis Berita</span>
+              </button>
+              <button class="action-btn" routerLink="/import">
+                <span class="icon">💾</span>
+                <span>Backup Data</span>
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="content-row mt-6 fade-in">
-          <div class="card-luxury bento-item">
+        <!-- Side Panel: Urgent & Finance -->
+        <div class="side-panel">
+          <div class="card-luxury bento-item mb-6">
             <div class="flex-between mb-4">
-              <h3>📥 Antrian Layanan</h3>
-              <button class="btn-text-sm" routerLink="/services">Lihat Semua</button>
+              <h3>📥 Aktivitas Layanan</h3>
+              <button class="btn-text-sm" routerLink="/services">Semua</button>
             </div>
-            <div class="request-list">
-              <div *ngFor="let req of latestRequests()" class="request-item">
-                <div class="req-info">
-                   <span class="req-type">{{ req.service_type }}</span>
-                   <span class="req-nik">{{ req.nik }}</span>
+            <div class="request-list-compact">
+              <div *ngFor="let req of latestRequests().slice(0,3)" class="request-item-small">
+                <div class="req-circle" [attr.data-status]="req.status">{{ req.service_type[0] }}</div>
+                <div class="req-body">
+                   <p class="type">{{ req.service_type }}</p>
+                   <p class="nik">{{ req.nik }}</p>
                 </div>
-                <span class="badge" [ngClass]="req.status.toLowerCase()">{{ req.status }}</span>
+                <span class="status-icon" [attr.data-status]="req.status"></span>
               </div>
-              <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-8">Tidak ada antrian.</p>
+              <p *ngIf="latestRequests().length === 0" class="text-muted text-center py-4">Antrian kosong.</p>
             </div>
           </div>
 
-          <div class="side-widgets">
-            <!-- Budget Widget -->
-            <div class="card-luxury budget-widget bento-item mb-4" *ngIf="budgetSummary()">
-              <div class="flex-between mb-4">
-                <h3>💰 APBDes {{ budgetSummary()?.year }}</h3>
-                <button class="btn-text-sm" routerLink="/apbdes">Detail</button>
-              </div>
-              <div class="budget-row flex gap-4">
-                <div class="budget-stat flex-1">
-                  <label>Pendapatan</label>
-                  <p class="val">Rp {{ budgetSummary()?.income | number }}</p>
-                </div>
-                <div class="budget-stat flex-1">
-                  <label>Realisasi</label>
-                  <p class="val text-primary">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</p>
-                </div>
-              </div>
+          <!-- Finance Widget -->
+          <div class="card-luxury budget-widget bento-item" *ngIf="budgetSummary()">
+            <div class="flex-between mb-4">
+              <h3>💰 Realisasi APBDes</h3>
+              <span class="year-badge">{{ budgetSummary()?.year }}</span>
             </div>
-
-            <!-- Inventory Widget -->
-            <div class="card-luxury inventory-mini bento-item" *ngIf="inventoryCount() > 0">
-               <div class="flex-between mb-4">
-                 <h3>📦 Aset Desa</h3>
-                 <button class="btn-text-sm" routerLink="/inventory">Kelola</button>
-               </div>
-               <div class="stat-main">
-                  <span class="count">{{ inventoryCount() }}</span>
-                  <span class="unit">Barang</span>
-               </div>
-               <p class="text-[10px] text-muted mt-2">Nilai Aset: Rp {{ totalInventoryValue() | number }}</p>
+            <div class="finance-card glass-panel p-4 mb-4">
+              <label class="text-[10px] text-muted">TOTAL PENDAPATAN</label>
+              <p class="val text-lg">Rp {{ budgetSummary()?.income | number }}</p>
+            </div>
+            <div class="finance-progress">
+              <div class="flex-between mb-1">
+                <span class="text-xs">Persentase Serapan</span>
+                <span class="text-xs font-bold text-primary">{{ budgetSummary()?.expensePercent | number:'1.0-1' }}%</span>
+              </div>
+              <div class="progress-lite"><div class="bar" [style.width.%]="budgetSummary()?.expensePercent"></div></div>
             </div>
           </div>
         </div>
+      </div>
 
         <!-- Latest Articles / Portal Desa -->
         <div class="articles-dashboard mt-8 fade-in" style="animation-delay: 0.2s">
@@ -257,46 +274,85 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     </div>
   `,
   styles: [`
-    .welcome-banner {
       padding: 3rem;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
       h1 { font-size: 2rem; margin-bottom: 0.5rem; }
     }
-    .village-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      .village-code {
-        font-family: monospace;
-        font-size: 0.7rem;
-        background: rgba(99, 102, 241, 0.15);
-        color: var(--primary);
-        padding: 0.1rem 0.5rem;
-        border-radius: 0.25rem;
-        margin-left: 0.5rem;
-      }
-    }
     .idm-badge {
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 0.15rem 0.6rem;
-      border-radius: 2rem;
-      background: rgba(255,255,255,0.1);
-      color: #fff;
+      font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.6rem; border-radius: 2rem;
       &[data-status='Mandiri'] { background: #10b981; }
       &[data-status='Maju'] { background: #3b82f6; }
       &[data-status='Berkembang'] { background: #f59e0b; }
     }
-    .custom-select {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: white;
-      padding: 0.4rem 0.8rem;
-      border-radius: 0.5rem;
-      font-size: 0.85rem;
-      outline: none;
-      & > option { background: var(--darkness); color: white; }
+    .quick-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      .stat-card {
+        display: flex; align-items: center; gap: 1rem; padding: 1.25rem;
+        .stat-icon-mini { font-size: 1.5rem; background: rgba(255,255,255,0.05); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 0.75rem; }
+        .stat-details {
+          .label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; display: block; margin-bottom: 0.15rem; }
+          .value { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1; }
+          .trend { font-size: 0.7rem; font-weight: 700; &.pending { color: #f59e0b; } }
+          .text-success { color: #10b981; }
+        }
+      }
     }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .dashboard-main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+    .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .span-2 { grid-column: span 2; }
+    .analytics-card { h3 { font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; } }
+    .quick-actions-hub {
+      padding: 1.5rem;
+      h3 { font-size: 0.85rem; margin-bottom: 1.25rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+      .actions-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+        .action-btn {
+          background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 1rem; border-radius: 1rem;
+          display: flex; flex-direction: column; align-items: center; gap: 0.75rem; cursor: pointer; transition: all 0.3s;
+          &:hover { background: var(--primary-glow); border-color: var(--primary); transform: translateY(-3px); }
+          .icon { font-size: 1.5rem; }
+          span:not(.icon) { font-size: 0.75rem; font-weight: 600; color: white; }
+        }
+      }
+    }
+    .request-list-compact {
+      display: flex; flex-direction: column; gap: 0.75rem;
+      .request-item-small {
+        display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: 0.75rem; border: 1px solid var(--border-color);
+        .req-circle {
+           width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;
+           &[data-status='Selesai'] { background: #10b981; color: white; }
+           &[data-status='Diproses'] { background: #3b82f6; color: white; }
+           &[data-status='Pending'] { background: #f59e0b; color: white; }
+        }
+        .req-body { flex: 1; .type { font-size: 0.8rem; font-weight: 600; margin: 0; } .nik { font-size: 0.65rem; color: var(--text-muted); font-family: monospace; } }
+        .status-icon { width: 8px; height: 8px; border-radius: 50%; &[data-status='Selesai'] { background: #10b981; box-shadow: 0 0 8px #10b981; } &[data-status='Diproses'] { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; } &[data-status='Pending'] { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; } }
+      }
+    }
+    .finance-card { background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border-radius: 1rem; .val { font-family: monospace; font-weight: 700; color: #fff; } }
+    .year-badge { background: var(--primary); color: white; padding: 0.15rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 800; }
+    .chart-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .bar.male { background: #3b82f6; }
+    .bar.female { background: #ec4899; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; &.male { background: #3b82f6; } &.female { background: #ec4899; } }
+    .label { font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+    .status-funnel { display: flex; flex-direction: column; gap: 0.75rem; }
+    .funnel-item { 
+      display: grid; grid-template-columns: 80px 1fr 30px; align-items: center; gap: 0.75rem;
+      label { font-size: 0.75rem; color: var(--text-muted); }
+      .funnel-bar-bg { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; }
+      .funnel-bar { height: 100%; &[data-status='Selesai'] { background: #10b981; } &[data-status='Diproses'] { background: #3b82f6; } &[data-status='Pending'] { background: #f59e0b; } }
+      .count { font-weight: 700; font-size: 0.8rem; text-align: right; }
+    }
+    .hamlet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .progress-lite { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; .bar { height: 100%; background: var(--primary); } }
+    @media (max-width: 1200px) { .dashboard-main-grid { grid-template-columns: 1.5fr 1fr; } }
+    @media (max-width: 1080px) { .quick-stats-grid { grid-template-columns: 1fr 1fr; } .dashboard-main-grid { grid-template-columns: 1fr; } .quick-actions-hub .actions-grid { grid-template-columns: 1fr 1fr; } }
+    .articles-grid-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; .art-mini-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.3s; &:hover { transform: translateY(-5px); border-color: var(--primary); } img { width: 100%; height: 80px; object-fit: cover; } h4 { font-weight: 600; line-height: 1.3; font-size: 0.8rem; } } }
+    .dev-tools-dashboard { border: 1px dashed var(--primary); background: rgba(99, 102, 241, 0.05); }
+    .btn-primary-sm { background: var(--primary); color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .badge {
       padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;
       &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
@@ -304,202 +360,17 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
       &.warga { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
     }
     .live-sync-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      padding: 0.25rem 0.6rem;
-      border-radius: 1rem;
-      .pulse-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #10b981;
-        border-radius: 50%;
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        animation: pulse 1.5s infinite;
-      }
-      .label {
-        font-size: 0.6rem;
-        font-weight: 700;
-        color: #10b981;
-        letter-spacing: 0.05em;
-      }
+      display: flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.25rem 0.6rem; border-radius: 1rem;
+      .pulse-dot { width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+      .label { font-size: 0.6rem; font-weight: 700; color: #10b981; }
     }
-    @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
+    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .custom-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.85rem; outline: none; }
     .personal-info-card, .family-card, .requests-card { padding: 2rem; }
-    .info-item {
-      label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-      p { font-weight: 600; color: white; }
-    }
+    .info-item { label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; } p { font-weight: 600; color: white; } }
     .kk-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-family: monospace; font-size: 1rem; display: inline-block; font-weight: 700; }
     .btn-text-sm { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; &:hover { text-decoration: underline; } }
-    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-    
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    .security-seal {
-      display: flex; align-items: center; gap: 0.5rem;
-      .seal-ring { width: 20px; height: 20px; border: 2px solid #10b981; border-radius: 50%; }
-      .seal-content { display: flex; align-items: center; gap: 0.25rem; font-size: 0.6rem; color: #10b981; }
-    }
-    .stat-card { display: flex; align-items: center; gap: 1.5rem; }
-    .stat-icon { font-size: 2.5rem; background: rgba(255, 255, 255, 0.05); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 1rem; }
-    .stat-value { font-size: 2.5rem; font-weight: 700; color: var(--primary); line-height: 1; margin: 0.2rem 0; }
-    .stat-trend {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      &.positive { color: #10b981; }
-      &.pending { color: #f59e0b; font-weight: 600; }
-    }
-    .grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; }
-    .request-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    .request-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 1rem;
-      background: rgba(255,255,255,0.03);
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-color);
-      .req-info { display: flex; flex-direction: column; .req-type { font-weight: 600; font-size: 0.9rem; } .req-nik { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; } }
-    }
-    .cta-card { display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(30, 41, 59, 0.7) 100%); }
-    .btn-outline { background: none; border: 1px solid var(--border-color); color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; cursor: pointer; &:hover { background: rgba(255,255,255,0.05); } }
-    .btn-secondary-sm { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.4rem 0.8rem; border-radius: 0.4rem; font-size: 0.7rem; cursor: pointer; &:hover { color: white; background: rgba(255,255,255,0.1); } }
-    
-    .bento-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-    }
-    .bento-item { height: 100%; }
-    .span-2 { grid-column: span 2; }
-    
-    .analytics-card { 
-      h3 { font-size: 0.9rem; margin-bottom: 1.25rem; opacity: 0.7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; } 
-    }
-    
-    .content-row {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 1.5rem;
-      align-items: start;
-    }
-    
-    .welcome-banner {
-      padding: 2rem 2.5rem;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%);
-      h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
-    }
-    .idm-badge {
-       font-size: 0.65rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.15rem 0.5rem; border-radius: 1rem;
-    }
-    .hamlet-grid {
-       display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
-    }
-    .inventory-mini {
-       .stat-main {
-          display: flex; align-items: baseline; gap: 0.5rem;
-          .count { font-size: 2rem; font-weight: 800; color: var(--primary); }
-          .unit { font-size: 0.8rem; color: var(--text-muted); }
-       }
-    }
-    .budget-row {
-       .val { font-size: 1.1rem; font-weight: 700; }
-    }
-    
-    .chart-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.05); }
-    .bar.male { background: #3b82f6; }
-    .bar.female { background: #ec4899; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; &.male { background: #3b82f6; } &.female { background: #ec4899; } }
-    .label { font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
-
-    .status-funnel { display: flex; flex-direction: column; gap: 0.75rem; }
-    .funnel-item { 
-      display: grid; grid-template-columns: 80px 1fr 30px; align-items: center; gap: 0.75rem;
-      label { font-size: 0.75rem; color: var(--text-muted); }
-      .funnel-bar-bg { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; }
-      .funnel-bar { 
-        height: 100%; 
-        &[data-status='Selesai'] { background: #10b981; }
-        &[data-status='Diproses'] { background: #3b82f6; }
-        &[data-status='Pending'] { background: #f59e0b; }
-      }
-      .count { font-weight: 700; font-size: 0.8rem; text-align: right; }
-    }
-
-    @media (max-width: 1080px) {
-       .bento-grid { grid-template-columns: 1fr 1fr; }
-       .content-row { grid-template-columns: 1fr; }
-       .span-2 { grid-column: span 1; }
-    }
-
-    .articles-grid-mini {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      .art-mini-card {
-        padding: 0;
-        overflow: hidden;
-        cursor: pointer;
-        transition: transform 0.3s;
-        &:hover { transform: translateY(-5px); border-color: var(--primary); }
-        img { width: 100%; height: 100px; object-fit: cover; }
-        h4 { font-weight: 600; line-height: 1.3; }
-      }
-    }
-
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .text-xs { font-size: 0.7rem; }
-    .opacity-70 { opacity: 0.7; }
-    .hamlet-list {
-       display: flex; flex-direction: column; gap: 1rem;
-       .hamlet-item {
-          .name { font-size: 0.85rem; font-weight: 500; color: #fff; }
-          .pct { font-size: 0.75rem; color: var(--primary); font-weight: 700; }
-          .progress-lite {
-             height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;
-             .bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--neon-cyan)); }
-          }
-       }
-    }
-    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-    .mt-12 { margin-top: 3rem; }
-    .gap-2 { gap: 0.5rem; }
-    .text-primary { color: var(--primary); }
-    .dev-tools-dashboard {
-       border: 1px dashed var(--primary);
-       background: rgba(99, 102, 241, 0.05);
-    }
-    .btn-primary-sm {
-       background: var(--primary);
-       color: white;
-       border: none;
-       padding: 0.35rem 0.75rem;
-       border-radius: 0.5rem;
-       font-size: 0.75rem;
-       font-weight: 600;
-       cursor: pointer;
-       &:hover { filter: brightness(1.1); }
-    }
   `]
 })
 export class DashboardComponent implements OnDestroy {
