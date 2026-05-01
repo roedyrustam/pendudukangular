@@ -42,6 +42,7 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
         </div>
       </div>
 
+      <ng-container *ngIf="profile.role !== 'warga'">
       <!-- 1. Executive Quick Stats (4-Column) -->
       <div class="quick-stats-grid mb-6 fade-in">
         <div class="stat-card card-luxury glass-panel">

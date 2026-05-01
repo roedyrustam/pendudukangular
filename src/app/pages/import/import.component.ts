@@ -324,10 +324,15 @@ export class ImportComponent {
 
     this.addLog('🔄 Step 1: Menyiapkan Data Penduduk...');
     const rawResidents = this.parseSQL('tweb_penduduk');
-    const residentNameMap = new Map<string, string>();
+    const residentIdMap = new Map<any, string>();
+    const residentNikMap = new Map<string, string>();
+    
     rawResidents.forEach(r => {
       const nikStr = String(r.nik).replace('.0', '');
-      residentNameMap.set(nikStr, r.nama);
+      if (r.nama) {
+        residentIdMap.set(r.id, r.nama);
+        residentNikMap.set(nikStr, r.nama);
+      }
     });
 
     this.addLog('🔄 Step 2: Mengimpor Data Keluarga & Wilayah...');
@@ -337,15 +342,22 @@ export class ImportComponent {
       const rt = cluster?.rt || f.rt || '00';
       const rw = cluster?.rw || f.rw || '00';
       
-      // Resolve head of family name if possible
-      let headName = f.nama_kepala || 'Kepala Keluarga';
-      if (f.nik_kepala && residentNameMap.has(String(f.nik_kepala))) {
-        headName = residentNameMap.get(String(f.nik_kepala)) || headName;
+      // Multi-step name resolution for Head of Family
+      let headName = f.nama_kepala;
+      
+      // Try resolving by internal ID (Common in OpenSID/Sidepe)
+      if (!headName && f.nik_kepala) {
+        headName = residentIdMap.get(f.nik_kepala) || residentIdMap.get(Number(f.nik_kepala));
+      }
+      
+      // Try resolving by NIK string
+      if (!headName && f.nik_kepala) {
+        headName = residentNikMap.get(String(f.nik_kepala).replace('.0', ''));
       }
 
       return {
-        kk_number: String(f.no_kk || f.kk_number).replace('.0', ''),
-        head_of_family_name: headName,
+        kk_number: String(f.no_kk || f.kk_number || '0000000000000000').replace('.0', ''),
+        head_of_family_name: headName || 'Kepala Keluarga (Data Migrasi)',
         address: f.alamat || 'Alamat tidak tersedia',
         rt: rt,
         rw: rw,
@@ -363,26 +375,28 @@ export class ImportComponent {
     this.addLog('🔄 Step 3: Menyiapkan Mapping ID -> No KK...');
     const idToKkMap = new Map<string | number, string>();
     rawFamilies.forEach(f => {
-      if (f.id && (f.no_kk || f.kk_number)) idToKkMap.set(f.id, String(f.no_kk || f.kk_number).replace('.0', ''));
+      const kk = String(f.no_kk || f.kk_number || '').replace('.0', '');
+      if (f.id && kk) idToKkMap.set(f.id, kk);
     });
 
     this.addLog('🔄 Step 4: Mengimpor Data Penduduk (Resolving Relasi)...');
     const mappedResidents = rawResidents.map(r => {
+      const nik = String(r.nik).replace('.0', '');
       return {
-        nik: String(r.nik).replace('.0', ''),
-        full_name: r.nama || r.full_name,
-        birth_place: r.tempatlahir || r.birth_place,
-        birth_date: r.tanggallahir || r.birth_date,
+        nik: nik,
+        full_name: r.nama || 'Warga Tanpa Nama',
+        birth_place: r.tempatlahir || r.birth_place || '-',
+        birth_date: r.tanggallahir || r.birth_date || null,
         gender: (r.sex === '1' || r.sex === 1) ? 'Laki-laki' : 'Perempuan',
         religion: agamaMap.get(r.agama_id) || 'Islam',
         education: pendidikanMap.get(r.pendidikan_kk_id) || 'SMA/Sederajat',
         occupation: pekerjaanMap.get(r.pekerjaan_id) || 'Tidak Bekerja',
         marital_status: kawinMap.get(r.status_kawin) || 'Belum Kawin',
         family_id: idToKkMap.get(r.id_kk) || null,
-        relationship: r.kk_level === '1' ? 'Kepala Keluarga' : 'Anggota',
+        relationship: (r.kk_level === '1' || r.kk_level === 1) ? 'Kepala Keluarga' : 'Anggota',
         father_name: r.nama_ayah || '-',
         mother_name: r.nama_ibu || '-',
-        address: r.alamat_sekarang || r.alamat,
+        address: r.alamat_sekarang || r.alamat || '-',
         citizenship: (r.warganegara_id === '1' || r.warganegara_id === 1) ? 'WNI' : 'WNA',
         blood_type: this.mapBloodType(r.golongan_darah_id),
         status_dasar: (r.status_dasar === '1' || r.status_dasar === 1) ? 'HIDUP' : 'MATI',
