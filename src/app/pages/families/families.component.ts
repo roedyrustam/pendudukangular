@@ -233,8 +233,6 @@ import { PdfService } from '../../services/pdf.service';
        &.active { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
     }
   `]
-dding-bottom: 1rem; }
-  `]
 })
 export class FamiliesComponent implements OnDestroy {
   private dataService = inject(DataService);

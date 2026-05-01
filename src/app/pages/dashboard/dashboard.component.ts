@@ -332,7 +332,6 @@ import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
     .custom-select { background: white; border: 1px solid var(--glass-border); color: #000; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 700; cursor: pointer; }
     .year-badge { background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 900; }
   `]
-  `]
 })
 export class DashboardComponent implements OnDestroy {
   private dataService = inject(DataService);
