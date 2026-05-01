@@ -204,20 +204,29 @@ export class ImportComponent {
 
   autoDetectTables(content: string) {
     const found: string[] = [];
-    if (content.includes('INSERT INTO `tweb_penduduk`')) found.push('tweb_penduduk');
-    if (content.includes('INSERT INTO `tweb_keluarga`')) found.push('tweb_keluarga');
-    if (content.includes('INSERT INTO `artikel`')) found.push('artikel');
+    const tables = [
+      'tweb_penduduk', 'tweb_keluarga', 'tweb_wil_clusterdesa', 
+      'tweb_penduduk_agama', 'tweb_penduduk_pekerjaan', 
+      'tweb_penduduk_pendidikan', 'tweb_penduduk_kawin',
+      'artikel'
+    ];
+    
+    tables.forEach(t => {
+      if (content.includes(`INSERT INTO \`${t}\``) || content.includes(`INSERT INTO ${t}`)) {
+        found.push(t);
+      }
+    });
     
     this.detectedTables.set(found);
     
     if (found.includes('tweb_keluarga') && found.includes('tweb_penduduk')) {
       this.importMode = 'relational';
-      this.addLog('✨ Multi-table detected. Switching to Relational Mode.');
+      this.addLog('✨ Database Sidepe/OpenSID terdeteksi. Mengaktifkan Mode Relasional Otomatis.');
     } else if (found.length > 0) {
       this.importMode = 'single';
       this.sqlTableName = found[0];
-      this.targetTable = found[0] === 'tweb_penduduk' ? 'residents' : (found[0] === 'tweb_keluarga' ? 'families' : 'articles');
-      this.addLog(`✨ Detected table: ${found[0]}`);
+      this.targetTable = found[0].includes('penduduk') ? 'residents' : (found[0].includes('keluarga') ? 'families' : 'articles');
+      this.addLog(`✨ Terdeteksi tabel: ${found[0]}`);
     }
   }
 
@@ -301,30 +310,84 @@ export class ImportComponent {
   }
 
   async runRelationalMigration() {
-    this.addLog('🔄 Step 1: Mengimpor Data Keluarga...');
+    this.addLog('🔍 Menganalisis seluruh struktur database...');
+    
+    // 1. Extract all lookup data
+    const agamaMap = this.getLookupMap('tweb_penduduk_agama');
+    const pekerjaanMap = this.getLookupMap('tweb_penduduk_pekerjaan');
+    const pendidikanMap = this.getLookupMap('tweb_penduduk_pendidikan');
+    const kawinMap = this.getLookupMap('tweb_penduduk_kawin');
+    const clusterData = this.parseSQL('tweb_wil_clusterdesa');
+    
+    const clusterMap = new Map<number, any>();
+    clusterData.forEach(c => clusterMap.set(c.id, c));
+
+    this.addLog('🔄 Step 1: Menyiapkan Data Penduduk...');
+    const rawResidents = this.parseSQL('tweb_penduduk');
+    const residentNameMap = new Map<string, string>();
+    rawResidents.forEach(r => {
+      const nikStr = String(r.nik).replace('.0', '');
+      residentNameMap.set(nikStr, r.nama);
+    });
+
+    this.addLog('🔄 Step 2: Mengimpor Data Keluarga & Wilayah...');
     const rawFamilies = this.parseSQL('tweb_keluarga');
-    const mappedFamilies = rawFamilies.map(f => this.mapSchema(f, 'families'));
+    const mappedFamilies = rawFamilies.map(f => {
+      const cluster = clusterMap.get(f.id_cluster);
+      const rt = cluster?.rt || f.rt || '00';
+      const rw = cluster?.rw || f.rw || '00';
+      
+      // Resolve head of family name if possible
+      let headName = f.nama_kepala || 'Kepala Keluarga';
+      if (f.nik_kepala && residentNameMap.has(String(f.nik_kepala))) {
+        headName = residentNameMap.get(String(f.nik_kepala)) || headName;
+      }
+
+      return {
+        kk_number: String(f.no_kk || f.kk_number).replace('.0', ''),
+        head_of_family_name: headName,
+        address: f.alamat || 'Alamat tidak tersedia',
+        rt: rt,
+        rw: rw,
+        rt_rw: `RT ${rt}/RW ${rw}`,
+        hamlet: cluster?.dusun || f.dusun || '',
+        district: 'Kecamatan',
+        social_class: this.mapSocialClass(f.kelas_sosial),
+        created_at: new Date().toISOString()
+      };
+    });
+    
     await this.bulkUpsert('families', mappedFamilies);
     this.addLog(`✅ ${mappedFamilies.length} Keluarga terimpor.`);
 
-    this.addLog('🔄 Step 2: Menyiapkan Mapping ID -> No KK...');
-    // Create mapping of internal ID to No KK
+    this.addLog('🔄 Step 3: Menyiapkan Mapping ID -> No KK...');
     const idToKkMap = new Map<string | number, string>();
     rawFamilies.forEach(f => {
-      const internalId = f.id;
-      const kkNumber = f.no_kk || f.kk_number;
-      if (internalId && kkNumber) idToKkMap.set(internalId, kkNumber);
+      if (f.id && (f.no_kk || f.kk_number)) idToKkMap.set(f.id, String(f.no_kk || f.kk_number).replace('.0', ''));
     });
 
-    this.addLog('🔄 Step 3: Mengimpor Data Penduduk...');
-    const rawResidents = this.parseSQL('tweb_penduduk');
+    this.addLog('🔄 Step 4: Mengimpor Data Penduduk (Resolving Relasi)...');
     const mappedResidents = rawResidents.map(r => {
-      const resident = this.mapSchema(r, 'residents');
-      // Fix relation: map internal id_kk to actual no_kk
-      if (idToKkMap.has(r.id_kk)) {
-        resident.family_id = idToKkMap.get(r.id_kk);
-      }
-      return resident;
+      return {
+        nik: String(r.nik).replace('.0', ''),
+        full_name: r.nama || r.full_name,
+        birth_place: r.tempatlahir || r.birth_place,
+        birth_date: r.tanggallahir || r.birth_date,
+        gender: (r.sex === '1' || r.sex === 1) ? 'Laki-laki' : 'Perempuan',
+        religion: agamaMap.get(r.agama_id) || 'Islam',
+        education: pendidikanMap.get(r.pendidikan_kk_id) || 'SMA/Sederajat',
+        occupation: pekerjaanMap.get(r.pekerjaan_id) || 'Tidak Bekerja',
+        marital_status: kawinMap.get(r.status_kawin) || 'Belum Kawin',
+        family_id: idToKkMap.get(r.id_kk) || null,
+        relationship: r.kk_level === '1' ? 'Kepala Keluarga' : 'Anggota',
+        father_name: r.nama_ayah || '-',
+        mother_name: r.nama_ibu || '-',
+        address: r.alamat_sekarang || r.alamat,
+        citizenship: (r.warganegara_id === '1' || r.warganegara_id === 1) ? 'WNI' : 'WNA',
+        blood_type: this.mapBloodType(r.golongan_darah_id),
+        status_dasar: (r.status_dasar === '1' || r.status_dasar === 1) ? 'HIDUP' : 'MATI',
+        created_at: new Date().toISOString()
+      };
     });
 
     await this.bulkUpsert('residents', mappedResidents);
@@ -335,15 +398,44 @@ export class ImportComponent {
     setTimeout(() => this.showSuccess.set(false), 5000);
   }
 
+  private getLookupMap(tableName: string): Map<number, string> {
+    const data = this.parseSQL(tableName);
+    const map = new Map<number, string>();
+    data.forEach(item => {
+      if (item.id && item.nama) map.set(item.id, item.nama);
+    });
+    return map;
+  }
+
+  private mapSocialClass(id: any): string {
+    const classes: any = { 1: 'Sangat Miskin', 2: 'Miskin', 3: 'Sedang', 4: 'Kaya' };
+    return classes[id] || 'Sedang';
+  }
+
+  private mapBloodType(id: any): string {
+    const types: any = { 1: 'A', 2: 'B', 3: 'AB', 4: 'O', 13: 'Tidak Tahu' };
+    return types[id] || '-';
+  }
+
   async bulkUpsert(table: string, data: any[]) {
+    // Filter out items with null/undefined keys if necessary
+    const validData = data.filter(item => {
+       if (table === 'residents') return !!item.nik;
+       if (table === 'families') return !!item.kk_number;
+       return true;
+    });
+
     const chunkSize = 100;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
+    for (let i = 0; i < validData.length; i += chunkSize) {
+      const chunk = validData.slice(i, i + chunkSize);
       const { error } = await (this.dataService as any).supabase
         .from(table)
         .upsert(chunk);
-      if (error) throw error;
-      this.addLog(`Progress [${table}]: ${Math.min(i + chunkSize, data.length)}/${data.length}...`);
+      if (error) {
+        this.addLog(`❌ BATCH ERROR [${table}]: ` + error.message);
+        throw error;
+      }
+      this.addLog(`Progress [${table}]: ${Math.min(i + chunkSize, validData.length)}/${validData.length}...`);
     }
   }
 
